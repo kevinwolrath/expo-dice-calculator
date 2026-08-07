@@ -1,7 +1,7 @@
-jest.mock("@/db", () => require("../../__mocks__/dbMock"));
+jest.mock("@/db", () => require("../__mocks__/dbMock"));
 
 import useInventoryStore from "@/stores/useInventoryStore";
-import dbMock from "../../__mocks__/dbMock";
+import dbMock from "../__mocks__/dbMock";
 
 beforeEach(() => {
   jest.clearAllMocks();

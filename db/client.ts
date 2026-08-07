@@ -1,0 +1,86 @@
+import * as SQLite from "expo-sqlite";
+
+import { DATABASE_SCHEMA } from "./schema";
+
+const DATABASE_NAME = "dice_calculator.db";
+
+// Bump this and add a branch below whenever `schema.ts` changes.
+// We're using a destructive prototype migration: create a fresh schema
+// by dropping existing tables when the version increases.
+const DATABASE_VERSION = 2;
+
+let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
+
+export const getDatabase = (): Promise<SQLite.SQLiteDatabase> => {
+  if (!dbPromise) {
+    dbPromise = openDatabaseWithRetry(DATABASE_NAME);
+  }
+  return dbPromise;
+};
+
+async function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function openDatabaseWithRetry(name: string, attempts = 5, delay = 200) {
+  let lastErr: unknown = null;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await SQLite.openDatabaseAsync(name);
+    } catch (err: any) {
+      lastErr = err;
+      // Detect the File System Access API race that prevents opening sync handles.
+      const isNoModificationAllowed =
+        err?.name === "NoModificationAllowedError" ||
+        (typeof err?.message === "string" &&
+          err.message.includes("createSyncAccessHandle"));
+      if (!isNoModificationAllowed) throw err;
+      // If this was the last attempt, rethrow the error.
+      if (i === attempts - 1) break;
+      // Back off and retry — another handle may be closing.
+      // Increase delay slightly between attempts.
+      await sleep(delay * (i + 1));
+    }
+  }
+  throw lastErr;
+}
+
+// Creates the schema on first run, and migrates on later app updates.
+// Pattern follows Expo's recommended `migrateDbIfNeeded` approach.
+export const initDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
+  const db = await getDatabase();
+
+  const result = await db.getFirstAsync<{ user_version: number }>(
+    "PRAGMA user_version",
+  );
+  let currentVersion = result?.user_version ?? 0;
+
+  if (currentVersion >= DATABASE_VERSION) {
+    return db;
+  }
+
+  await db.execAsync("PRAGMA journal_mode = WAL;");
+
+  // For prototypes we can recreate the DB when the schema version increases.
+  if (currentVersion === 0) {
+    await db.execAsync(DATABASE_SCHEMA);
+    currentVersion = DATABASE_VERSION;
+  } else {
+    // Destructive replace: drop existing tables then create the new schema.
+    // This intentionally wipes existing data (acceptable for prototype).
+    await db.execAsync("BEGIN;");
+    await db.execAsync("DROP TABLE IF EXISTS production_method_material;");
+    await db.execAsync("DROP TABLE IF EXISTS dice_job_colour;");
+    await db.execAsync("DROP TABLE IF EXISTS dice_job;");
+    await db.execAsync("DROP TABLE IF EXISTS material_stock;");
+    await db.execAsync("DROP TABLE IF EXISTS production_method;");
+    await db.execAsync("DROP TABLE IF EXISTS material_type;");
+    await db.execAsync(DATABASE_SCHEMA);
+    await db.execAsync("COMMIT;");
+    currentVersion = DATABASE_VERSION;
+  }
+
+  await db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
+
+  return db;
+};
