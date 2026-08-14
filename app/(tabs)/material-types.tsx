@@ -15,8 +15,10 @@ import FormField from "@/components/ui/FormField";
 import PrimaryButton from "@/components/ui/PrimaryButton";
 import type { MaterialType } from "@/db";
 import useInventoryStore from "@/stores/useInventoryStore";
+import { useTranslation } from "react-i18next";
 
 export default function MaterialTypesScreen() {
+  const { t } = useTranslation();
   const types = useInventoryStore((s) => s.types);
   const loading = useInventoryStore((s) => s.loading);
   const loadAll = useInventoryStore((s) => s.loadAll);
@@ -33,7 +35,10 @@ export default function MaterialTypesScreen() {
 
   const handleSaveType = async () => {
     if (!description.trim())
-      return showMessage("Missing", "Type description is required");
+      return showMessage(
+        t("materialTypes.missingTitle"),
+        t("materialTypes.missingMessage"),
+      );
     try {
       if (typeEditingId) {
         await updateType(typeEditingId, {
@@ -46,7 +51,7 @@ export default function MaterialTypesScreen() {
       setTypeEditingId(null);
     } catch (e) {
       console.warn(e);
-      showMessage("Error", "Could not save material type.");
+      showMessage(t("common.error"), t("materialTypes.saveError"));
     }
   };
 
@@ -55,9 +60,18 @@ export default function MaterialTypesScreen() {
     setDescription(t.description ?? "");
   };
 
+  const handleCancelType = () => {
+    setDescription("");
+    setTypeEditingId(null);
+  };
+
   const handleDeleteType = (id: number) => {
     if (Platform.OS === "web") {
-      if (window.confirm("Delete type - are you sure?")) {
+      if (
+        window.confirm(
+          `${t("materialTypes.deleteTitle")} - ${t("materialTypes.deleteMessage")}`,
+        )
+      ) {
         (async () => {
           await deleteType(id);
           await loadAll();
@@ -66,17 +80,21 @@ export default function MaterialTypesScreen() {
       return;
     }
 
-    Alert.alert("Delete type", "Are you sure?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          await deleteType(id);
-          await loadAll();
+    Alert.alert(
+      t("materialTypes.deleteTitle"),
+      t("materialTypes.deleteMessage"),
+      [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("common.delete"),
+          style: "destructive",
+          onPress: async () => {
+            await deleteType(id);
+            await loadAll();
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   return (
@@ -91,24 +109,30 @@ export default function MaterialTypesScreen() {
         contentContainerStyle={styles.content}
         ListHeaderComponent={
           <RNView style={{ marginBottom: 12 }}>
-            <Text style={styles.title}>Material Types</Text>
             <Card>
               <FormField
-                label="Description"
+                label={t("materialTypes.description")}
                 value={description}
                 onChangeText={setDescription}
               />
-              <PrimaryButton
-                title={
-                  loading
-                    ? "Saving..."
-                    : typeEditingId
-                      ? "Save type"
-                      : "Add type"
-                }
-                onPress={handleSaveType}
-                disabled={loading}
-              />
+              <RNView style={styles.actionRow}>
+                <PrimaryButton
+                  title={
+                    loading
+                      ? t("common.saving")
+                      : typeEditingId
+                        ? t("materialTypes.save")
+                        : t("materialTypes.add")
+                  }
+                  onPress={handleSaveType}
+                  disabled={loading}
+                />
+                <PrimaryButton
+                  title={t("common.cancel")}
+                  onPress={handleCancelType}
+                  disabled={loading}
+                />
+              </RNView>
             </Card>
           </RNView>
         }
@@ -126,11 +150,11 @@ export default function MaterialTypesScreen() {
               </RNView>
               <RNView style={{ flexDirection: "row", gap: 10 }}>
                 <PrimaryButton
-                  title="Edit"
+                  title={t("common.edit")}
                   onPress={() => handleEditType(item)}
                 />
                 <PrimaryButton
-                  title="Delete"
+                  title={t("common.delete")}
                   variant="destructive"
                   onPress={() => handleDeleteType(item.material_type_id)}
                 />
@@ -140,7 +164,7 @@ export default function MaterialTypesScreen() {
         )}
         ListEmptyComponent={
           <Text style={{ textAlign: "center", opacity: 0.6 }}>
-            No types yet.
+            {t("materialTypes.empty")}
           </Text>
         }
       />
@@ -151,5 +175,5 @@ export default function MaterialTypesScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   content: { padding: 16, paddingBottom: 32 },
-  title: { fontSize: 24, fontWeight: "700", marginBottom: 12 },
+  actionRow: { flexDirection: "row", gap: 10 },
 });

@@ -1,6 +1,7 @@
 import { Pressable, ScrollView, StyleSheet } from "react-native";
 
 import { Text, View } from "@/components/Themed";
+import { useTranslation } from "react-i18next";
 
 type ChipOption = { value: number; label: string };
 
@@ -19,11 +20,13 @@ export default function ChipSelect({
   onChange,
   emptyHint,
 }: ChipSelectProps) {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.container}>
       <Text style={styles.label}>{label}</Text>
       {options.length === 0 ? (
-        <Text style={styles.hint}>{emptyHint ?? "No options yet"}</Text>
+        <Text style={styles.hint}>{emptyHint ?? t("misc.noOptions")}</Text>
       ) : (
         <ScrollView
           horizontal

@@ -1,12 +1,18 @@
+import DateTimePicker, {
+  type DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
 import { SymbolView } from "expo-symbols";
 import { useCallback, useEffect, useState } from "react";
 import {
-    Alert,
-    FlatList,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    StyleSheet,
+  Alert,
+  FlatList,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  View as RNView,
+  ScrollView,
+  StyleSheet,
 } from "react-native";
 
 import { showMessage } from "@/components/alert";
@@ -17,19 +23,48 @@ import FormField from "@/components/ui/FormField";
 import PrimaryButton from "@/components/ui/PrimaryButton";
 import type { MaterialStock } from "@/db";
 import {
-    createDiceJob,
-    deleteDiceJob,
-    initDatabase,
-    listDiceJobs,
-    listProductionMethods,
-    type DiceJob,
-    type ProductionMethod,
+  createDiceJob,
+  deleteDiceJob,
+  initDatabase,
+  listDiceJobs,
+  listProductionMethods,
+  type DiceJob,
+  type ProductionMethod,
 } from "@/db";
 import useInventoryStore from "@/stores/useInventoryStore";
+import { useTranslation } from "react-i18next";
 
 const today = () => new Date().toISOString().slice(0, 10);
 
+const parseStoredDate = (value: string) => {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day);
+};
+
+const formatDisplayDate = (value: string) => {
+  const [year, month, day] = value.split("-");
+  return year && month && day ? `${day}/${month}/${year}` : value;
+};
+
+const parseDisplayDate = (value: string) => {
+  const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!match) return null;
+
+  const [, day, month, year] = match;
+  const date = new Date(Number(year), Number(month) - 1, Number(day));
+  if (
+    date.getFullYear() !== Number(year) ||
+    date.getMonth() !== Number(month) - 1 ||
+    date.getDate() !== Number(day)
+  ) {
+    return null;
+  }
+
+  return `${year}-${month}-${day}`;
+};
+
 export default function JobsScreen() {
+  const { t } = useTranslation();
   const [jobs, setJobs] = useState<DiceJob[]>([]);
   const [methods, setMethods] = useState<ProductionMethod[]>([]);
   const stock = useInventoryStore((s) => s.stock);
@@ -38,10 +73,13 @@ export default function JobsScreen() {
   const [jobName, setJobName] = useState("");
   const [description, setDescription] = useState("");
   const [jobDate, setJobDate] = useState(today());
+  const [jobDateInput, setJobDateInput] = useState(formatDisplayDate(today()));
   const [colourCount, setColourCount] = useState("1");
   const [methodId, setMethodId] = useState<number | null>(null);
   const [stockId, setStockId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showMethodPicker, setShowMethodPicker] = useState(false);
 
   const loadAll = useCallback(async () => {
     const [jobRows, methodRows, stockRows] = await Promise.all([
@@ -77,24 +115,32 @@ export default function JobsScreen() {
     setJobName("");
     setDescription("");
     setJobDate(today());
+    setJobDateInput(formatDisplayDate(today()));
     setColourCount("1");
     setStockId(null);
+    setShowDatePicker(false);
+    setShowMethodPicker(false);
+  };
+
+  const handleDateChange = (event: DateTimePickerEvent, date?: Date) => {
+    if (Platform.OS === "android") setShowDatePicker(false);
+    if (event.type !== "set" || !date) return;
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    setJobDate(`${year}-${month}-${day}`);
+    setJobDateInput(`${day}/${month}/${year}`);
   };
 
   const handleCreate = async () => {
     if (!jobName.trim() || !methodId) {
-      showMessage(
-        "Missing info",
-        "Job name and production method are required.",
-      );
+      showMessage(t("jobs.missingTitle"), t("jobs.missingMessage"));
       return;
     }
     const count = Number(colourCount);
     if (!Number.isInteger(count) || count <= 0) {
-      showMessage(
-        "Invalid colour count",
-        "Colour count must be a positive whole number.",
-      );
+      showMessage(t("jobs.invalidCountTitle"), t("jobs.invalidCountMessage"));
       return;
     }
     setSaving(true);
@@ -111,7 +157,7 @@ export default function JobsScreen() {
       await loadAll();
     } catch (e) {
       console.warn("Failed to create job", e);
-      showMessage("Error", "Could not save the job.");
+      showMessage(t("common.error"), t("jobs.saveError"));
     } finally {
       setSaving(false);
     }
@@ -120,7 +166,7 @@ export default function JobsScreen() {
   const handleDelete = (id: number) => {
     if (Platform.OS === "web") {
       if (
-        window.confirm("Delete job - are you sure you want to delete this job?")
+        window.confirm(`${t("jobs.deleteTitle")} - ${t("jobs.deleteMessage")}`)
       ) {
         (async () => {
           await deleteDiceJob(id);
@@ -130,10 +176,10 @@ export default function JobsScreen() {
       return;
     }
 
-    Alert.alert("Delete job", "Are you sure you want to delete this job?", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert(t("jobs.deleteTitle"), t("jobs.deleteMessage"), [
+      { text: t("common.cancel"), style: "cancel" },
       {
-        text: "Delete",
+        text: t("common.delete"),
         style: "destructive",
         onPress: async () => {
           await deleteDiceJob(id);
@@ -145,7 +191,12 @@ export default function JobsScreen() {
 
   const methodLabel = (id: number) =>
     methods.find((m) => m.production_method_id === id)?.description ??
-    "Unknown";
+    t("jobs.unknownMethod");
+
+  const selectedMethodLabel = methodId
+    ? (methods.find((method) => method.production_method_id === methodId)
+        ?.description ?? t("jobs.unknownMethod"))
+    : t("jobs.selectProductionMethod");
 
   return (
     <KeyboardAvoidingView
@@ -159,60 +210,157 @@ export default function JobsScreen() {
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={styles.title}>Dice Jobs</Text>
             <Card>
               <FormField
-                label="Job name"
+                label={t("jobs.jobName")}
                 value={jobName}
                 onChangeText={setJobName}
-                placeholder="e.g. Red/Blue Swirl Batch"
+                placeholder={t("jobs.jobNamePlaceholder")}
               />
               <FormField
-                label="Description"
+                label={t("jobs.description")}
                 value={description}
                 onChangeText={setDescription}
-                placeholder="Optional notes"
+                placeholder={t("jobs.descriptionPlaceholder")}
                 multiline
               />
+              {Platform.OS === "web" ? (
+                <FormField
+                  label={t("jobs.jobDate")}
+                  value={jobDateInput}
+                  onChangeText={(value) => {
+                    setJobDateInput(value);
+                    const parsed = parseDisplayDate(value);
+                    if (parsed) setJobDate(parsed);
+                  }}
+                  placeholder={t("jobs.jobDatePlaceholder")}
+                  keyboardType="number-pad"
+                />
+              ) : (
+                <View style={styles.dateField}>
+                  <Text style={styles.dateLabel}>{t("jobs.jobDate")}</Text>
+                  <Pressable
+                    onPress={() => setShowDatePicker(true)}
+                    style={styles.dateButton}
+                  >
+                    <Text>{formatDisplayDate(jobDate)}</Text>
+                  </Pressable>
+                  {showDatePicker ? (
+                    <DateTimePicker
+                      value={parseStoredDate(jobDate)}
+                      mode="date"
+                      display={Platform.OS === "ios" ? "spinner" : "default"}
+                      onChange={handleDateChange}
+                    />
+                  ) : null}
+                </View>
+              )}
               <FormField
-                label="Job date (YYYY-MM-DD)"
-                value={jobDate}
-                onChangeText={setJobDate}
-              />
-              <FormField
-                label="Colour count"
+                label={t("jobs.colourCount")}
                 value={colourCount}
                 onChangeText={setColourCount}
                 keyboardType="number-pad"
               />
+              <View style={styles.selectField}>
+                <Text style={styles.selectLabel}>
+                  {t("jobs.productionMethod")}
+                </Text>
+                {methods.length === 0 ? (
+                  <Text style={styles.selectHint}>
+                    {t("jobs.addProductionMethodHint")}
+                  </Text>
+                ) : (
+                  <>
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() => setShowMethodPicker(true)}
+                      style={styles.pickerContainer}
+                    >
+                      <Text
+                        style={[
+                          styles.pickerValue,
+                          !methodId && styles.pickerPlaceholder,
+                        ]}
+                      >
+                        {selectedMethodLabel}
+                      </Text>
+                      <Text style={styles.pickerChevron}>⌄</Text>
+                    </Pressable>
+                    <Modal
+                      visible={showMethodPicker}
+                      transparent
+                      animationType="fade"
+                      onRequestClose={() => setShowMethodPicker(false)}
+                    >
+                      <RNView style={styles.modalBackdrop}>
+                        <Pressable
+                          style={StyleSheet.absoluteFill}
+                          onPress={() => setShowMethodPicker(false)}
+                        />
+                        <RNView style={styles.optionsSheet}>
+                          <Text style={styles.optionsTitle}>
+                            {t("jobs.productionMethod")}
+                          </Text>
+                          <ScrollView>
+                            {methods.map((method) => {
+                              const selected =
+                                method.production_method_id === methodId;
+                              return (
+                                <Pressable
+                                  key={method.production_method_id}
+                                  onPress={() => {
+                                    setMethodId(method.production_method_id);
+                                    setShowMethodPicker(false);
+                                  }}
+                                  style={[
+                                    styles.option,
+                                    selected && styles.selectedOption,
+                                  ]}
+                                >
+                                  <Text
+                                    style={[
+                                      styles.optionLabel,
+                                      selected && styles.selectedOptionLabel,
+                                    ]}
+                                  >
+                                    {method.description ??
+                                      method.production_method_id.toString()}
+                                  </Text>
+                                </Pressable>
+                              );
+                            })}
+                          </ScrollView>
+                        </RNView>
+                      </RNView>
+                    </Modal>
+                  </>
+                )}
+              </View>
               <ChipSelect
-                label="Production method"
-                options={methods.map((m) => ({
-                  value: m.production_method_id,
-                  label: m.description ?? m.production_method_id.toString(),
-                }))}
-                value={methodId}
-                onChange={setMethodId}
-                emptyHint="Add a production method in Setup first"
-              />
-              <ChipSelect
-                label="Primary material (optional)"
+                label={t("jobs.primaryMaterial")}
                 options={stock.map((s) => ({
                   value: s.material_stock_id,
                   label: s.colour_name,
                 }))}
                 value={stockId}
                 onChange={setStockId}
-                emptyHint="Add material stock in the Stock tab first"
+                emptyHint={t("jobs.addStockHint")}
               />
-              <PrimaryButton
-                title={saving ? "Saving..." : "Add job"}
-                onPress={handleCreate}
-                disabled={saving}
-              />
+              <View style={styles.actionRow}>
+                <PrimaryButton
+                  title={saving ? t("common.saving") : t("jobs.addJob")}
+                  onPress={handleCreate}
+                  disabled={saving}
+                />
+                <PrimaryButton
+                  title={t("common.cancel")}
+                  onPress={resetForm}
+                  disabled={saving}
+                />
+              </View>
             </Card>
             <Text style={styles.sectionLabel}>
-              {jobs.length} job{jobs.length === 1 ? "" : "s"}
+              {t("jobs.jobCount", { count: jobs.length })}
             </Text>
           </View>
         }
@@ -232,8 +380,9 @@ export default function JobsScreen() {
               </Pressable>
             </View>
             <Text style={styles.itemMeta}>
-              {item.job_date} • {methodLabel(item.production_method_id)} •{" "}
-              {item.colour_count} colour{item.colour_count === 1 ? "" : "s"}
+              {formatDisplayDate(item.job_date)} •{" "}
+              {methodLabel(item.production_method_id)} •{" "}
+              {t("jobs.colourCountValue", { count: item.colour_count })}
             </Text>
             {item.description ? (
               <Text style={styles.itemDescription}>{item.description}</Text>
@@ -241,9 +390,7 @@ export default function JobsScreen() {
           </Card>
         )}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>
-            No jobs yet. Add your first one above.
-          </Text>
+          <Text style={styles.emptyText}>{t("jobs.empty")}</Text>
         }
       />
     </KeyboardAvoidingView>
@@ -254,7 +401,6 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   listContent: { padding: 16, paddingBottom: 32 },
   header: { marginBottom: 8 },
-  title: { fontSize: 24, fontWeight: "700", marginBottom: 12 },
   sectionLabel: { fontSize: 13, opacity: 0.6, marginBottom: 8 },
   rowBetween: {
     flexDirection: "row",
@@ -270,4 +416,59 @@ const styles = StyleSheet.create({
   itemMeta: { fontSize: 13, opacity: 0.6, marginTop: 4 },
   itemDescription: { fontSize: 14, marginTop: 6 },
   emptyText: { textAlign: "center", opacity: 0.6, marginTop: 24 },
+  actionRow: { flexDirection: "row", gap: 10 },
+  dateField: { marginBottom: 12 },
+  dateLabel: { fontSize: 13, fontWeight: "600", marginBottom: 4, opacity: 0.7 },
+  dateButton: {
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: "#999",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+  },
+  selectField: { marginBottom: 12 },
+  selectLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    marginBottom: 4,
+    opacity: 0.7,
+  },
+  selectHint: { fontSize: 13, opacity: 0.5, fontStyle: "italic" },
+  pickerContainer: {
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: "#999",
+    borderRadius: 10,
+    minHeight: 48,
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  pickerValue: { fontSize: 16 },
+  pickerPlaceholder: { opacity: 0.5 },
+  pickerChevron: { fontSize: 22, opacity: 0.6, marginTop: -6 },
+  modalBackdrop: {
+    flex: 1,
+    justifyContent: "center",
+    padding: 24,
+    backgroundColor: "rgba(0, 0, 0, 0.35)",
+  },
+  optionsSheet: {
+    maxHeight: "70%",
+    borderRadius: 12,
+    padding: 8,
+    backgroundColor: "#fff",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "#e5e5ea",
+  },
+  optionsTitle: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  option: { paddingHorizontal: 12, paddingVertical: 13, borderRadius: 8 },
+  selectedOption: { backgroundColor: "#2f95dc" },
+  optionLabel: { fontSize: 16 },
+  selectedOptionLabel: { color: "#fff", fontWeight: "600" },
 });

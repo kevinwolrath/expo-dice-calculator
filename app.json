@@ -1,14 +1,18 @@
 {
   "expo": {
     "name": "expo-dice-calculator",
-    "slug": "expo-dice-calculator",
+    "slug": "dice-job-manager",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "expodicecalculator",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.snackbearer.expodicecalculator",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -35,7 +39,8 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      "expo-sqlite"
+      "expo-sqlite",
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true
@@ -43,8 +48,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "07a9c4de-dc9e-4553-bb52-be9ef7dc4d74"
+        "projectId": "d35243d5-ae50-40ea-bde9-8640344e8d30"
       }
-    }
+    },
+    "owner": "snackbearers-team"
   }
 }

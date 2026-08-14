@@ -5,9 +5,11 @@ import { Pressable } from "react-native";
 import { useClientOnlyValue } from "@/components/useClientOnlyValue";
 import { useColorScheme } from "@/components/useColorScheme";
 import Colors from "@/constants/Colors";
+import { useTranslation } from "react-i18next";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const { t } = useTranslation();
 
   return (
     <Tabs
@@ -21,7 +23,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Jobs",
+          title: t("tabs.jobs"),
           tabBarIcon: ({ color }) => (
             <SymbolView
               name={{
@@ -53,7 +55,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="stock"
         options={{
-          title: "Stock",
+          title: t("tabs.stock"),
           tabBarIcon: ({ color }) => (
             <SymbolView
               name={{ ios: "cube.box", android: "inventory", web: "inventory" }}
@@ -67,7 +69,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="material-types"
         options={{
-          title: "Material Types",
+          title: t("tabs.materialTypes"),
           tabBarIcon: ({ color }) => (
             <SymbolView
               name={{
@@ -85,7 +87,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="production-methods"
         options={{
-          title: "Production Methods",
+          title: t("tabs.productionMethods"),
           tabBarIcon: ({ color }) => (
             <SymbolView
               name={{ ios: "wrench.fill", android: "build", web: "build" }}

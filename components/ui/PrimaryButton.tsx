@@ -31,10 +31,18 @@ export default function PrimaryButton({
 
 const styles = StyleSheet.create({
   button: {
+    minWidth: 84,
+    minHeight: 44,
+    paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
   },
-  label: { color: "#fff", fontSize: 16, fontWeight: "600" },
+  label: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+    textAlign: "center",
+  },
 });

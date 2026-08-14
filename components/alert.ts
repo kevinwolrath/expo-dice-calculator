@@ -1,5 +1,7 @@
 import { Alert, Platform } from "react-native";
 
+import i18n from "@/constants/i18n";
+
 export const showMessage = (title: string, message?: string) => {
   if (Platform.OS === "web") {
     // Use a simple browser alert on web
@@ -21,8 +23,12 @@ export const confirm = (title: string, message?: string): Promise<boolean> => {
       title,
       message,
       [
-        { text: "Cancel", style: "cancel", onPress: () => resolve(false) },
-        { text: "OK", onPress: () => resolve(true) },
+        {
+          text: i18n.t("common.cancel"),
+          style: "cancel",
+          onPress: () => resolve(false),
+        },
+        { text: i18n.t("common.ok"), onPress: () => resolve(true) },
       ],
       { cancelable: true },
     );

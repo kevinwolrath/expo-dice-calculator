@@ -1,13 +1,14 @@
 import * as SQLite from "expo-sqlite";
 
 import { DATABASE_SCHEMA } from "./schema";
+import { seedInitialData } from "./seed";
 
 const DATABASE_NAME = "dice_calculator.db";
 
 // Bump this and add a branch below whenever `schema.ts` changes.
 // We're using a destructive prototype migration: create a fresh schema
 // by dropping existing tables when the version increases.
-const DATABASE_VERSION = 2;
+const DATABASE_VERSION = 3;
 
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
@@ -56,6 +57,7 @@ export const initDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
   let currentVersion = result?.user_version ?? 0;
 
   if (currentVersion >= DATABASE_VERSION) {
+    await seedIfDatabaseIsBlank(db);
     return db;
   }
 
@@ -64,6 +66,15 @@ export const initDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
   // For prototypes we can recreate the DB when the schema version increases.
   if (currentVersion === 0) {
     await db.execAsync(DATABASE_SCHEMA);
+    // Seed initial reference data (material types, methods, method-material links)
+    try {
+      await seedInitialData();
+    } catch (e) {
+      // Swallow seeding errors to avoid breaking DB init in unusual environments,
+      // but log to console for diagnostics.
+      // eslint-disable-next-line no-console
+      console.warn("DB seeding failed:", e);
+    }
     currentVersion = DATABASE_VERSION;
   } else {
     // Destructive replace: drop existing tables then create the new schema.
@@ -84,3 +95,26 @@ export const initDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
 
   return db;
 };
+
+async function seedIfDatabaseIsBlank(db: SQLite.SQLiteDatabase): Promise<void> {
+  const materialTypeCount = await db.getFirstAsync<{ count: number }>(
+    "SELECT COUNT(*) AS count FROM material_type;",
+  );
+  const productionMethodCount = await db.getFirstAsync<{ count: number }>(
+    "SELECT COUNT(*) AS count FROM production_method;",
+  );
+
+  if (
+    (materialTypeCount?.count ?? 0) > 0 ||
+    (productionMethodCount?.count ?? 0) > 0
+  ) {
+    return;
+  }
+
+  try {
+    await seedInitialData();
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn("DB seeding failed:", e);
+  }
+}

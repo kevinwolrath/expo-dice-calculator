@@ -16,8 +16,10 @@ import FormField from "@/components/ui/FormField";
 import PrimaryButton from "@/components/ui/PrimaryButton";
 import type { MaterialStock } from "@/db";
 import useInventoryStore from "@/stores/useInventoryStore";
+import { useTranslation } from "react-i18next";
 
 export default function StockScreen() {
+  const { t } = useTranslation();
   const items = useInventoryStore((s) => s.stock);
   const types = useInventoryStore((s) => s.types);
   const loading = useInventoryStore((s) => s.loading);
@@ -38,10 +40,7 @@ export default function StockScreen() {
 
   const handleSave = async () => {
     if (!colourName.trim() || !materialTypeId) {
-      showMessage(
-        "Missing data",
-        "Colour name and material type are required.",
-      );
+      showMessage(t("stock.missingTitle"), t("stock.missingMessage"));
       return;
     }
     setSaving(true);
@@ -64,7 +63,7 @@ export default function StockScreen() {
       setEditingId(null);
     } catch (e) {
       console.warn(e);
-      showMessage("Error", "Could not save stock item.");
+      showMessage(t("common.error"), t("stock.saveError"));
     } finally {
       setSaving(false);
     }
@@ -77,10 +76,20 @@ export default function StockScreen() {
     setQuantity(String(item.quantity_in_stock));
   };
 
+  const handleCancel = () => {
+    setColourName("");
+    setMaterialTypeId(null);
+    setQuantity("0");
+    setEditingId(null);
+  };
+
   const handleDelete = (id: number) => {
     if (Platform.OS === "web") {
-      // window.confirm returns true if user confirms
-      if (window.confirm("Delete item - are you sure?")) {
+      if (
+        window.confirm(
+          `${t("stock.deleteTitle")} - ${t("stock.deleteMessage")}`,
+        )
+      ) {
         (async () => {
           await deleteStock(id);
           await loadAll();
@@ -89,10 +98,10 @@ export default function StockScreen() {
       return;
     }
 
-    Alert.alert("Delete item", "Are you sure?", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert(t("stock.deleteTitle"), t("stock.deleteMessage"), [
+      { text: t("common.cancel"), style: "cancel" },
       {
-        text: "Delete",
+        text: t("common.delete"),
         style: "destructive",
         onPress: async () => {
           await deleteStock(id);
@@ -114,40 +123,46 @@ export default function StockScreen() {
         contentContainerStyle={styles.content}
         ListHeaderComponent={
           <RNView style={{ marginBottom: 12 }}>
-            <Text style={styles.title}>Material Stock</Text>
             <Card>
               <FormField
-                label="Colour name"
+                label={t("stock.colourName")}
                 value={colourName}
                 onChangeText={setColourName}
               />
               <ChipSelect
-                label="Material type"
+                label={t("stock.materialType")}
                 options={types.map((t) => ({
                   value: t.material_type_id,
                   label: t.description ?? String(t.material_type_id),
                 }))}
                 value={materialTypeId}
                 onChange={setMaterialTypeId}
-                emptyHint="Add material types in Material Types"
+                emptyHint={t("stock.addMaterialTypesHint")}
               />
               <FormField
-                label="Quantity"
+                label={t("stock.quantity")}
                 value={quantity}
                 onChangeText={setQuantity}
                 keyboardType="number-pad"
               />
-              <PrimaryButton
-                title={
-                  saving
-                    ? "Saving..."
-                    : editingId
-                      ? "Save changes"
-                      : "Add stock"
-                }
-                onPress={handleSave}
-                disabled={saving}
-              />
+              <RNView style={styles.actionRow}>
+                <PrimaryButton
+                  title={
+                    saving
+                      ? t("common.saving")
+                      : editingId
+                        ? t("stock.save")
+                        : t("stock.add")
+                  }
+                  onPress={handleSave}
+                  disabled={saving}
+                />
+                <PrimaryButton
+                  title={t("common.cancel")}
+                  onPress={handleCancel}
+                  disabled={saving}
+                />
+              </RNView>
             </Card>
           </RNView>
         }
@@ -163,13 +178,16 @@ export default function StockScreen() {
               <RNView>
                 <Text style={{ fontWeight: "600" }}>{item.colour_name}</Text>
                 <Text style={{ opacity: 0.7 }}>
-                  {item.quantity_in_stock} in stock
+                  {t("stock.inStock", { count: item.quantity_in_stock })}
                 </Text>
               </RNView>
               <RNView style={{ flexDirection: "row", gap: 10 }}>
-                <PrimaryButton title="Edit" onPress={() => handleEdit(item)} />
                 <PrimaryButton
-                  title="Delete"
+                  title={t("common.edit")}
+                  onPress={() => handleEdit(item)}
+                />
+                <PrimaryButton
+                  title={t("common.delete")}
                   variant="destructive"
                   onPress={() => handleDelete(item.material_stock_id)}
                 />
@@ -179,7 +197,7 @@ export default function StockScreen() {
         )}
         ListEmptyComponent={
           <Text style={{ textAlign: "center", opacity: 0.6 }}>
-            No stock items yet.
+            {t("stock.empty")}
           </Text>
         }
       />
@@ -190,5 +208,5 @@ export default function StockScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   content: { padding: 16, paddingBottom: 32 },
-  title: { fontSize: 24, fontWeight: "700", marginBottom: 12 },
+  actionRow: { flexDirection: "row", gap: 10 },
 });
