@@ -16,7 +16,7 @@ import {
 } from "react-native";
 
 import { showMessage } from "@/components/alert";
-import { Text, View } from "@/components/Themed";
+import { Text, useThemeColor, View } from "@/components/Themed";
 import Card from "@/components/ui/Card";
 import ChipSelect from "@/components/ui/ChipSelect";
 import FormField from "@/components/ui/FormField";
@@ -65,6 +65,9 @@ const parseDisplayDate = (value: string) => {
 
 export default function JobsScreen() {
   const { t } = useTranslation();
+  const textColor = useThemeColor({}, "text");
+  const backgroundColor = useThemeColor({}, "background");
+  const borderColor = useThemeColor({}, "tabIconDefault");
   const [jobs, setJobs] = useState<DiceJob[]>([]);
   const [methods, setMethods] = useState<ProductionMethod[]>([]);
   const stock = useInventoryStore((s) => s.stock);
@@ -274,7 +277,7 @@ export default function JobsScreen() {
                     <Pressable
                       accessibilityRole="button"
                       onPress={() => setShowMethodPicker(true)}
-                      style={styles.pickerContainer}
+                      style={[styles.pickerContainer, { borderColor }]}
                     >
                       <Text
                         style={[
@@ -284,7 +287,11 @@ export default function JobsScreen() {
                       >
                         {selectedMethodLabel}
                       </Text>
-                      <Text style={styles.pickerChevron}>⌄</Text>
+                      <Text
+                        style={[styles.pickerChevron, { color: textColor }]}
+                      >
+                        ⌄
+                      </Text>
                     </Pressable>
                     <Modal
                       visible={showMethodPicker}
@@ -297,8 +304,15 @@ export default function JobsScreen() {
                           style={StyleSheet.absoluteFill}
                           onPress={() => setShowMethodPicker(false)}
                         />
-                        <RNView style={styles.optionsSheet}>
-                          <Text style={styles.optionsTitle}>
+                        <RNView
+                          style={[
+                            styles.optionsSheet,
+                            { backgroundColor, borderColor },
+                          ]}
+                        >
+                          <Text
+                            style={[styles.optionsTitle, { color: textColor }]}
+                          >
                             {t("jobs.productionMethod")}
                           </Text>
                           <ScrollView>
@@ -320,6 +334,7 @@ export default function JobsScreen() {
                                   <Text
                                     style={[
                                       styles.optionLabel,
+                                      { color: textColor },
                                       selected && styles.selectedOptionLabel,
                                     ]}
                                   >
