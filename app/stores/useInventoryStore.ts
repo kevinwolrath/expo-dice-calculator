@@ -176,7 +176,7 @@ export const useInventoryStore = create<InventoryState>((set) => ({
           colour_name: input.colour_name,
           material_type_id: input.material_type_id,
           quantity_in_stock: input.quantity_in_stock ?? 0,
-          is_active: 1,
+          is_active: input.is_active === false ? 0 : 1,
           created_at: new Date().toISOString(),
           updated_at: null,
         },
