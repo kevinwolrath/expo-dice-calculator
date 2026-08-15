@@ -129,6 +129,71 @@ Prefer existing:
 Do not introduce CSS, SCSS or web styling patterns into native screens unless
 the project already supports them.
 
+## Visual consistency and theming
+
+Keep all interfaces visually uniform across screens and platforms.
+
+Before adding or changing colors, spacing, typography, borders, radii, buttons,
+inputs, dropdowns, modals, or empty states:
+
+1. Inspect the existing shared component and theme implementation.
+2. Reuse the existing component, style, or theme token whenever possible.
+3. Check both light and dark color schemes before considering the change complete.
+
+Do not:
+
+- hardcode a color in a screen when a global theme color or shared component is available
+- use a light-only background, border, or text color in a theme-aware interface
+- create a one-off button, input, dropdown, card, or modal style when an existing shared component can be reused
+- duplicate design values across screens without a clear component-level reason
+- use browser-native controls that visually bypass the React Native design system unless the behavior is intentionally web-specific
+
+Use `useThemeColor`, `Colors`, or the existing theme/component API for colors.
+If a new semantic color is required, add it to the shared theme first and use
+that token everywhere. Verify text/background contrast in light and dark modes.
+
+## Localization
+
+All user-visible text must come from the i18next locale resources.
+
+Use the existing `react-i18next` setup and call `useTranslation()` with `t(...)`
+in React components. For non-component code, use the configured i18next instance
+only when a hook cannot be used.
+
+Translation resources are stored in:
+
+- `locales/en.json`
+- `locales/de.json`
+
+When adding or changing visible text:
+
+1. Add or update the same translation key in every supported locale file.
+2. Use interpolation and pluralization keys for dynamic values.
+3. Pass translated labels, placeholders, button titles, alerts, confirmations,
+   empty states, validation messages, accessibility labels, and navigation titles
+   through `t(...)`.
+4. Preserve the existing translation key structure and naming conventions.
+
+Do not hardcode user-visible strings in screens, components, alerts, navigation
+options, or platform-specific branches. Technical values such as route names,
+database column names, log messages, test descriptions, and icon identifiers do
+not need translation.
+
+Before finishing a UI change, search the touched files for hardcoded visible
+strings and confirm that all locale files contain the new keys.
+
+## Shared UI change checklist
+
+Before completing a UI change, verify:
+
+- the existing shared component and theme were inspected first
+- no unnecessary screen-specific visual styles were introduced
+- light mode and dark mode both have readable contrast
+- all visible text uses `react-i18next`
+- English and German locale files have matching keys
+- the affected screen has no TypeScript diagnostics
+- the relevant tests or validation command pass
+
 ## Navigation
 
 Inspect the existing navigation system before changing routes.

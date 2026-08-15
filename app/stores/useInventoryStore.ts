@@ -1,4 +1,9 @@
-import type { MaterialStock, MaterialType } from "@/db";
+import type {
+    MaterialStock,
+    MaterialStockService,
+    MaterialType,
+    MaterialTypeService,
+} from "@/db";
 import {
     createMaterialStock,
     createMaterialType,
@@ -12,6 +17,19 @@ import {
 } from "@/db";
 import { create } from "zustand";
 
+type CreateMaterialTypeInput = Parameters<
+  MaterialTypeService["createMaterialType"]
+>[0];
+type UpdateMaterialTypeInput = Parameters<
+  MaterialTypeService["updateMaterialType"]
+>[1];
+type CreateMaterialStockInput = Parameters<
+  MaterialStockService["createMaterialStock"]
+>[0];
+type UpdateMaterialStockInput = Parameters<
+  MaterialStockService["updateMaterialStock"]
+>[1];
+
 type InventoryState = {
   types: MaterialType[];
   stock: MaterialStock[];
@@ -21,30 +39,16 @@ type InventoryState = {
   loadTypes: () => Promise<void>;
   loadStock: () => Promise<void>;
 
-  createType: (input: { description: string }) => Promise<void>;
-  updateType: (
-    id: number,
-    input: { description?: string | null },
-  ) => Promise<void>;
+  createType: (input: CreateMaterialTypeInput) => Promise<void>;
+  updateType: (id: number, input: UpdateMaterialTypeInput) => Promise<void>;
   deleteType: (id: number) => Promise<void>;
 
-  createStock: (input: {
-    colour_name: string;
-    material_type_id: number;
-    quantity_in_stock?: number;
-  }) => Promise<void>;
-  updateStock: (
-    id: number,
-    input: {
-      colour_name?: string;
-      material_type_id?: number;
-      quantity_in_stock?: number;
-    },
-  ) => Promise<void>;
+  createStock: (input: CreateMaterialStockInput) => Promise<void>;
+  updateStock: (id: number, input: UpdateMaterialStockInput) => Promise<void>;
   deleteStock: (id: number) => Promise<void>;
 };
 
-export const useInventoryStore = create<InventoryState>((set: any) => ({
+export const useInventoryStore = create<InventoryState>((set) => ({
   types: [],
   stock: [],
   loading: false,
@@ -83,17 +87,17 @@ export const useInventoryStore = create<InventoryState>((set: any) => ({
     }
   },
 
-  createType: async (input: { description: string }) => {
+  createType: async (input) => {
     // optimistic: add a temporary type immediately
     const tempId = -Date.now();
-    set((s: any) => ({
+    set((s) => ({
       types: [
         ...s.types,
         {
           material_type_id: tempId,
           description: input.description,
           created_at: new Date().toISOString(),
-        } as MaterialType,
+        },
       ],
       loading: true,
     }));
@@ -111,16 +115,16 @@ export const useInventoryStore = create<InventoryState>((set: any) => ({
     }
   },
 
-  updateType: async (id: number, input: { description?: string | null }) => {
+  updateType: async (id, input) => {
     // optimistic update
-    const prev = (await listMaterialTypes()).map((t: any) => ({ ...t }));
-    set((s: any) => ({
-      types: s.types.map((t: any) =>
+    const prev = await listMaterialTypes();
+    set((s) => ({
+      types: s.types.map((t) =>
         t.material_type_id === id
           ? {
               ...t,
               description:
-                input.description !== undefined
+                input.description !== undefined && input.description !== null
                   ? input.description
                   : t.description,
             }
@@ -143,9 +147,9 @@ export const useInventoryStore = create<InventoryState>((set: any) => ({
 
   deleteType: async (id: number) => {
     // optimistic delete
-    const prev = (await listMaterialTypes()).map((t: any) => ({ ...t }));
-    set((s: any) => ({
-      types: s.types.filter((t: any) => t.material_type_id !== id),
+    const prev = await listMaterialTypes();
+    set((s) => ({
+      types: s.types.filter((t) => t.material_type_id !== id),
       loading: true,
     }));
     try {
@@ -161,14 +165,10 @@ export const useInventoryStore = create<InventoryState>((set: any) => ({
     }
   },
 
-  createStock: async (input: {
-    colour_name: string;
-    material_type_id: number;
-    quantity_in_stock?: number;
-  }) => {
+  createStock: async (input) => {
     // optimistic add
     const tempId = -Date.now();
-    set((s: any) => ({
+    set((s) => ({
       stock: [
         ...s.stock,
         {
@@ -176,9 +176,10 @@ export const useInventoryStore = create<InventoryState>((set: any) => ({
           colour_name: input.colour_name,
           material_type_id: input.material_type_id,
           quantity_in_stock: input.quantity_in_stock ?? 0,
-          is_active: 1,
+          is_active: input.is_active === false ? 0 : 1,
           created_at: new Date().toISOString(),
-        } as MaterialStock,
+          updated_at: null,
+        },
       ],
       loading: true,
     }));
@@ -195,19 +196,23 @@ export const useInventoryStore = create<InventoryState>((set: any) => ({
     }
   },
 
-  updateStock: async (
-    id: number,
-    input: {
-      colour_name?: string;
-      material_type_id?: number;
-      quantity_in_stock?: number;
-    },
-  ) => {
+  updateStock: async (id, input) => {
     // optimistic update
-    const prev = (await listMaterialStock()).map((s: any) => ({ ...s }));
-    set((s: any) => ({
-      stock: s.stock.map((st: any) =>
-        st.material_stock_id === id ? { ...st, ...input } : st,
+    const prev = await listMaterialStock();
+    set((s) => ({
+      stock: s.stock.map((st) =>
+        st.material_stock_id === id
+          ? {
+              ...st,
+              ...input,
+              is_active:
+                input.is_active === undefined
+                  ? st.is_active
+                  : input.is_active
+                    ? 1
+                    : 0,
+            }
+          : st,
       ),
       loading: true,
     }));
@@ -225,9 +230,9 @@ export const useInventoryStore = create<InventoryState>((set: any) => ({
 
   deleteStock: async (id: number) => {
     // optimistic delete
-    const prev = (await listMaterialStock()).map((s: any) => ({ ...s }));
-    set((s: any) => ({
-      stock: s.stock.filter((st: any) => st.material_stock_id !== id),
+    const prev = await listMaterialStock();
+    set((s) => ({
+      stock: s.stock.filter((st) => st.material_stock_id !== id),
       loading: true,
     }));
     try {
