@@ -1,5 +1,8 @@
 import { Pressable, StyleSheet, Text } from "react-native";
 
+import { useThemeColors } from "@/components/Themed";
+import { Radius, Space, Touch, Type } from "@/constants/theme";
+
 type PrimaryButtonProps = {
   title: string;
   onPress: () => void;
@@ -13,7 +16,9 @@ export default function PrimaryButton({
   disabled,
   variant = "primary",
 }: PrimaryButtonProps) {
-  const backgroundColor = variant === "destructive" ? "#d9534f" : "#2f95dc";
+  const colors = useThemeColors();
+  const backgroundColor =
+    variant === "destructive" ? colors.destructive : colors.primary;
 
   return (
     <Pressable
@@ -24,7 +29,7 @@ export default function PrimaryButton({
         { backgroundColor, opacity: disabled ? 0.5 : pressed ? 0.8 : 1 },
       ]}
     >
-      <Text style={styles.label}>{title}</Text>
+      <Text style={[Type.button, { color: colors.onPrimary }]}>{title}</Text>
     </Pressable>
   );
 }
@@ -32,17 +37,11 @@ export default function PrimaryButton({
 const styles = StyleSheet.create({
   button: {
     minWidth: 84,
-    minHeight: 44,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 10,
+    minHeight: Touch.minHeight,
+    paddingHorizontal: Space[4],
+    paddingVertical: Space[3],
+    borderRadius: Radius.md,
     alignItems: "center",
     justifyContent: "center",
-  },
-  label: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-    textAlign: "center",
   },
 });

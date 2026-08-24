@@ -11,6 +11,15 @@ export const listAllowedMaterialsForMethod = async (
   );
 };
 
+export const listAllAllowedMaterials = async (): Promise<
+  ProductionMethodMaterial[]
+> => {
+  const db = await getDatabase();
+  return db.getAllAsync<ProductionMethodMaterial>(
+    "SELECT * FROM production_method_material;",
+  );
+};
+
 export const addAllowedMaterial = async (
   productionMethodId: number,
   materialTypeId: number,

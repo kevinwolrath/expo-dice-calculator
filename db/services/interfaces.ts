@@ -1,6 +1,7 @@
 import type {
     DiceJob,
     DiceJobColour,
+    DiceJobNumberColour,
     MaterialStock,
     MaterialType,
     ProductionMethod,
@@ -61,7 +62,7 @@ export interface DiceJobService {
     job_date: string;
     colour_count: number;
     production_method_id: number;
-    primary_material_stock_id?: number | null;
+    dice_job_number_colour_id: number;
   }): Promise<DiceJob>;
   updateDiceJob(
     id: number,
@@ -71,7 +72,7 @@ export interface DiceJobService {
       job_date?: string;
       colour_count?: number;
       production_method_id?: number;
-      primary_material_stock_id?: number | null;
+      dice_job_number_colour_id?: number;
     },
   ): Promise<void>;
   deleteDiceJob(id: number): Promise<void>;
@@ -79,6 +80,7 @@ export interface DiceJobService {
 
 export interface DiceJobColourService {
   listDiceJobColours(diceJobId: number): Promise<DiceJobColour[]>;
+  listAllDiceJobColours(): Promise<DiceJobColour[]>;
   getDiceJobColour(id: number): Promise<DiceJobColour | null>;
   createDiceJobColour(input: {
     dice_job_id: number;
@@ -90,12 +92,30 @@ export interface DiceJobColourService {
     input: { material_stock_id?: number; colour_order?: number | null },
   ): Promise<void>;
   deleteDiceJobColour(id: number): Promise<void>;
+  replaceDiceJobColours(
+    diceJobId: number,
+    materialStockIds: number[],
+  ): Promise<DiceJobColour[]>;
+}
+
+export interface DiceJobNumberColourService {
+  listDiceJobNumberColours(): Promise<DiceJobNumberColour[]>;
+  getDiceJobNumberColour(id: number): Promise<DiceJobNumberColour | null>;
+  createDiceJobNumberColour(input: {
+    dice_job_number_colour_name: string;
+  }): Promise<DiceJobNumberColour>;
+  updateDiceJobNumberColour(
+    id: number,
+    input: { dice_job_number_colour_name?: string },
+  ): Promise<void>;
+  deleteDiceJobNumberColour(id: number): Promise<void>;
 }
 
 export interface ProductionMethodMaterialService {
   listAllowedMaterialsForMethod(
     productionMethodId: number,
   ): Promise<ProductionMethodMaterial[]>;
+  listAllAllowedMaterials(): Promise<ProductionMethodMaterial[]>;
   addAllowedMaterial(
     productionMethodId: number,
     materialTypeId: number,
@@ -112,4 +132,5 @@ export type DBServices =
   | MaterialStockService
   | DiceJobService
   | DiceJobColourService
+  | DiceJobNumberColourService
   | ProductionMethodMaterialService;

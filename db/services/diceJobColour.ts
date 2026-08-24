@@ -62,3 +62,32 @@ export const deleteDiceJobColour = async (id: number): Promise<void> => {
     id,
   );
 };
+
+export const listAllDiceJobColours = async (): Promise<DiceJobColour[]> => {
+  const db = await getDatabase();
+  return db.getAllAsync<DiceJobColour>(
+    "SELECT * FROM dice_job_colour ORDER BY dice_job_id, colour_order;",
+  );
+};
+
+export const replaceDiceJobColours = async (
+  diceJobId: number,
+  materialStockIds: number[],
+): Promise<DiceJobColour[]> => {
+  const db = await getDatabase();
+  await db.withTransactionAsync(async () => {
+    await db.runAsync(
+      "DELETE FROM dice_job_colour WHERE dice_job_id = ?;",
+      diceJobId,
+    );
+    for (let order = 0; order < materialStockIds.length; order += 1) {
+      await db.runAsync(
+        "INSERT INTO dice_job_colour (dice_job_id, material_stock_id, colour_order) VALUES (?, ?, ?);",
+        diceJobId,
+        materialStockIds[order],
+        order + 1,
+      );
+    }
+  });
+  return listDiceJobColours(diceJobId);
+};

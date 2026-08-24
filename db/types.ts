@@ -27,7 +27,7 @@ export type DiceJob = {
   job_date: string;
   colour_count: number;
   production_method_id: number;
-  primary_material_stock_id: number | null;
+  dice_job_number_colour_id: number;
   created_at: string;
   updated_at: string | null;
 };
@@ -37,6 +37,12 @@ export type DiceJobColour = {
   dice_job_id: number;
   material_stock_id: number;
   colour_order: number | null;
+  created_at: string;
+};
+
+export type DiceJobNumberColour = {
+  dice_job_number_colour_id: number;
+  dice_job_number_colour_name: string;
   created_at: string;
 };
 

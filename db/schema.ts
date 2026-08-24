@@ -60,6 +60,19 @@ CREATE INDEX ix_material_stock_material_type
 ON material_stock(material_type_id);
 
 -------------------------------------------------------------
+-- Job Number Colours
+-------------------------------------------------------------
+
+CREATE TABLE dice_job_number_colour
+(
+    dice_job_number_colour_id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    dice_job_number_colour_name TEXT NOT NULL UNIQUE,
+
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-------------------------------------------------------------
 -- Jobs
 -------------------------------------------------------------
 
@@ -77,7 +90,7 @@ CREATE TABLE dice_job
 
     production_method_id INTEGER NOT NULL,
 
-    primary_material_stock_id INTEGER,
+    dice_job_number_colour_id INTEGER NOT NULL,
 
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -86,8 +99,8 @@ CREATE TABLE dice_job
     FOREIGN KEY (production_method_id)
         REFERENCES production_method(production_method_id),
 
-    FOREIGN KEY (primary_material_stock_id)
-        REFERENCES material_stock(material_stock_id),
+    FOREIGN KEY (dice_job_number_colour_id)
+        REFERENCES dice_job_number_colour(dice_job_number_colour_id),
 
     CHECK (colour_count > 0)
 );
@@ -95,8 +108,8 @@ CREATE TABLE dice_job
 CREATE INDEX ix_dice_job_method
 ON dice_job(production_method_id);
 
-CREATE INDEX ix_dice_job_material
-ON dice_job(primary_material_stock_id);
+CREATE INDEX ix_dice_job_number_colour
+ON dice_job(dice_job_number_colour_id);
 
 -------------------------------------------------------------
 -- Job Colours

@@ -3,7 +3,8 @@
     "jobs": "Jobs",
     "stock": "Stock",
     "materialTypes": "Material Types",
-    "productionMethods": "Production Methods"
+    "productionMethods": "Production Methods",
+    "diceNumberColours": "Number Colours"
   },
   "common": {
     "cancel": "Cancel",
@@ -13,7 +14,21 @@
     "error": "Error",
     "materials": "Materials",
     "ok": "OK",
-    "saving": "Saving..."
+    "required": "Required",
+    "saving": "Saving...",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "appearance": {
+    "useDark": "Use dark theme",
+    "useLight": "Use light theme"
+  },
+  "startup": {
+    "loadingTitle": "Preparing Dice Calculator",
+    "loadingMessage": "Loading the database...",
+    "errorTitle": "Database unavailable",
+    "errorMessage": "The database could not be loaded.",
+    "retry": "Try again"
   },
   "jobs": {
     "title": "Dice Jobs",
@@ -22,14 +37,32 @@
     "jobDate": "Job date (DD/MM/YYYY)",
     "jobDatePlaceholder": "DD/MM/YYYY",
     "colourCount": "Colour count",
+    "generate": "Generate",
+    "generatedColours": "Job colours",
+    "generateColoursRequired": "Press Generate to fill empty colour rows",
+    "coloursAlreadyFilled": "All colour rows are already filled.",
+    "notEnoughColours": "Need {{count}} different colours, but only {{available}} are available in stock.",
+    "noStockForGenerate": "Add material stock before generating colours.",
+    "noProductionMethods": "Add a production method before generating colours.",
+    "noCompatibleStock": "No stock colours match this production method.",
+    "selectJobColour": "Choose a colour",
+    "noReplacementColours": "No other unused stock colours are available.",
+    "deleteColourTitle": "Delete colour",
+    "deleteColourMessage": "Remove this colour from the job?",
+    "regenerateColoursTitle": "Regenerate colours?",
+    "regenerateColoursOnCount": "Colour count is now lower than the colours already on this job. Generate a new set?",
+    "regenerateColoursOnMethod": "Changing the production method can make the current colours invalid. Generate a new set?",
     "productionMethod": "Production method",
-    "selectProductionMethod": "Select a production method",
-    "primaryMaterial": "Primary material (optional)",
+    "selectProductionMethod": "Choose a production method",
+    "numberColour": "Number colour",
+    "selectNumberColour": "Choose a number colour",
+    "unknownNumberColour": "Unknown",
+    "addNumberColourHint": "Add a number colour in Setup first",
     "jobNamePlaceholder": "e.g. Red/Blue Swirl Batch",
     "descriptionPlaceholder": "Optional notes",
     "addProductionMethodHint": "Add a production method in Setup first",
-    "addStockHint": "Add material stock in the Stock tab first",
     "addJob": "Add job",
+    "save": "Save job",
     "jobCount_one": "{{count}} job",
     "jobCount_other": "{{count}} jobs",
     "colourCountValue_one": "{{count}} colour",
@@ -38,8 +71,11 @@
     "unknownMethod": "Unknown",
     "missingTitle": "Missing info",
     "missingMessage": "Job name and production method are required.",
+    "missingNumberColourTitle": "Missing number colour",
+    "missingNumberColourMessage": "A number colour is required.",
     "invalidCountTitle": "Invalid colour count",
-    "invalidCountMessage": "Colour count must be a positive whole number.",
+    "invalidCountMessage": "Must be a positive whole number",
+    "invalidDate": "Enter a valid date (DD/MM/YYYY)",
     "saveError": "Could not save the job.",
     "deleteTitle": "Delete job",
     "deleteMessage": "Are you sure you want to delete this job?"
@@ -54,7 +90,9 @@
     "saveError": "Could not save material type.",
     "deleteTitle": "Delete type",
     "deleteMessage": "Are you sure?",
-    "empty": "No types yet."
+    "empty": "No types yet.",
+    "typeCount_one": "{{count}} type",
+    "typeCount_other": "{{count}} types"
   },
   "productionMethods": {
     "title": "Production Methods",
@@ -67,7 +105,9 @@
     "saveError": "Could not save production method.",
     "deleteTitle": "Delete method",
     "deleteMessage": "Are you sure?",
-    "empty": "No methods yet."
+    "empty": "No methods yet.",
+    "methodCount_one": "{{count}} method",
+    "methodCount_other": "{{count}} methods"
   },
   "stock": {
     "title": "Material Stock",
@@ -75,6 +115,7 @@
     "materialType": "Material type",
     "quantity": "Quantity",
     "addMaterialTypesHint": "Add material types in Material Types",
+    "selectMaterialType": "Choose a material type",
     "add": "Add stock",
     "save": "Save changes",
     "missingTitle": "Missing data",
@@ -83,7 +124,23 @@
     "deleteTitle": "Delete item",
     "deleteMessage": "Are you sure?",
     "empty": "No stock items yet.",
+    "itemCount_one": "{{count}} item",
+    "itemCount_other": "{{count}} items",
     "inStock": "{{count}} in stock"
+  },
+  "diceNumberColours": {
+    "title": "Number Colours",
+    "name": "Colour name",
+    "add": "Add colour",
+    "save": "Save colour",
+    "missingTitle": "Missing",
+    "missingMessage": "Colour name is required",
+    "saveError": "Could not save number colour.",
+    "deleteTitle": "Delete colour",
+    "deleteMessage": "Are you sure?",
+    "empty": "No number colours yet.",
+    "colourCount_one": "{{count}} colour",
+    "colourCount_other": "{{count}} colours"
   },
   "misc": {
     "noOptions": "No options yet",

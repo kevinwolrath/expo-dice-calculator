@@ -1,6 +1,4 @@
-import { useColorScheme as useColorSchemeCore } from 'react-native';
+import { useAppearanceStore } from "@/stores/useAppearanceStore";
 
-export const useColorScheme = () => {
-  const coreScheme = useColorSchemeCore();
-  return coreScheme === 'unspecified' ? 'light' : coreScheme;
-};
+export const useColorScheme = () =>
+  useAppearanceStore((state) => state.colorScheme);

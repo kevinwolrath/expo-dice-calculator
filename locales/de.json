@@ -3,7 +3,8 @@
     "jobs": "Aufträge",
     "stock": "Bestand",
     "materialTypes": "Materialarten",
-    "productionMethods": "Produktionsmethoden"
+    "productionMethods": "Produktionsmethoden",
+    "diceNumberColours": "Zahlenfarben"
   },
   "common": {
     "cancel": "Abbrechen",
@@ -13,7 +14,21 @@
     "error": "Fehler",
     "materials": "Materialien",
     "ok": "OK",
-    "saving": "Wird gespeichert..."
+    "required": "Pflichtfeld",
+    "saving": "Wird gespeichert...",
+    "yes": "Ja",
+    "no": "Nein"
+  },
+  "appearance": {
+    "useDark": "Dunkles Design verwenden",
+    "useLight": "Helles Design verwenden"
+  },
+  "startup": {
+    "loadingTitle": "Würfelrechner wird vorbereitet",
+    "loadingMessage": "Datenbank wird geladen...",
+    "errorTitle": "Datenbank nicht verfügbar",
+    "errorMessage": "Die Datenbank konnte nicht geladen werden.",
+    "retry": "Erneut versuchen"
   },
   "jobs": {
     "title": "Würfelaufträge",
@@ -22,14 +37,32 @@
     "jobDate": "Auftragsdatum (TT/MM/JJJJ)",
     "jobDatePlaceholder": "TT/MM/JJJJ",
     "colourCount": "Anzahl der Farben",
+    "generate": "Generieren",
+    "generatedColours": "Auftragsfarben",
+    "generateColoursRequired": "Drücken Sie Generieren, um leere Farbzeilen zu füllen",
+    "coloursAlreadyFilled": "Alle Farbzeilen sind bereits gefüllt.",
+    "notEnoughColours": "{{count}} unterschiedliche Farben werden benötigt, aber nur {{available}} sind im Bestand verfügbar.",
+    "noStockForGenerate": "Fügen Sie zuerst Materialbestand hinzu, bevor Farben generiert werden.",
+    "noProductionMethods": "Fügen Sie zuerst eine Produktionsmethode hinzu, bevor Farben generiert werden.",
+    "noCompatibleStock": "Keine Bestandsfarben passen zu dieser Produktionsmethode.",
+    "selectJobColour": "Farbe wählen",
+    "noReplacementColours": "Keine weiteren unbenutzten Bestandsfarben verfügbar.",
+    "deleteColourTitle": "Farbe löschen",
+    "deleteColourMessage": "Diese Farbe aus dem Auftrag entfernen?",
+    "regenerateColoursTitle": "Farben neu generieren?",
+    "regenerateColoursOnCount": "Die Farbanzahl ist jetzt niedriger als die Farben auf diesem Auftrag. Neue Farben generieren?",
+    "regenerateColoursOnMethod": "Eine andere Produktionsmethode kann die aktuellen Farben ungültig machen. Neue Farben generieren?",
     "productionMethod": "Produktionsmethode",
-    "selectProductionMethod": "Produktionsmethode auswählen",
-    "primaryMaterial": "Hauptmaterial (optional)",
+    "selectProductionMethod": "Produktionsmethode wählen",
+    "numberColour": "Nummernfarbe",
+    "selectNumberColour": "Nummernfarbe wählen",
+    "unknownNumberColour": "Unbekannt",
+    "addNumberColourHint": "Fügen Sie zuerst eine Nummernfarbe unter Einrichtung hinzu",
     "jobNamePlaceholder": "z. B. Rot-Blau-Wirbelcharge",
     "descriptionPlaceholder": "Optionale Notizen",
     "addProductionMethodHint": "Fügen Sie zuerst eine Produktionsmethode unter Einrichtung hinzu",
-    "addStockHint": "Fügen Sie zuerst Materialbestand im Bestand hinzu",
     "addJob": "Auftrag hinzufügen",
+    "save": "Auftrag speichern",
     "jobCount_one": "{{count}} Auftrag",
     "jobCount_other": "{{count}} Aufträge",
     "colourCountValue_one": "{{count}} Farbe",
@@ -38,8 +71,11 @@
     "unknownMethod": "Unbekannt",
     "missingTitle": "Fehlende Angaben",
     "missingMessage": "Auftragsname und Produktionsmethode sind erforderlich.",
+    "missingNumberColourTitle": "Nummernfarbe fehlt",
+    "missingNumberColourMessage": "Eine Nummernfarbe ist erforderlich.",
     "invalidCountTitle": "Ungültige Farbanzahl",
-    "invalidCountMessage": "Die Farbanzahl muss eine positive ganze Zahl sein.",
+    "invalidCountMessage": "Muss eine positive ganze Zahl sein",
+    "invalidDate": "Gültiges Datum eingeben (TT/MM/JJJJ)",
     "saveError": "Der Auftrag konnte nicht gespeichert werden.",
     "deleteTitle": "Auftrag löschen",
     "deleteMessage": "Möchten Sie diesen Auftrag wirklich löschen?"
@@ -54,7 +90,9 @@
     "saveError": "Die Materialart konnte nicht gespeichert werden.",
     "deleteTitle": "Materialart löschen",
     "deleteMessage": "Möchten Sie die Materialart wirklich löschen?",
-    "empty": "Noch keine Materialarten vorhanden."
+    "empty": "Noch keine Materialarten vorhanden.",
+    "typeCount_one": "{{count}} Materialart",
+    "typeCount_other": "{{count}} Materialarten"
   },
   "productionMethods": {
     "title": "Produktionsmethoden",
@@ -67,7 +105,9 @@
     "saveError": "Die Produktionsmethode konnte nicht gespeichert werden.",
     "deleteTitle": "Methode löschen",
     "deleteMessage": "Möchten Sie die Methode wirklich löschen?",
-    "empty": "Noch keine Methoden vorhanden."
+    "empty": "Noch keine Methoden vorhanden.",
+    "methodCount_one": "{{count}} Methode",
+    "methodCount_other": "{{count}} Methoden"
   },
   "stock": {
     "title": "Materialbestand",
@@ -75,6 +115,7 @@
     "materialType": "Materialart",
     "quantity": "Menge",
     "addMaterialTypesHint": "Fügen Sie zuerst Materialarten unter Materialarten hinzu",
+    "selectMaterialType": "Materialart wählen",
     "add": "Bestand hinzufügen",
     "save": "Änderungen speichern",
     "missingTitle": "Fehlende Angaben",
@@ -83,7 +124,23 @@
     "deleteTitle": "Eintrag löschen",
     "deleteMessage": "Möchten Sie den Eintrag wirklich löschen?",
     "empty": "Noch keine Bestandseinträge vorhanden.",
+    "itemCount_one": "{{count}} Eintrag",
+    "itemCount_other": "{{count}} Einträge",
     "inStock": "{{count}} auf Lager"
+  },
+  "diceNumberColours": {
+    "title": "Zahlenfarben",
+    "name": "Farbname",
+    "add": "Farbe hinzufügen",
+    "save": "Farbe speichern",
+    "missingTitle": "Fehlende Angaben",
+    "missingMessage": "Ein Farbname ist erforderlich",
+    "saveError": "Die Zahlenfarbe konnte nicht gespeichert werden.",
+    "deleteTitle": "Farbe löschen",
+    "deleteMessage": "Möchten Sie die Farbe wirklich löschen?",
+    "empty": "Noch keine Zahlenfarben vorhanden.",
+    "colourCount_one": "{{count}} Farbe",
+    "colourCount_other": "{{count}} Farben"
   },
   "misc": {
     "noOptions": "Noch keine Optionen vorhanden",

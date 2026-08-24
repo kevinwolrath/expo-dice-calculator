@@ -1,18 +1,16 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet, View } from "react-native";
 
-import { View } from "@/components/Themed";
-import { useColorScheme } from "@/components/useColorScheme";
+import { useThemeColors } from "@/components/Themed";
+import { Radius, Space, Stroke } from "@/constants/theme";
 
 export default function Card({ children }: { children: React.ReactNode }) {
-  const colorScheme = useColorScheme();
+  const colors = useThemeColors();
 
   return (
     <View
-      lightColor="#f7f7f9"
-      darkColor="#1c1c1e"
       style={[
         styles.card,
-        { borderColor: colorScheme === "dark" ? "#333" : "#e5e5ea" },
+        { backgroundColor: colors.card, borderColor: colors.border },
       ]}
     >
       {children}
@@ -22,9 +20,9 @@ export default function Card({ children }: { children: React.ReactNode }) {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    padding: 14,
-    marginBottom: 12,
+    borderRadius: Radius.lg,
+    borderWidth: Stroke.hairline,
+    padding: Space[3],
+    marginBottom: Space[3],
   },
 });

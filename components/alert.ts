@@ -11,7 +11,14 @@ export const showMessage = (title: string, message?: string) => {
   Alert.alert(title, message);
 };
 
-export const confirm = (title: string, message?: string): Promise<boolean> => {
+export const confirm = (
+  title: string,
+  message?: string,
+  labels?: { confirm?: string; cancel?: string },
+): Promise<boolean> => {
+  const confirmText = labels?.confirm ?? i18n.t("common.ok");
+  const cancelText = labels?.cancel ?? i18n.t("common.cancel");
+
   if (Platform.OS === "web") {
     return Promise.resolve(
       window.confirm(message ? `${title}\n\n${message}` : title),
@@ -24,11 +31,11 @@ export const confirm = (title: string, message?: string): Promise<boolean> => {
       message,
       [
         {
-          text: i18n.t("common.cancel"),
+          text: cancelText,
           style: "cancel",
           onPress: () => resolve(false),
         },
-        { text: i18n.t("common.ok"), onPress: () => resolve(true) },
+        { text: confirmText, onPress: () => resolve(true) },
       ],
       { cancelable: true },
     );

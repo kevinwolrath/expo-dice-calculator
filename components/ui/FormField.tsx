@@ -1,47 +1,55 @@
 import { StyleSheet, TextInput, type TextInputProps } from "react-native";
 
-import { Text, useThemeColor, View } from "@/components/Themed";
+import { View, useThemeColors } from "@/components/Themed";
+import FieldError from "@/components/ui/FieldError";
+import FieldLabel from "@/components/ui/FieldLabel";
+import { FontSize, Radius, Space, Stroke, Touch } from "@/constants/theme";
 
 type FormFieldProps = TextInputProps & {
   label: string;
+  required?: boolean;
+  error?: string;
 };
 
 export default function FormField({
   label,
+  required,
+  error,
   style,
   multiline,
   ...props
 }: FormFieldProps) {
-  const borderColor = useThemeColor({}, "tabIconDefault");
-  const color = useThemeColor({}, "text");
+  const colors = useThemeColors();
+  const borderColor = error ? colors.destructive : colors.inputBorder;
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>{label}</Text>
+      <FieldLabel label={label} required={required} />
       <TextInput
-        placeholderTextColor={borderColor}
+        placeholderTextColor={colors.muted}
         multiline={multiline}
         style={[
           styles.input,
-          { borderColor, color },
+          { borderColor, color: colors.text },
           multiline && styles.multiline,
           style,
         ]}
         {...props}
       />
+      <FieldError message={error} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { marginBottom: 12 },
-  label: { fontSize: 13, fontWeight: "600", marginBottom: 4, opacity: 0.7 },
+  container: { marginBottom: Space[3] },
   input: {
-    borderWidth: StyleSheet.hairlineWidth * 2,
-    borderRadius: 10,
-    paddingHorizontal: 12,
+    borderWidth: Stroke.input,
+    borderRadius: Radius.md,
+    paddingHorizontal: Space[3],
     paddingVertical: 10,
-    fontSize: 16,
+    fontSize: FontSize.md,
+    minHeight: Touch.minHeight,
   },
   multiline: { minHeight: 80, textAlignVertical: "top" },
 });

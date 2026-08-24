@@ -1,1 +1,9 @@
-{ "recommendations": ["expo.vscode-expo-tools"] }
+{
+  "recommendations": [
+    "expo.vscode-expo-tools",
+    "dsznajder.es7-react-js-snippets",
+    "formulahendry.auto-rename-tag",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode"
+  ]
+}
