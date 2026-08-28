@@ -1,16 +1,17 @@
 import * as SQLite from "expo-sqlite";
 
 import { DATABASE_SCHEMA } from "./schema";
-import { seedInitialData } from "./seed";
+import { seedInitialData, seedMissingMaterialStock } from "./seed";
 
 const DATABASE_NAME = "dice_calculator.db";
 
 // Bump this and add a branch below whenever `schema.ts` changes.
 // We're using a destructive prototype migration: create a fresh schema
 // by dropping existing tables when the version increases.
-const DATABASE_VERSION = 3;
+const DATABASE_VERSION = 9;
 
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
+let initPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
 export const getDatabase = (): Promise<SQLite.SQLiteDatabase> => {
   if (!dbPromise) {
@@ -48,7 +49,18 @@ async function openDatabaseWithRetry(name: string, attempts = 5, delay = 200) {
 
 // Creates the schema on first run, and migrates on later app updates.
 // Pattern follows Expo's recommended `migrateDbIfNeeded` approach.
-export const initDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
+export const initDatabase = (): Promise<SQLite.SQLiteDatabase> => {
+  if (!initPromise) {
+    initPromise = initializeDatabase().catch((error) => {
+      initPromise = null;
+      throw error;
+    });
+  }
+
+  return initPromise;
+};
+
+async function initializeDatabase(): Promise<SQLite.SQLiteDatabase> {
   const db = await getDatabase();
 
   const result = await db.getFirstAsync<{ user_version: number }>(
@@ -58,6 +70,7 @@ export const initDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
 
   if (currentVersion >= DATABASE_VERSION) {
     await seedIfDatabaseIsBlank(db);
+    await seedMissingMaterialStock(db);
     return db;
   }
 
@@ -66,9 +79,10 @@ export const initDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
   // For prototypes we can recreate the DB when the schema version increases.
   if (currentVersion === 0) {
     await db.execAsync(DATABASE_SCHEMA);
+    await db.execAsync("PRAGMA foreign_keys = ON;");
     // Seed initial reference data (material types, methods, method-material links)
     try {
-      await seedInitialData();
+      await seedInitialData(db);
     } catch (e) {
       // Swallow seeding errors to avoid breaking DB init in unusual environments,
       // but log to console for diagnostics.
@@ -83,18 +97,28 @@ export const initDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
     await db.execAsync("DROP TABLE IF EXISTS production_method_material;");
     await db.execAsync("DROP TABLE IF EXISTS dice_job_colour;");
     await db.execAsync("DROP TABLE IF EXISTS dice_job;");
+    await db.execAsync("DROP TABLE IF EXISTS dice_job_number_colour;");
     await db.execAsync("DROP TABLE IF EXISTS material_stock;");
+    await db.execAsync("DROP TABLE IF EXISTS colour_type;");
     await db.execAsync("DROP TABLE IF EXISTS production_method;");
     await db.execAsync("DROP TABLE IF EXISTS material_type;");
     await db.execAsync(DATABASE_SCHEMA);
     await db.execAsync("COMMIT;");
+    await db.execAsync("PRAGMA foreign_keys = ON;");
+    try {
+      await seedInitialData(db);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn("DB seeding failed:", e);
+    }
     currentVersion = DATABASE_VERSION;
   }
 
   await db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
+  await seedMissingMaterialStock(db);
 
   return db;
-};
+}
 
 async function seedIfDatabaseIsBlank(db: SQLite.SQLiteDatabase): Promise<void> {
   const materialTypeCount = await db.getFirstAsync<{ count: number }>(
@@ -112,7 +136,7 @@ async function seedIfDatabaseIsBlank(db: SQLite.SQLiteDatabase): Promise<void> {
   }
 
   try {
-    await seedInitialData();
+    await seedInitialData(db);
   } catch (e) {
     // eslint-disable-next-line no-console
     console.warn("DB seeding failed:", e);

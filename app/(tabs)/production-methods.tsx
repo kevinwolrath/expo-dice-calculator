@@ -1,19 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
-import {
-  Alert,
-  FlatList,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  View as RNView,
-  StyleSheet,
-} from "react-native";
+import { Alert, Platform } from "react-native";
 
 import * as AlertHelper from "@/components/alert";
-import { Text } from "@/components/Themed";
-import Card from "@/components/ui/Card";
+import ChipSelect from "@/components/ui/ChipSelect";
+import EntityListItem from "@/components/ui/EntityListItem";
+import FormActionRow from "@/components/ui/FormActionRow";
 import FormField from "@/components/ui/FormField";
-import PrimaryButton from "@/components/ui/PrimaryButton";
+import ScreenList from "@/components/ui/ScreenList";
 import {
   addAllowedMaterial,
   createProductionMethod,
@@ -38,6 +31,7 @@ export default function ProductionMethodsScreen() {
   const materialTypes = useInventoryStore((s) => s.types);
   const loadAll = useInventoryStore((s) => s.loadAll);
   const [allowedMaterialIds, setAllowedMaterialIds] = useState<number[]>([]);
+  const [errors, setErrors] = useState<{ description?: string }>({});
 
   const load = useCallback(async () => {
     const mRows = await listProductionMethods();
@@ -53,11 +47,11 @@ export default function ProductionMethodsScreen() {
   }, [load, loadAll]);
 
   const handleSaveMethod = async () => {
-    if (!methodDescription.trim())
-      return AlertHelper.showMessage(
-        t("productionMethods.missingTitle"),
-        t("productionMethods.missingMessage"),
-      );
+    if (!methodDescription.trim()) {
+      setErrors({ description: t("common.required") });
+      return;
+    }
+    setErrors({});
     setSavingMethod(true);
     try {
       let productionMethodId = methodEditingId;
@@ -85,9 +79,8 @@ export default function ProductionMethodsScreen() {
             .map((id) => addAllowedMaterial(productionMethodId!, id)),
         ]);
       }
-      setMethodDescription("");
-      setMethodEditingId(null);
-      setAllowedMaterialIds([]);
+      setMethodEditingId(productionMethodId);
+      setErrors({});
       await load();
     } catch (e) {
       console.warn(e);
@@ -100,17 +93,21 @@ export default function ProductionMethodsScreen() {
     }
   };
 
-  const handleEditMethod = async (m: ProductionMethod) => {
-    setMethodEditingId(m.production_method_id);
-    setMethodDescription(m.description ?? "");
-    const allowed = await listAllowedMaterialsForMethod(m.production_method_id);
+  const handleEditMethod = async (method: ProductionMethod) => {
+    setMethodEditingId(method.production_method_id);
+    setMethodDescription(method.description ?? "");
+    const allowed = await listAllowedMaterialsForMethod(
+      method.production_method_id,
+    );
     setAllowedMaterialIds(allowed.map((item) => item.material_type_id));
+    setErrors({});
   };
 
   const handleCancelMethod = () => {
     setMethodDescription("");
     setMethodEditingId(null);
     setAllowedMaterialIds([]);
+    setErrors({});
   };
 
   const handleDeleteMethod = (id: number) => {
@@ -122,6 +119,7 @@ export default function ProductionMethodsScreen() {
       ) {
         (async () => {
           await deleteProductionMethod(id);
+          if (methodEditingId === id) handleCancelMethod();
           await load();
         })();
       }
@@ -138,6 +136,7 @@ export default function ProductionMethodsScreen() {
           style: "destructive",
           onPress: async () => {
             await deleteProductionMethod(id);
+            if (methodEditingId === id) handleCancelMethod();
             await load();
           },
         },
@@ -146,142 +145,53 @@ export default function ProductionMethodsScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={100}
-    >
-      <FlatList
-        data={methods}
-        keyExtractor={(i) => String(i.production_method_id)}
-        contentContainerStyle={styles.content}
-        ListHeaderComponent={
-          <RNView style={{ marginBottom: 12 }}>
-            <Card>
-              <FormField
-                label={t("productionMethods.description")}
-                value={methodDescription}
-                onChangeText={setMethodDescription}
-              />
-              <Text style={styles.materialLabel}>
-                {t("productionMethods.allowedMaterials")}
-              </Text>
-              <RNView style={styles.materialOptions}>
-                {materialTypes.length === 0 ? (
-                  <Text style={styles.emptyMaterialHint}>
-                    {t("misc.noOptions")}
-                  </Text>
-                ) : (
-                  materialTypes.map((materialType) => {
-                    const selected = allowedMaterialIds.includes(
-                      materialType.material_type_id,
-                    );
-                    return (
-                      <Pressable
-                        key={materialType.material_type_id}
-                        onPress={() =>
-                          setAllowedMaterialIds((current) =>
-                            selected
-                              ? current.filter(
-                                  (id) => id !== materialType.material_type_id,
-                                )
-                              : [...current, materialType.material_type_id],
-                          )
-                        }
-                        style={[styles.chip, selected && styles.chipSelected]}
-                      >
-                        <Text
-                          style={[
-                            styles.chipLabel,
-                            selected && styles.chipLabelSelected,
-                          ]}
-                        >
-                          {materialType.description}
-                        </Text>
-                      </Pressable>
-                    );
-                  })
-                )}
-              </RNView>
-              <RNView style={styles.actionRow}>
-                <PrimaryButton
-                  title={
-                    savingMethod
-                      ? t("common.saving")
-                      : methodEditingId
-                        ? t("productionMethods.save")
-                        : t("productionMethods.add")
-                  }
-                  onPress={handleSaveMethod}
-                  disabled={savingMethod}
-                />
-                <PrimaryButton
-                  title={t("common.cancel")}
-                  onPress={handleCancelMethod}
-                  disabled={savingMethod}
-                />
-              </RNView>
-            </Card>
-          </RNView>
-        }
-        renderItem={({ item }) => (
-          <Card>
-            <RNView
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <RNView>
-                <Text style={{ fontWeight: "600" }}>{item.description}</Text>
-              </RNView>
-              <RNView style={{ flexDirection: "row", gap: 10 }}>
-                <PrimaryButton
-                  title={t("common.edit")}
-                  onPress={() => handleEditMethod(item)}
-                />
-                <PrimaryButton
-                  title={t("common.delete")}
-                  variant="destructive"
-                  onPress={() => handleDeleteMethod(item.production_method_id)}
-                />
-              </RNView>
-            </RNView>
-          </Card>
-        )}
-        ListEmptyComponent={
-          <Text style={{ textAlign: "center", opacity: 0.6 }}>
-            {t("productionMethods.empty")}
-          </Text>
-        }
-      />
-    </KeyboardAvoidingView>
+    <ScreenList
+      data={methods}
+      keyExtractor={(item) => String(item.production_method_id)}
+      countLabel={t("productionMethods.methodCount", { count: methods.length })}
+      emptyText={t("productionMethods.empty")}
+      form={
+        <>
+          <FormField
+            label={t("productionMethods.description")}
+            required
+            error={errors.description}
+            value={methodDescription}
+            onChangeText={(value) => {
+              setMethodDescription(value);
+              setErrors({});
+            }}
+          />
+          <ChipSelect
+            multiple
+            wrap
+            label={t("productionMethods.allowedMaterials")}
+            options={materialTypes.map((materialType) => ({
+              value: materialType.material_type_id,
+              label:
+                materialType.description ??
+                String(materialType.material_type_id),
+            }))}
+            value={allowedMaterialIds}
+            onChange={setAllowedMaterialIds}
+          />
+          <FormActionRow
+            addTitle={t("productionMethods.add")}
+            onAdd={handleCancelMethod}
+            saveTitle={t("productionMethods.save")}
+            onSave={handleSaveMethod}
+            onCancel={handleCancelMethod}
+            saving={savingMethod}
+          />
+        </>
+      }
+      renderItem={({ item }) => (
+        <EntityListItem
+          title={item.description ?? String(item.production_method_id)}
+          onEdit={() => handleEditMethod(item)}
+          onDelete={() => handleDeleteMethod(item.production_method_id)}
+        />
+      )}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  content: { padding: 16, paddingBottom: 32 },
-  actionRow: { flexDirection: "row", gap: 10 },
-  materialLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-    marginBottom: 6,
-    opacity: 0.7,
-  },
-  materialOptions: { flexDirection: "row", flexWrap: "wrap", marginBottom: 4 },
-  emptyMaterialHint: { fontSize: 13, opacity: 0.5, fontStyle: "italic" },
-  chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 18,
-    borderWidth: StyleSheet.hairlineWidth * 2,
-    borderColor: "#2f95dc",
-    marginRight: 8,
-    marginBottom: 8,
-  },
-  chipSelected: { backgroundColor: "#2f95dc" },
-  chipLabel: { color: "#2f95dc", fontSize: 14, fontWeight: "600" },
-  chipLabelSelected: { color: "#fff" },
-});

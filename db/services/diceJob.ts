@@ -4,7 +4,7 @@ import type { DiceJob } from "../types";
 export const listDiceJobs = async (): Promise<DiceJob[]> => {
   const db = await getDatabase();
   return db.getAllAsync<DiceJob>(
-    "SELECT * FROM dice_job ORDER BY job_date DESC, dice_job_id DESC;",
+    "SELECT * FROM dice_job ORDER BY created_at DESC, dice_job_id DESC;",
   );
 };
 
@@ -19,22 +19,20 @@ export const getDiceJob = async (id: number): Promise<DiceJob | null> => {
 export const createDiceJob = async (input: {
   job_name: string;
   description?: string | null;
-  job_date: string;
   colour_count: number;
   production_method_id: number;
-  primary_material_stock_id?: number | null;
+  dice_job_number_colour_id: number;
 }): Promise<DiceJob> => {
   const db = await getDatabase();
   const result = await db.runAsync(
     `INSERT INTO dice_job
-      (job_name, description, job_date, colour_count, production_method_id, primary_material_stock_id)
-     VALUES (?, ?, ?, ?, ?, ?);`,
+      (job_name, description, colour_count, production_method_id, dice_job_number_colour_id)
+     VALUES (?, ?, ?, ?, ?);`,
     input.job_name,
     input.description ?? null,
-    input.job_date,
     input.colour_count,
     input.production_method_id,
-    input.primary_material_stock_id ?? null,
+    input.dice_job_number_colour_id,
   );
   const created = await getDiceJob(result.lastInsertRowId);
   if (!created) throw new Error("Failed to load created dice job");
@@ -46,10 +44,9 @@ export const updateDiceJob = async (
   input: {
     job_name?: string;
     description?: string | null;
-    job_date?: string;
     colour_count?: number;
     production_method_id?: number;
-    primary_material_stock_id?: number | null;
+    dice_job_number_colour_id?: number;
   },
 ): Promise<void> => {
   const db = await getDatabase();
@@ -57,17 +54,16 @@ export const updateDiceJob = async (
   if (!current) throw new Error(`Dice job ${id} not found`);
   await db.runAsync(
     `UPDATE dice_job
-     SET job_name = ?, description = ?, job_date = ?, colour_count = ?,
-         production_method_id = ?, primary_material_stock_id = ?, updated_at = CURRENT_TIMESTAMP
+     SET job_name = ?, description = ?, colour_count = ?,
+         production_method_id = ?, dice_job_number_colour_id = ?, updated_at = CURRENT_TIMESTAMP
      WHERE dice_job_id = ?;`,
     input.job_name ?? current.job_name,
     input.description !== undefined ? input.description : current.description,
-    input.job_date ?? current.job_date,
     input.colour_count ?? current.colour_count,
     input.production_method_id ?? current.production_method_id,
-    input.primary_material_stock_id !== undefined
-      ? input.primary_material_stock_id
-      : current.primary_material_stock_id,
+    input.dice_job_number_colour_id !== undefined
+      ? input.dice_job_number_colour_id
+      : current.dice_job_number_colour_id,
     id,
   );
 };
