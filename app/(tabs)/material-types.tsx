@@ -39,10 +39,9 @@ export default function MaterialTypesScreen() {
           description: description.trim() || null,
         });
       } else {
-        await createType({ description: description.trim() });
+        const created = await createType({ description: description.trim() });
+        setTypeEditingId(created.material_type_id);
       }
-      setDescription("");
-      setTypeEditingId(null);
       setErrors({});
     } catch (e) {
       console.warn(e);
@@ -71,6 +70,7 @@ export default function MaterialTypesScreen() {
       ) {
         (async () => {
           await deleteType(id);
+          if (typeEditingId === id) handleCancelType();
           await loadAll();
         })();
       }
@@ -87,6 +87,7 @@ export default function MaterialTypesScreen() {
           style: "destructive",
           onPress: async () => {
             await deleteType(id);
+            if (typeEditingId === id) handleCancelType();
             await loadAll();
           },
         },
@@ -113,11 +114,9 @@ export default function MaterialTypesScreen() {
             }}
           />
           <FormActionRow
-            saveTitle={
-              typeEditingId
-                ? t("materialTypes.save")
-                : t("materialTypes.add")
-            }
+            addTitle={t("materialTypes.add")}
+            onAdd={handleCancelType}
+            saveTitle={t("materialTypes.save")}
             onSave={handleSaveType}
             onCancel={handleCancelType}
             saving={loading}

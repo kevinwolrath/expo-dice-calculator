@@ -39,11 +39,11 @@ type InventoryState = {
   loadTypes: () => Promise<void>;
   loadStock: () => Promise<void>;
 
-  createType: (input: CreateMaterialTypeInput) => Promise<void>;
+  createType: (input: CreateMaterialTypeInput) => Promise<MaterialType>;
   updateType: (id: number, input: UpdateMaterialTypeInput) => Promise<void>;
   deleteType: (id: number) => Promise<void>;
 
-  createStock: (input: CreateMaterialStockInput) => Promise<void>;
+  createStock: (input: CreateMaterialStockInput) => Promise<MaterialStock>;
   updateStock: (id: number, input: UpdateMaterialStockInput) => Promise<void>;
   deleteStock: (id: number) => Promise<void>;
 };
@@ -102,9 +102,10 @@ export const useInventoryStore = create<InventoryState>((set) => ({
       loading: true,
     }));
     try {
-      await createMaterialType(input);
+      const created = await createMaterialType(input);
       const types = await listMaterialTypes();
       set({ types });
+      return created;
     } catch (e) {
       // rollback by reloading
       const types = await listMaterialTypes();
@@ -175,6 +176,7 @@ export const useInventoryStore = create<InventoryState>((set) => ({
           material_stock_id: tempId,
           colour_name: input.colour_name,
           material_type_id: input.material_type_id,
+          colour_type_id: input.colour_type_id ?? 0,
           quantity_in_stock: input.quantity_in_stock ?? 0,
           is_active: input.is_active === false ? 0 : 1,
           created_at: new Date().toISOString(),
@@ -184,9 +186,10 @@ export const useInventoryStore = create<InventoryState>((set) => ({
       loading: true,
     }));
     try {
-      await createMaterialStock(input);
+      const created = await createMaterialStock(input);
       const stock = await listMaterialStock();
       set({ stock });
+      return created;
     } catch (e) {
       const stock = await listMaterialStock();
       set({ stock });

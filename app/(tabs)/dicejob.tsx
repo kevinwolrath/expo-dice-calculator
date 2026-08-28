@@ -1,6 +1,3 @@
-import DateTimePicker, {
-  type DateTimePickerEvent,
-} from "@react-native-community/datetimepicker";
 import { useCallback, useEffect, useState } from "react";
 import {
   Alert,
@@ -15,7 +12,6 @@ import {
 import { confirm, showMessage } from "@/components/alert";
 import { Text, View, useThemeColors } from "@/components/Themed";
 import EntityListItem from "@/components/ui/EntityListItem";
-import FieldError from "@/components/ui/FieldError";
 import FieldLabel from "@/components/ui/FieldLabel";
 import FormActionRow from "@/components/ui/FormActionRow";
 import FormField from "@/components/ui/FormField";
@@ -53,37 +49,18 @@ import {
 import useInventoryStore from "@/stores/useInventoryStore";
 import { useTranslation } from "react-i18next";
 
-const today = () => new Date().toISOString().slice(0, 10);
-
-const parseStoredDate = (value: string) => {
-  const [year, month, day] = value.split("-").map(Number);
-  return new Date(year, month - 1, day);
-};
-
-const formatDisplayDate = (value: string) => {
-  const [year, month, day] = value.split("-");
-  return year && month && day ? `${day}/${month}/${year}` : value;
-};
-
-const parseDisplayDate = (value: string) => {
-  const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (!match) return null;
-
-  const [, day, month, year] = match;
-  const date = new Date(Number(year), Number(month) - 1, Number(day));
-  if (
-    date.getFullYear() !== Number(year) ||
-    date.getMonth() !== Number(month) - 1 ||
-    date.getDate() !== Number(day)
-  ) {
-    return null;
-  }
-
-  return `${year}-${month}-${day}`;
+const formatJobTimestamp = (value: string, locale: string) => {
+  const iso = value.includes("T") ? value : `${value.replace(" ", "T")}Z`;
+  const parsed = new Date(iso);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return new Intl.DateTimeFormat(locale, {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(parsed);
 };
 
 export default function JobsScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const colors = useThemeColors();
   const [jobs, setJobs] = useState<DiceJob[]>([]);
   const [methods, setMethods] = useState<ProductionMethod[]>([]);
@@ -93,8 +70,6 @@ export default function JobsScreen() {
 
   const [jobName, setJobName] = useState("");
   const [description, setDescription] = useState("");
-  const [jobDate, setJobDate] = useState(today());
-  const [jobDateInput, setJobDateInput] = useState(formatDisplayDate(today()));
   const [colourCount, setColourCount] = useState("");
   const [jobColourStockIds, setJobColourStockIds] = useState<number[]>([]);
   const [allJobColours, setAllJobColours] = useState<DiceJobColour[]>([]);
@@ -103,14 +78,12 @@ export default function JobsScreen() {
   const [numberColourId, setNumberColourId] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [showJobColourPicker, setShowJobColourPicker] = useState(false);
   const [editingColourIndex, setEditingColourIndex] = useState<number | null>(
     null,
   );
   const [errors, setErrors] = useState<{
     jobName?: string;
-    jobDate?: string;
     colourCount?: string;
     methodId?: string;
     numberColourId?: string;
@@ -161,14 +134,11 @@ export default function JobsScreen() {
   const resetForm = () => {
     setJobName("");
     setDescription("");
-    setJobDate(today());
-    setJobDateInput(formatDisplayDate(today()));
     setColourCount("");
     setJobColourStockIds([]);
     setMethodId(null);
     setNumberColourId(null);
     setEditingId(null);
-    setShowDatePicker(false);
     setShowJobColourPicker(false);
     setEditingColourIndex(null);
     setErrors({});
@@ -178,8 +148,6 @@ export default function JobsScreen() {
     setEditingId(job.dice_job_id);
     setJobName(job.job_name);
     setDescription(job.description ?? "");
-    setJobDate(job.job_date);
-    setJobDateInput(formatDisplayDate(job.job_date));
     setColourCount(String(job.colour_count));
     setMethodId(job.production_method_id);
     setNumberColourId(job.dice_job_number_colour_id);
@@ -373,28 +341,9 @@ export default function JobsScreen() {
     );
   };
 
-  const handleDateChange = (event: DateTimePickerEvent, date?: Date) => {
-    if (Platform.OS === "android") setShowDatePicker(false);
-    if (event.type !== "set" || !date) return;
-
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    setJobDate(`${year}-${month}-${day}`);
-    setJobDateInput(`${day}/${month}/${year}`);
-    setErrors((current) => ({ ...current, jobDate: undefined }));
-  };
-
   const handleCreate = async () => {
     const nextErrors: typeof errors = {};
     if (!jobName.trim()) nextErrors.jobName = t("common.required");
-    if (Platform.OS === "web") {
-      if (!parseDisplayDate(jobDateInput)) {
-        nextErrors.jobDate = t("jobs.invalidDate");
-      }
-    } else if (!jobDate) {
-      nextErrors.jobDate = t("common.required");
-    }
     const count = parseColourCount();
     if (count === null) {
       nextErrors.colourCount = t("jobs.invalidCountMessage");
@@ -418,7 +367,6 @@ export default function JobsScreen() {
       const payload = {
         job_name: jobName.trim(),
         description: description.trim() || null,
-        job_date: jobDate,
         colour_count: count,
         production_method_id: methodId,
         dice_job_number_colour_id: numberColourId,
@@ -431,7 +379,7 @@ export default function JobsScreen() {
         jobId = (await createDiceJob(payload)).dice_job_id;
       }
       await replaceDiceJobColours(jobId, jobColourStockIds);
-      resetForm();
+      setEditingId(jobId);
       await loadAll();
     } catch (e) {
       console.warn("Failed to save job", e);
@@ -448,6 +396,7 @@ export default function JobsScreen() {
       ) {
         (async () => {
           await deleteDiceJob(id);
+          if (editingId === id) resetForm();
           await loadAll();
         })();
       }
@@ -461,6 +410,7 @@ export default function JobsScreen() {
         style: "destructive",
         onPress: async () => {
           await deleteDiceJob(id);
+          if (editingId === id) resetForm();
           await loadAll();
         },
       },
@@ -523,48 +473,6 @@ export default function JobsScreen() {
             placeholder={t("jobs.descriptionPlaceholder")}
             multiline
           />
-          {Platform.OS === "web" ? (
-            <FormField
-              label={t("jobs.jobDate")}
-              required
-              error={errors.jobDate}
-              value={jobDateInput}
-              onChangeText={(value) => {
-                setJobDateInput(value);
-                const parsed = parseDisplayDate(value);
-                if (parsed) setJobDate(parsed);
-                setErrors((current) => ({ ...current, jobDate: undefined }));
-              }}
-              placeholder={t("jobs.jobDatePlaceholder")}
-              keyboardType="number-pad"
-            />
-          ) : (
-            <View style={styles.dateField}>
-              <FieldLabel label={t("jobs.jobDate")} required />
-              <Pressable
-                onPress={() => setShowDatePicker(true)}
-                style={[
-                  styles.dateButton,
-                  {
-                    borderColor: errors.jobDate
-                      ? colors.destructive
-                      : colors.inputBorder,
-                  },
-                ]}
-              >
-                <Text>{formatDisplayDate(jobDate)}</Text>
-              </Pressable>
-              {showDatePicker ? (
-                <DateTimePicker
-                  value={parseStoredDate(jobDate)}
-                  mode="date"
-                  display={Platform.OS === "ios" ? "spinner" : "default"}
-                  onChange={handleDateChange}
-                />
-              ) : null}
-              <FieldError message={errors.jobDate} />
-            </View>
-          )}
           <View style={styles.colourCountBlock}>
             <FormField
               label={t("jobs.colourCount")}
@@ -722,7 +630,9 @@ export default function JobsScreen() {
             emptyHint={t("jobs.addNumberColourHint")}
           />
           <FormActionRow
-            saveTitle={editingId ? t("jobs.save") : t("jobs.addJob")}
+            addTitle={t("jobs.addJob")}
+            onAdd={resetForm}
+            saveTitle={t("jobs.save")}
             onSave={handleCreate}
             onCancel={resetForm}
             saving={saving}
@@ -734,7 +644,7 @@ export default function JobsScreen() {
         return (
           <EntityListItem
             title={item.job_name}
-            meta={`${formatDisplayDate(item.job_date)} • ${methodLabel(item.production_method_id)} • ${t("jobs.colourCountValue", { count: item.colour_count })} • ${numberColourLabel(item.dice_job_number_colour_id)}${
+            meta={`${formatJobTimestamp(item.created_at, i18n.language)} • ${methodLabel(item.production_method_id)} • ${t("jobs.colourCountValue", { count: item.colour_count })} • ${numberColourLabel(item.dice_job_number_colour_id)}${
               colourNames.length ? ` • ${colourNames.join(", ")}` : ""
             }`}
             description={item.description}
@@ -748,15 +658,6 @@ export default function JobsScreen() {
 }
 
 const styles = StyleSheet.create({
-  dateField: { marginBottom: Space[3] },
-  dateButton: {
-    borderWidth: Stroke.input,
-    borderRadius: Radius.md,
-    paddingHorizontal: Space[3],
-    paddingVertical: Space[3],
-    minHeight: Touch.minHeight,
-    justifyContent: "center",
-  },
   selectField: { marginBottom: Space[3] },
   colourCountBlock: { marginBottom: Space[3] },
   generatedColours: { marginTop: Space[2], gap: Space[2] },

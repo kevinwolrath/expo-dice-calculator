@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 
 import { Text, View, useThemeColors } from "@/components/Themed";
 import Card from "@/components/ui/Card";
+import { useScrollToForm } from "@/components/ui/ScreenList";
 import { FontSize, Space, Type } from "@/constants/theme";
 
 type EntityListItemProps = {
@@ -23,6 +24,7 @@ export default function EntityListItem({
 }: EntityListItemProps) {
   const { t } = useTranslation();
   const colors = useThemeColors();
+  const scrollToForm = useScrollToForm();
 
   return (
     <Card>
@@ -32,7 +34,12 @@ export default function EntityListItem({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={t("common.edit")}
-            onPress={onEdit}
+            onPress={() => {
+              onEdit();
+              requestAnimationFrame(() => {
+                scrollToForm();
+              });
+            }}
             hitSlop={8}
           >
             <SymbolView

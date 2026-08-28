@@ -1,4 +1,10 @@
-import { type ReactElement, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useRef,
+  type ReactElement,
+  type ReactNode,
+} from "react";
 import {
   FlatList,
   KeyboardAvoidingView,
@@ -10,6 +16,10 @@ import {
 import { Screen, Text, View } from "@/components/Themed";
 import Card from "@/components/ui/Card";
 import { Layout, Space, Type } from "@/constants/theme";
+
+const ScrollToFormContext = createContext<() => void>(() => {});
+
+export const useScrollToForm = () => useContext(ScrollToFormContext);
 
 type ScreenListProps<T> = {
   data: T[];
@@ -28,31 +38,47 @@ export default function ScreenList<T>({
   countLabel,
   emptyText,
 }: ScreenListProps<T>): ReactElement {
+  const listRef = useRef<FlatList<T>>(null);
+
+  const scrollToForm = () => {
+    listRef.current?.scrollToOffset({ offset: 0, animated: true });
+    if (Platform.OS === "web" && typeof document !== "undefined") {
+      document
+        .getElementById("entity-form")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
   return (
-    <Screen>
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Layout.keyboardOffset}
-      >
-        <FlatList
-          data={data}
-          keyExtractor={keyExtractor}
-          contentContainerStyle={styles.listContent}
-          keyboardShouldPersistTaps="handled"
-          ListHeaderComponent={
-            <View style={styles.header}>
-              <Card>{form}</Card>
-              <Text style={[Type.meta, styles.sectionLabel]}>{countLabel}</Text>
-            </View>
-          }
-          renderItem={renderItem}
-          ListEmptyComponent={
-            <Text style={[Type.meta, styles.emptyText]}>{emptyText}</Text>
-          }
-        />
-      </KeyboardAvoidingView>
-    </Screen>
+    <ScrollToFormContext.Provider value={scrollToForm}>
+      <Screen>
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          keyboardVerticalOffset={Layout.keyboardOffset}
+        >
+          <FlatList
+            ref={listRef}
+            data={data}
+            keyExtractor={keyExtractor}
+            contentContainerStyle={styles.listContent}
+            keyboardShouldPersistTaps="handled"
+            ListHeaderComponent={
+              <View nativeID="entity-form" style={styles.header}>
+                <Card>{form}</Card>
+                <Text style={[Type.meta, styles.sectionLabel]}>
+                  {countLabel}
+                </Text>
+              </View>
+            }
+            renderItem={renderItem}
+            ListEmptyComponent={
+              <Text style={[Type.meta, styles.emptyText]}>{emptyText}</Text>
+            }
+          />
+        </KeyboardAvoidingView>
+      </Screen>
+    </ScrollToFormContext.Provider>
   );
 }
 

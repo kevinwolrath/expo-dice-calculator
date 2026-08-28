@@ -34,8 +34,6 @@
     "title": "Dice Jobs",
     "jobName": "Job name",
     "description": "Description",
-    "jobDate": "Job date (DD/MM/YYYY)",
-    "jobDatePlaceholder": "DD/MM/YYYY",
     "colourCount": "Colour count",
     "generate": "Generate",
     "generatedColours": "Job colours",
@@ -75,7 +73,6 @@
     "missingNumberColourMessage": "A number colour is required.",
     "invalidCountTitle": "Invalid colour count",
     "invalidCountMessage": "Must be a positive whole number",
-    "invalidDate": "Enter a valid date (DD/MM/YYYY)",
     "saveError": "Could not save the job.",
     "deleteTitle": "Delete job",
     "deleteMessage": "Are you sure you want to delete this job?"

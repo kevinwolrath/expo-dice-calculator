@@ -17,6 +17,14 @@ const TECHNIQUES: Array<{ technique: string; resin: boolean; clay: boolean }> =
     { technique: "Layered", resin: true, clay: true },
   ];
 
+const COLOUR_TYPES = [
+  "Opaque",
+  "Transparent",
+  "Translucent",
+  "Metallic",
+  "Glow",
+] as const;
+
 const DICE_NUMBER_COLOURS: string[] = [
   "Black",
   "White",
@@ -111,6 +119,7 @@ export const seedInitialData = async (
 
   const resinId = resinRow.material_type_id;
   const clayId = clayRow.material_type_id;
+  const colourTypeIds = await ensureColourTypes(db);
 
   // For each technique, ensure production_method exists and add allowed materials
   for (const t of TECHNIQUES) {
@@ -151,13 +160,42 @@ export const seedInitialData = async (
     );
   }
 
-  await seedMissingMaterialStock(db, resinId, clayId);
+  await seedMissingMaterialStock(db, resinId, clayId, colourTypeIds);
+};
+
+const colourTypeForStock = (colourName: string): (typeof COLOUR_TYPES)[number] => {
+  if (["Clear"].includes(colourName)) return "Transparent";
+  if (["Gold", "Silver", "Copper", "Bronze", "Pearl"].includes(colourName)) {
+    return "Metallic";
+  }
+  if (colourName.startsWith("Neon ")) return "Glow";
+  return "Opaque";
+};
+
+const ensureColourTypes = async (
+  db: SQLite.SQLiteDatabase,
+): Promise<Record<(typeof COLOUR_TYPES)[number], number>> => {
+  const ids = {} as Record<(typeof COLOUR_TYPES)[number], number>;
+  for (const description of COLOUR_TYPES) {
+    await db.runAsync(
+      "INSERT OR IGNORE INTO colour_type (description) VALUES (?);",
+      description,
+    );
+    const row = await db.getFirstAsync<{ colour_type_id: number }>(
+      "SELECT colour_type_id FROM colour_type WHERE description = ?;",
+      description,
+    );
+    if (!row) throw new Error(`Failed to ensure colour type ${description}`);
+    ids[description] = row.colour_type_id;
+  }
+  return ids;
 };
 
 export const seedMissingMaterialStock = async (
   db: SQLite.SQLiteDatabase,
   resinId?: number,
   clayId?: number,
+  colourTypeIds?: Record<(typeof COLOUR_TYPES)[number], number>,
 ): Promise<void> => {
   const resolvedResinId =
     resinId ??
@@ -175,21 +213,24 @@ export const seedMissingMaterialStock = async (
         "Clay",
       )
     )?.material_type_id;
+  const resolvedColourTypeIds = colourTypeIds ?? (await ensureColourTypes(db));
 
   if (!resolvedResinId || !resolvedClayId) return;
 
   for (const stock of SAMPLE_MATERIAL_STOCK) {
     const materialTypeId =
       stock.type === "Resin" ? resolvedResinId : resolvedClayId;
+    const colourTypeId = resolvedColourTypeIds[colourTypeForStock(stock.colour_name)];
     await db.runAsync(
-      `INSERT INTO material_stock (colour_name, material_type_id, quantity_in_stock)
-       SELECT ?, ?, ?
+      `INSERT INTO material_stock (colour_name, material_type_id, colour_type_id, quantity_in_stock)
+       SELECT ?, ?, ?, ?
        WHERE NOT EXISTS (
          SELECT 1 FROM material_stock
          WHERE colour_name = ? AND material_type_id = ?
        );`,
       stock.colour_name,
       materialTypeId,
+      colourTypeId,
       stock.quantity_in_stock,
       stock.colour_name,
       materialTypeId,

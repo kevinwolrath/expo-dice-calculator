@@ -34,8 +34,6 @@
     "title": "Würfelaufträge",
     "jobName": "Auftragsname",
     "description": "Beschreibung",
-    "jobDate": "Auftragsdatum (TT/MM/JJJJ)",
-    "jobDatePlaceholder": "TT/MM/JJJJ",
     "colourCount": "Anzahl der Farben",
     "generate": "Generieren",
     "generatedColours": "Auftragsfarben",
@@ -75,7 +73,6 @@
     "missingNumberColourMessage": "Eine Nummernfarbe ist erforderlich.",
     "invalidCountTitle": "Ungültige Farbanzahl",
     "invalidCountMessage": "Muss eine positive ganze Zahl sein",
-    "invalidDate": "Gültiges Datum eingeben (TT/MM/JJJJ)",
     "saveError": "Der Auftrag konnte nicht gespeichert werden.",
     "deleteTitle": "Auftrag löschen",
     "deleteMessage": "Möchten Sie diesen Auftrag wirklich löschen?"

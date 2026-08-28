@@ -54,16 +54,13 @@ export default function StockScreen() {
           quantity_in_stock: Number(quantity) || 0,
         });
       } else {
-        await createStock({
+        const created = await createStock({
           colour_name: colourName.trim(),
           material_type_id: materialTypeId,
           quantity_in_stock: Number(quantity) || 0,
         });
+        setEditingId(created.material_stock_id);
       }
-      setColourName("");
-      setQuantity("0");
-      setMaterialTypeId(null);
-      setEditingId(null);
       setErrors({});
     } catch (e) {
       console.warn(e);
@@ -98,6 +95,7 @@ export default function StockScreen() {
       ) {
         (async () => {
           await deleteStock(id);
+          if (editingId === id) handleCancel();
           await loadAll();
         })();
       }
@@ -111,6 +109,7 @@ export default function StockScreen() {
         style: "destructive",
         onPress: async () => {
           await deleteStock(id);
+          if (editingId === id) handleCancel();
           await loadAll();
         },
       },
@@ -161,7 +160,9 @@ export default function StockScreen() {
             keyboardType="number-pad"
           />
           <FormActionRow
-            saveTitle={editingId ? t("stock.save") : t("stock.add")}
+            addTitle={t("stock.add")}
+            onAdd={handleCancel}
+            saveTitle={t("stock.save")}
             onSave={handleSave}
             onCancel={handleCancel}
             saving={saving}

@@ -38,6 +38,7 @@ export interface MaterialStockService {
   createMaterialStock(input: {
     colour_name: string;
     material_type_id: number;
+    colour_type_id?: number;
     quantity_in_stock?: number;
     is_active?: boolean;
   }): Promise<MaterialStock>;
@@ -46,6 +47,7 @@ export interface MaterialStockService {
     input: {
       colour_name?: string;
       material_type_id?: number;
+      colour_type_id?: number;
       quantity_in_stock?: number;
       is_active?: boolean;
     },
@@ -59,7 +61,6 @@ export interface DiceJobService {
   createDiceJob(input: {
     job_name: string;
     description?: string | null;
-    job_date: string;
     colour_count: number;
     production_method_id: number;
     dice_job_number_colour_id: number;
@@ -69,7 +70,6 @@ export interface DiceJobService {
     input: {
       job_name?: string;
       description?: string | null;
-      job_date?: string;
       colour_count?: number;
       production_method_id?: number;
       dice_job_number_colour_id?: number;

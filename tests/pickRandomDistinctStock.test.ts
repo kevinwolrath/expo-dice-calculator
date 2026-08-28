@@ -5,6 +5,7 @@ const stock = (id: number, name: string, typeId = 1, active = 1): MaterialStock 
   material_stock_id: id,
   colour_name: name,
   material_type_id: typeId,
+  colour_type_id: 1,
   quantity_in_stock: 10,
   is_active: active,
   created_at: "2026-01-01",

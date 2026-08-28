@@ -4,7 +4,7 @@ import type { DiceJob } from "../types";
 export const listDiceJobs = async (): Promise<DiceJob[]> => {
   const db = await getDatabase();
   return db.getAllAsync<DiceJob>(
-    "SELECT * FROM dice_job ORDER BY job_date DESC, dice_job_id DESC;",
+    "SELECT * FROM dice_job ORDER BY created_at DESC, dice_job_id DESC;",
   );
 };
 
@@ -19,7 +19,6 @@ export const getDiceJob = async (id: number): Promise<DiceJob | null> => {
 export const createDiceJob = async (input: {
   job_name: string;
   description?: string | null;
-  job_date: string;
   colour_count: number;
   production_method_id: number;
   dice_job_number_colour_id: number;
@@ -27,11 +26,10 @@ export const createDiceJob = async (input: {
   const db = await getDatabase();
   const result = await db.runAsync(
     `INSERT INTO dice_job
-      (job_name, description, job_date, colour_count, production_method_id, dice_job_number_colour_id)
-     VALUES (?, ?, ?, ?, ?, ?);`,
+      (job_name, description, colour_count, production_method_id, dice_job_number_colour_id)
+     VALUES (?, ?, ?, ?, ?);`,
     input.job_name,
     input.description ?? null,
-    input.job_date,
     input.colour_count,
     input.production_method_id,
     input.dice_job_number_colour_id,
@@ -46,7 +44,6 @@ export const updateDiceJob = async (
   input: {
     job_name?: string;
     description?: string | null;
-    job_date?: string;
     colour_count?: number;
     production_method_id?: number;
     dice_job_number_colour_id?: number;
@@ -57,12 +54,11 @@ export const updateDiceJob = async (
   if (!current) throw new Error(`Dice job ${id} not found`);
   await db.runAsync(
     `UPDATE dice_job
-     SET job_name = ?, description = ?, job_date = ?, colour_count = ?,
+     SET job_name = ?, description = ?, colour_count = ?,
          production_method_id = ?, dice_job_number_colour_id = ?, updated_at = CURRENT_TIMESTAMP
      WHERE dice_job_id = ?;`,
     input.job_name ?? current.job_name,
     input.description !== undefined ? input.description : current.description,
-    input.job_date ?? current.job_date,
     input.colour_count ?? current.colour_count,
     input.production_method_id ?? current.production_method_id,
     input.dice_job_number_colour_id !== undefined

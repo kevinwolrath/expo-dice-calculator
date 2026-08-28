@@ -8,7 +8,7 @@ const DATABASE_NAME = "dice_calculator.db";
 // Bump this and add a branch below whenever `schema.ts` changes.
 // We're using a destructive prototype migration: create a fresh schema
 // by dropping existing tables when the version increases.
-const DATABASE_VERSION = 7;
+const DATABASE_VERSION = 9;
 
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 let initPromise: Promise<SQLite.SQLiteDatabase> | null = null;
@@ -79,6 +79,7 @@ async function initializeDatabase(): Promise<SQLite.SQLiteDatabase> {
   // For prototypes we can recreate the DB when the schema version increases.
   if (currentVersion === 0) {
     await db.execAsync(DATABASE_SCHEMA);
+    await db.execAsync("PRAGMA foreign_keys = ON;");
     // Seed initial reference data (material types, methods, method-material links)
     try {
       await seedInitialData(db);
@@ -98,10 +99,12 @@ async function initializeDatabase(): Promise<SQLite.SQLiteDatabase> {
     await db.execAsync("DROP TABLE IF EXISTS dice_job;");
     await db.execAsync("DROP TABLE IF EXISTS dice_job_number_colour;");
     await db.execAsync("DROP TABLE IF EXISTS material_stock;");
+    await db.execAsync("DROP TABLE IF EXISTS colour_type;");
     await db.execAsync("DROP TABLE IF EXISTS production_method;");
     await db.execAsync("DROP TABLE IF EXISTS material_type;");
     await db.execAsync(DATABASE_SCHEMA);
     await db.execAsync("COMMIT;");
+    await db.execAsync("PRAGMA foreign_keys = ON;");
     try {
       await seedInitialData(db);
     } catch (e) {

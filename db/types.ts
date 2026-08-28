@@ -14,6 +14,7 @@ export type MaterialStock = {
   material_stock_id: number;
   colour_name: string;
   material_type_id: number;
+  colour_type_id: number;
   quantity_in_stock: number;
   is_active: number;
   created_at: string;
@@ -24,7 +25,6 @@ export type DiceJob = {
   dice_job_id: number;
   job_name: string;
   description: string | null;
-  job_date: string;
   colour_count: number;
   production_method_id: number;
   dice_job_number_colour_id: number;

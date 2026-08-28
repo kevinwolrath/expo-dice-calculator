@@ -54,12 +54,11 @@ export default function DiceNumberColoursScreen() {
           dice_job_number_colour_name: name.trim(),
         });
       } else {
-        await createDiceJobNumberColour({
+        const created = await createDiceJobNumberColour({
           dice_job_number_colour_name: name.trim(),
         });
+        setColourEditingId(created.dice_job_number_colour_id);
       }
-      setName("");
-      setColourEditingId(null);
       setErrors({});
       await load();
     } catch (e) {
@@ -89,6 +88,7 @@ export default function DiceNumberColoursScreen() {
       ) {
         (async () => {
           await deleteDiceJobNumberColour(id);
+          if (colourEditingId === id) handleCancelColour();
           await load();
         })();
       }
@@ -105,6 +105,7 @@ export default function DiceNumberColoursScreen() {
           style: "destructive",
           onPress: async () => {
             await deleteDiceJobNumberColour(id);
+            if (colourEditingId === id) handleCancelColour();
             await load();
           },
         },
@@ -131,11 +132,9 @@ export default function DiceNumberColoursScreen() {
             }}
           />
           <FormActionRow
-            saveTitle={
-              colourEditingId
-                ? t("diceNumberColours.save")
-                : t("diceNumberColours.add")
-            }
+            addTitle={t("diceNumberColours.add")}
+            onAdd={handleCancelColour}
+            saveTitle={t("diceNumberColours.save")}
             onSave={handleSaveColour}
             onCancel={handleCancelColour}
             saving={loading}

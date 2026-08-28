@@ -3,9 +3,12 @@ import { useTranslation } from "react-i18next";
 
 import { View } from "@/components/Themed";
 import PrimaryButton from "@/components/ui/PrimaryButton";
+import { useScrollToForm } from "@/components/ui/ScreenList";
 import { Space } from "@/constants/theme";
 
 type FormActionRowProps = {
+  addTitle: string;
+  onAdd: () => void;
   saveTitle: string;
   onSave: () => void;
   onCancel: () => void;
@@ -13,15 +16,28 @@ type FormActionRowProps = {
 };
 
 export default function FormActionRow({
+  addTitle,
+  onAdd,
   saveTitle,
   onSave,
   onCancel,
   saving = false,
 }: FormActionRowProps) {
   const { t } = useTranslation();
+  const scrollToForm = useScrollToForm();
 
   return (
     <View style={styles.actionRow}>
+      <PrimaryButton
+        title={addTitle}
+        onPress={() => {
+          onAdd();
+          requestAnimationFrame(() => {
+            scrollToForm();
+          });
+        }}
+        disabled={saving}
+      />
       <PrimaryButton
         title={saving ? t("common.saving") : saveTitle}
         onPress={onSave}
@@ -37,5 +53,5 @@ export default function FormActionRow({
 }
 
 const styles = StyleSheet.create({
-  actionRow: { flexDirection: "row", gap: Space[3] },
+  actionRow: { flexDirection: "row", flexWrap: "wrap", gap: Space[3] },
 });

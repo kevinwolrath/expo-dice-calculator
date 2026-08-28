@@ -79,9 +79,7 @@ export default function ProductionMethodsScreen() {
             .map((id) => addAllowedMaterial(productionMethodId!, id)),
         ]);
       }
-      setMethodDescription("");
-      setMethodEditingId(null);
-      setAllowedMaterialIds([]);
+      setMethodEditingId(productionMethodId);
       setErrors({});
       await load();
     } catch (e) {
@@ -121,6 +119,7 @@ export default function ProductionMethodsScreen() {
       ) {
         (async () => {
           await deleteProductionMethod(id);
+          if (methodEditingId === id) handleCancelMethod();
           await load();
         })();
       }
@@ -137,6 +136,7 @@ export default function ProductionMethodsScreen() {
           style: "destructive",
           onPress: async () => {
             await deleteProductionMethod(id);
+            if (methodEditingId === id) handleCancelMethod();
             await load();
           },
         },
@@ -176,11 +176,9 @@ export default function ProductionMethodsScreen() {
             onChange={setAllowedMaterialIds}
           />
           <FormActionRow
-            saveTitle={
-              methodEditingId
-                ? t("productionMethods.save")
-                : t("productionMethods.add")
-            }
+            addTitle={t("productionMethods.add")}
+            onAdd={handleCancelMethod}
+            saveTitle={t("productionMethods.save")}
             onSave={handleSaveMethod}
             onCancel={handleCancelMethod}
             saving={savingMethod}
