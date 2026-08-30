@@ -7,12 +7,12 @@ import FormActionRow from "@/components/ui/FormActionRow";
 import FormField from "@/components/ui/FormField";
 import ScreenList from "@/components/ui/ScreenList";
 import {
-  createDiceJobNumberColour,
-  deleteDiceJobNumberColour,
-  initDatabase,
-  listDiceJobNumberColours,
-  updateDiceJobNumberColour,
-  type DiceJobNumberColour,
+    createDiceJobNumberColour,
+    deleteDiceJobNumberColour,
+    initDatabase,
+    listDiceJobNumberColours,
+    updateDiceJobNumberColour,
+    type DiceJobNumberColour,
 } from "@/db";
 import { useTranslation } from "react-i18next";
 
@@ -22,7 +22,7 @@ export default function DiceNumberColoursScreen() {
   const [loading, setLoading] = useState(false);
 
   const [name, setName] = useState("");
-  const [colourEditingId, setColourEditingId] = useState<number | null>(null);
+  const [colourEditingId, setColourEditingId] = useState<string | null>(null);
   const [errors, setErrors] = useState<{ name?: string }>({});
 
   const load = useCallback(async () => {
@@ -79,7 +79,7 @@ export default function DiceNumberColoursScreen() {
     setErrors({});
   };
 
-  const handleDeleteColour = (id: number) => {
+  const handleDeleteColour = (id: string) => {
     if (Platform.OS === "web") {
       if (
         window.confirm(

@@ -1,14 +1,14 @@
 import * as SQLite from "expo-sqlite";
 
 import { DATABASE_SCHEMA } from "./schema";
-import { seedInitialData, seedMissingMaterialStock } from "./seed";
+import { seedInitialData } from "./seed";
 
 const DATABASE_NAME = "dice_calculator.db";
 
 // Bump this and add a branch below whenever `schema.ts` changes.
 // We're using a destructive prototype migration: create a fresh schema
 // by dropping existing tables when the version increases.
-const DATABASE_VERSION = 9;
+const DATABASE_VERSION = 12;
 
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 let initPromise: Promise<SQLite.SQLiteDatabase> | null = null;
@@ -70,7 +70,6 @@ async function initializeDatabase(): Promise<SQLite.SQLiteDatabase> {
 
   if (currentVersion >= DATABASE_VERSION) {
     await seedIfDatabaseIsBlank(db);
-    await seedMissingMaterialStock(db);
     return db;
   }
 
@@ -94,11 +93,13 @@ async function initializeDatabase(): Promise<SQLite.SQLiteDatabase> {
     // Destructive replace: drop existing tables then create the new schema.
     // This intentionally wipes existing data (acceptable for prototype).
     await db.execAsync("BEGIN;");
+    await db.execAsync("DROP TABLE IF EXISTS dice_job_colour_type_exclusion;");
     await db.execAsync("DROP TABLE IF EXISTS production_method_material;");
     await db.execAsync("DROP TABLE IF EXISTS dice_job_colour;");
     await db.execAsync("DROP TABLE IF EXISTS dice_job;");
     await db.execAsync("DROP TABLE IF EXISTS dice_job_number_colour;");
     await db.execAsync("DROP TABLE IF EXISTS material_stock;");
+    await db.execAsync("DROP TABLE IF EXISTS colour_brand;");
     await db.execAsync("DROP TABLE IF EXISTS colour_type;");
     await db.execAsync("DROP TABLE IF EXISTS production_method;");
     await db.execAsync("DROP TABLE IF EXISTS material_type;");
@@ -115,7 +116,6 @@ async function initializeDatabase(): Promise<SQLite.SQLiteDatabase> {
   }
 
   await db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
-  await seedMissingMaterialStock(db);
 
   return db;
 }

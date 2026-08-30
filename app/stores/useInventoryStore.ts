@@ -1,19 +1,27 @@
 import type {
-    MaterialStock,
-    MaterialStockService,
-    MaterialType,
-    MaterialTypeService,
+  ColourBrand,
+  ColourType,
+  ColourTypeService,
+  MaterialStock,
+  MaterialStockService,
+  MaterialType,
+  MaterialTypeService,
 } from "@/db";
 import {
-    createMaterialStock,
-    createMaterialType,
-    deleteMaterialStock,
-    deleteMaterialType,
-    initDatabase,
-    listMaterialStock,
-    listMaterialTypes,
-    updateMaterialStock,
-    updateMaterialType,
+  createMaterialStock,
+  createMaterialType,
+  deleteMaterialStock,
+  deleteMaterialType,
+  initDatabase,
+  createColourType as insertColourType,
+  listColourBrands,
+  listColourTypes,
+  listMaterialStock,
+  listMaterialTypes,
+  updateColourType as patchColourType,
+  deleteColourType as removeColourType,
+  updateMaterialStock,
+  updateMaterialType,
 } from "@/db";
 import { create } from "zustand";
 
@@ -29,27 +37,44 @@ type CreateMaterialStockInput = Parameters<
 type UpdateMaterialStockInput = Parameters<
   MaterialStockService["updateMaterialStock"]
 >[1];
+type CreateColourTypeInput = Parameters<
+  ColourTypeService["createColourType"]
+>[0];
+type UpdateColourTypeInput = Parameters<
+  ColourTypeService["updateColourType"]
+>[1];
 
 type InventoryState = {
   types: MaterialType[];
+  colourTypes: ColourType[];
+  colourBrands: ColourBrand[];
   stock: MaterialStock[];
   loading: boolean;
 
   loadAll: () => Promise<void>;
   loadTypes: () => Promise<void>;
+  loadColourTypes: () => Promise<void>;
+  loadColourBrands: () => Promise<void>;
   loadStock: () => Promise<void>;
 
   createType: (input: CreateMaterialTypeInput) => Promise<MaterialType>;
-  updateType: (id: number, input: UpdateMaterialTypeInput) => Promise<void>;
-  deleteType: (id: number) => Promise<void>;
+  updateType: (id: string, input: UpdateMaterialTypeInput) => Promise<void>;
+  deleteType: (id: string) => Promise<void>;
+
+  createColourType: (input: CreateColourTypeInput) => Promise<ColourType>;
+  updateColourType: (id: string, input: UpdateColourTypeInput) => Promise<void>;
+  deleteColourType: (id: string) => Promise<void>;
 
   createStock: (input: CreateMaterialStockInput) => Promise<MaterialStock>;
-  updateStock: (id: number, input: UpdateMaterialStockInput) => Promise<void>;
-  deleteStock: (id: number) => Promise<void>;
+  updateStock: (id: string, input: UpdateMaterialStockInput) => Promise<void>;
+  deleteStock: (id: string) => Promise<void>;
 };
 
 export const useInventoryStore = create<InventoryState>((set) => ({
   types: [],
+  colourTypes: [],
+  colourBrands: [],
+  materialTypes: [],
   stock: [],
   loading: false,
 
@@ -57,11 +82,13 @@ export const useInventoryStore = create<InventoryState>((set) => ({
     set({ loading: true });
     try {
       await initDatabase();
-      const [types, stock] = await Promise.all([
+      const [types, colourTypes, colourBrands, stock] = await Promise.all([
         listMaterialTypes(),
+        listColourTypes(),
+        listColourBrands(),
         listMaterialStock(),
       ]);
-      set({ types, stock });
+      set({ types, colourTypes, colourBrands, stock });
     } finally {
       set({ loading: false });
     }
@@ -72,6 +99,26 @@ export const useInventoryStore = create<InventoryState>((set) => ({
     try {
       const types = await listMaterialTypes();
       set({ types });
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  loadColourTypes: async () => {
+    set({ loading: true });
+    try {
+      const colourTypes = await listColourTypes();
+      set({ colourTypes });
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  loadColourBrands: async () => {
+    set({ loading: true });
+    try {
+      const colourBrands = await listColourBrands();
+      set({ colourBrands });
     } finally {
       set({ loading: false });
     }
@@ -89,7 +136,7 @@ export const useInventoryStore = create<InventoryState>((set) => ({
 
   createType: async (input) => {
     // optimistic: add a temporary type immediately
-    const tempId = -Date.now();
+    const tempId = `temp-${Date.now()}`;
     set((s) => ({
       types: [
         ...s.types,
@@ -146,7 +193,7 @@ export const useInventoryStore = create<InventoryState>((set) => ({
     }
   },
 
-  deleteType: async (id: number) => {
+  deleteType: async (id: string) => {
     // optimistic delete
     const prev = await listMaterialTypes();
     set((s) => ({
@@ -166,17 +213,93 @@ export const useInventoryStore = create<InventoryState>((set) => ({
     }
   },
 
+  createColourType: async (input) => {
+    const tempId = `temp-${Date.now()}`;
+    set((s) => ({
+      colourTypes: [
+        ...s.colourTypes,
+        {
+          colour_type_id: tempId,
+          description: input.description,
+          material_type_id: input.material_type_id,
+          created_at: new Date().toISOString(),
+        },
+      ],
+      loading: true,
+    }));
+    try {
+      const created = await insertColourType(input);
+      const colourTypes = await listColourTypes();
+      set({ colourTypes });
+      return created;
+    } catch (e) {
+      const colourTypes = await listColourTypes();
+      set({ colourTypes });
+      throw e;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  updateColourType: async (id, input) => {
+    const prev = await listColourTypes();
+    set((s) => ({
+      colourTypes: s.colourTypes.map((item) =>
+        item.colour_type_id === id
+          ? {
+              ...item,
+              description:
+                input.description !== undefined && input.description !== null
+                  ? input.description
+                  : item.description,
+              material_type_id: input.material_type_id ?? item.material_type_id,
+            }
+          : item,
+      ),
+      loading: true,
+    }));
+    try {
+      await patchColourType(id, input);
+      const colourTypes = await listColourTypes();
+      set({ colourTypes });
+    } catch (e) {
+      set({ colourTypes: prev });
+      throw e;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  deleteColourType: async (id: string) => {
+    const prev = await listColourTypes();
+    set((s) => ({
+      colourTypes: s.colourTypes.filter((item) => item.colour_type_id !== id),
+      loading: true,
+    }));
+    try {
+      await removeColourType(id);
+      const colourTypes = await listColourTypes();
+      set({ colourTypes });
+    } catch (e) {
+      set({ colourTypes: prev });
+      throw e;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
   createStock: async (input) => {
     // optimistic add
-    const tempId = -Date.now();
+    const tempId = `temp-${Date.now()}`;
     set((s) => ({
       stock: [
         ...s.stock,
         {
           material_stock_id: tempId,
           colour_name: input.colour_name,
-          material_type_id: input.material_type_id,
-          colour_type_id: input.colour_type_id ?? 0,
+          comment: null,
+          colour_type_id: input.colour_type_id,
+          colour_brand_id: input.colour_brand_id ?? null,
           quantity_in_stock: input.quantity_in_stock ?? 0,
           is_active: input.is_active === false ? 0 : 1,
           created_at: new Date().toISOString(),
@@ -231,7 +354,7 @@ export const useInventoryStore = create<InventoryState>((set) => ({
     }
   },
 
-  deleteStock: async (id: number) => {
+  deleteStock: async (id: string) => {
     // optimistic delete
     const prev = await listMaterialStock();
     set((s) => ({

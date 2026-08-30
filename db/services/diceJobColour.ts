@@ -1,8 +1,9 @@
 import { getDatabase } from "../client";
 import type { DiceJobColour } from "../types";
+import { generateId } from "../uuid";
 
 export const listDiceJobColours = async (
-  diceJobId: number,
+  diceJobId: string,
 ): Promise<DiceJobColour[]> => {
   const db = await getDatabase();
   return db.getAllAsync<DiceJobColour>(
@@ -12,7 +13,7 @@ export const listDiceJobColours = async (
 };
 
 export const getDiceJobColour = async (
-  id: number,
+  id: string,
 ): Promise<DiceJobColour | null> => {
   const db = await getDatabase();
   return db.getFirstAsync<DiceJobColour>(
@@ -22,25 +23,27 @@ export const getDiceJobColour = async (
 };
 
 export const createDiceJobColour = async (input: {
-  dice_job_id: number;
-  material_stock_id: number;
+  dice_job_id: string;
+  material_stock_id: string;
   colour_order?: number | null;
 }): Promise<DiceJobColour> => {
   const db = await getDatabase();
-  const result = await db.runAsync(
-    "INSERT INTO dice_job_colour (dice_job_id, material_stock_id, colour_order) VALUES (?, ?, ?);",
+  const id = generateId();
+  await db.runAsync(
+    "INSERT INTO dice_job_colour (dice_job_colour_id, dice_job_id, material_stock_id, colour_order) VALUES (?, ?, ?, ?);",
+    id,
     input.dice_job_id,
     input.material_stock_id,
     input.colour_order ?? null,
   );
-  const created = await getDiceJobColour(result.lastInsertRowId);
+  const created = await getDiceJobColour(id);
   if (!created) throw new Error("Failed to load created dice job colour");
   return created;
 };
 
 export const updateDiceJobColour = async (
-  id: number,
-  input: { material_stock_id?: number; colour_order?: number | null },
+  id: string,
+  input: { material_stock_id?: string; colour_order?: number | null },
 ): Promise<void> => {
   const db = await getDatabase();
   const current = await getDiceJobColour(id);
@@ -55,7 +58,7 @@ export const updateDiceJobColour = async (
   );
 };
 
-export const deleteDiceJobColour = async (id: number): Promise<void> => {
+export const deleteDiceJobColour = async (id: string): Promise<void> => {
   const db = await getDatabase();
   await db.runAsync(
     "DELETE FROM dice_job_colour WHERE dice_job_colour_id = ?;",
@@ -71,8 +74,8 @@ export const listAllDiceJobColours = async (): Promise<DiceJobColour[]> => {
 };
 
 export const replaceDiceJobColours = async (
-  diceJobId: number,
-  materialStockIds: number[],
+  diceJobId: string,
+  materialStockIds: string[],
 ): Promise<DiceJobColour[]> => {
   const db = await getDatabase();
   await db.withTransactionAsync(async () => {
@@ -82,7 +85,8 @@ export const replaceDiceJobColours = async (
     );
     for (let order = 0; order < materialStockIds.length; order += 1) {
       await db.runAsync(
-        "INSERT INTO dice_job_colour (dice_job_id, material_stock_id, colour_order) VALUES (?, ?, ?);",
+        "INSERT INTO dice_job_colour (dice_job_colour_id, dice_job_id, material_stock_id, colour_order) VALUES (?, ?, ?, ?);",
+        generateId(),
         diceJobId,
         materialStockIds[order],
         order + 1,

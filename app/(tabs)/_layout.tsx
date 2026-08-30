@@ -158,6 +158,24 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
+        name="colour-types"
+        options={{
+          title: t("tabs.colourTypes"),
+          tabBarIcon: ({ color }) => (
+            <SymbolView
+              name={{
+                ios: "drop.fill",
+                android: "format_color_fill",
+                web: "format_color_fill",
+              }}
+              tintColor={color}
+              size={22}
+            />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
         name="production-methods"
         options={{
           title: t("tabs.productionMethods"),

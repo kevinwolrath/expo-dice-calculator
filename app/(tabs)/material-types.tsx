@@ -20,7 +20,7 @@ export default function MaterialTypesScreen() {
   const deleteType = useInventoryStore((s) => s.deleteType);
 
   const [description, setDescription] = useState("");
-  const [typeEditingId, setTypeEditingId] = useState<number | null>(null);
+  const [typeEditingId, setTypeEditingId] = useState<string | null>(null);
   const [errors, setErrors] = useState<{ description?: string }>({});
 
   useEffect(() => {
@@ -61,7 +61,7 @@ export default function MaterialTypesScreen() {
     setErrors({});
   };
 
-  const handleDeleteType = (id: number) => {
+  const handleDeleteType = (id: string) => {
     if (Platform.OS === "web") {
       if (
         window.confirm(

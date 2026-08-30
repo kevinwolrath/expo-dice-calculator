@@ -1,5 +1,7 @@
 export * from "./client";
 export * from "./pickRandomDistinctStock";
+export * from "./services/colourBrand";
+export * from "./services/colourType";
 export * from "./services/diceJob";
 export * from "./services/diceJobColour";
 export * from "./services/diceJobNumberColour";

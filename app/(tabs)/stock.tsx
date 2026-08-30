@@ -15,48 +15,69 @@ export default function StockScreen() {
   const { t } = useTranslation();
   const items = useInventoryStore((s) => s.stock);
   const types = useInventoryStore((s) => s.types);
+  const colourTypes = useInventoryStore((s) => s.colourTypes);
+  const colourBrands = useInventoryStore((s) => s.colourBrands);
   const loadAll = useInventoryStore((s) => s.loadAll);
   const createStock = useInventoryStore((s) => s.createStock);
   const updateStock = useInventoryStore((s) => s.updateStock);
   const deleteStock = useInventoryStore((s) => s.deleteStock);
 
   const [colourName, setColourName] = useState("");
-  const [materialTypeId, setMaterialTypeId] = useState<number | null>(null);
+  const [colourTypeId, setColourTypeId] = useState<string | null>(null);
+  const [colourBrandId, setColourBrandId] = useState<string | null>(null);
   const [quantity, setQuantity] = useState("0");
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<{
     colourName?: string;
-    materialTypeId?: string;
+    colourTypeId?: string;
   }>({});
 
   useEffect(() => {
     loadAll();
   }, [loadAll]);
 
-  const typeLabel = (id: number) =>
+  const materialTypeLabel = (id: string) =>
     types.find((type) => type.material_type_id === id)?.description ??
     String(id);
+
+  const colourTypeLabel = (id: string) => {
+    const colourType = colourTypes.find((type) => type.colour_type_id === id);
+    if (!colourType) return String(id);
+    return `${colourType.description} (${materialTypeLabel(colourType.material_type_id)})`;
+  };
+
+  const colourBrandLabel = (id: string | null) => {
+    if (!id) return null;
+    return (
+      colourBrands.find((brand) => brand.colour_brand_id === id)
+        ?.colour_brand_name ?? String(id)
+    );
+  };
 
   const handleSave = async () => {
     const nextErrors: typeof errors = {};
     if (!colourName.trim()) nextErrors.colourName = t("common.required");
-    if (!materialTypeId) nextErrors.materialTypeId = t("common.required");
+    if (!colourTypeId) nextErrors.colourTypeId = t("common.required");
     setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0 || !materialTypeId) return;
+    if (Object.keys(nextErrors).length > 0 || !colourTypeId) {
+      return;
+    }
 
     setSaving(true);
     try {
       if (editingId) {
         await updateStock(editingId, {
           colour_name: colourName.trim(),
-          material_type_id: materialTypeId,
+          colour_type_id: colourTypeId,
+          colour_brand_id: colourBrandId,
           quantity_in_stock: Number(quantity) || 0,
         });
       } else {
         const created = await createStock({
           colour_name: colourName.trim(),
-          material_type_id: materialTypeId,
+          colour_type_id: colourTypeId,
+          colour_brand_id: colourBrandId,
           quantity_in_stock: Number(quantity) || 0,
         });
         setEditingId(created.material_stock_id);
@@ -73,20 +94,22 @@ export default function StockScreen() {
   const handleEdit = (item: MaterialStock) => {
     setEditingId(item.material_stock_id);
     setColourName(item.colour_name);
-    setMaterialTypeId(item.material_type_id);
+    setColourTypeId(item.colour_type_id);
+    setColourBrandId(item.colour_brand_id);
     setQuantity(String(item.quantity_in_stock));
     setErrors({});
   };
 
   const handleCancel = () => {
     setColourName("");
-    setMaterialTypeId(null);
+    setColourTypeId(null);
+    setColourBrandId(null);
     setQuantity("0");
     setEditingId(null);
     setErrors({});
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: string) => {
     if (Platform.OS === "web") {
       if (
         window.confirm(
@@ -135,23 +158,34 @@ export default function StockScreen() {
             }}
           />
           <SelectDropdown
-            label={t("stock.materialType")}
-            placeholder={t("stock.selectMaterialType")}
+            label={t("stock.colourType")}
+            placeholder={t("stock.selectColourType")}
             required
-            error={errors.materialTypeId}
-            options={types.map((type) => ({
-              value: type.material_type_id,
-              label: type.description ?? String(type.material_type_id),
+            error={errors.colourTypeId}
+            options={colourTypes.map((type) => ({
+              value: type.colour_type_id,
+              label: colourTypeLabel(type.colour_type_id),
             }))}
-            value={materialTypeId}
+            value={colourTypeId}
             onChange={(value) => {
-              setMaterialTypeId(value);
+              setColourTypeId(value);
               setErrors((current) => ({
                 ...current,
-                materialTypeId: undefined,
+                colourTypeId: undefined,
               }));
             }}
-            emptyHint={t("stock.addMaterialTypesHint")}
+            emptyHint={t("stock.addColourTypesHint")}
+          />
+          <SelectDropdown
+            label={t("stock.colourBrand")}
+            placeholder={t("stock.selectColourBrand")}
+            options={colourBrands.map((brand) => ({
+              value: brand.colour_brand_id,
+              label: brand.colour_brand_name,
+            }))}
+            value={colourBrandId}
+            onChange={setColourBrandId}
+            emptyHint={t("stock.addColourBrandsHint")}
           />
           <FormField
             label={t("stock.quantity")}
@@ -169,14 +203,19 @@ export default function StockScreen() {
           />
         </>
       }
-      renderItem={({ item }) => (
-        <EntityListItem
-          title={item.colour_name}
-          meta={`${typeLabel(item.material_type_id)} • ${t("stock.inStock", { count: item.quantity_in_stock })}`}
-          onEdit={() => handleEdit(item)}
-          onDelete={() => handleDelete(item.material_stock_id)}
-        />
-      )}
+      renderItem={({ item }) => {
+        const brand = colourBrandLabel(item.colour_brand_id);
+        return (
+          <EntityListItem
+            title={item.colour_name}
+            meta={`${colourTypeLabel(item.colour_type_id)}${
+              brand ? ` • ${brand}` : ""
+            } • ${t("stock.inStock", { count: item.quantity_in_stock })}`}
+            onEdit={() => handleEdit(item)}
+            onDelete={() => handleDelete(item.material_stock_id)}
+          />
+        );
+      }}
     />
   );
 }

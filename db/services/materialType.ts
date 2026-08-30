@@ -1,5 +1,6 @@
 import { getDatabase } from "../client";
 import type { MaterialType } from "../types";
+import { generateId } from "../uuid";
 
 export const listMaterialTypes = async (): Promise<MaterialType[]> => {
   const db = await getDatabase();
@@ -9,7 +10,7 @@ export const listMaterialTypes = async (): Promise<MaterialType[]> => {
 };
 
 export const getMaterialType = async (
-  id: number,
+  id: string,
 ): Promise<MaterialType | null> => {
   const db = await getDatabase();
   return db.getFirstAsync<MaterialType>(
@@ -22,17 +23,19 @@ export const createMaterialType = async (input: {
   description: string;
 }): Promise<MaterialType> => {
   const db = await getDatabase();
-  const result = await db.runAsync(
-    "INSERT INTO material_type (description) VALUES (?);",
+  const id = generateId();
+  await db.runAsync(
+    "INSERT INTO material_type (material_type_id, description) VALUES (?, ?);",
+    id,
     input.description,
   );
-  const created = await getMaterialType(result.lastInsertRowId);
+  const created = await getMaterialType(id);
   if (!created) throw new Error("Failed to load created material type");
   return created;
 };
 
 export const updateMaterialType = async (
-  id: number,
+  id: string,
   input: { description?: string | null },
 ): Promise<void> => {
   const db = await getDatabase();
@@ -47,7 +50,7 @@ export const updateMaterialType = async (
   );
 };
 
-export const deleteMaterialType = async (id: number): Promise<void> => {
+export const deleteMaterialType = async (id: string): Promise<void> => {
   const db = await getDatabase();
   await db.runAsync(
     "DELETE FROM material_type WHERE material_type_id = ?;",

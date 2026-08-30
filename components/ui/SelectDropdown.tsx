@@ -1,28 +1,36 @@
 import { useState } from "react";
 import {
-  Modal,
-  Pressable,
-  View as RNView,
-  ScrollView,
-  StyleSheet,
+    Modal,
+    Pressable,
+    View as RNView,
+    ScrollView,
+    StyleSheet,
 } from "react-native";
 
 import { Text, View, useThemeColors } from "@/components/Themed";
 import FieldError from "@/components/ui/FieldError";
 import FieldLabel from "@/components/ui/FieldLabel";
-import { FontSize, Radius, Space, Stroke, Touch, Type } from "@/constants/theme";
+import {
+    FontSize,
+    Radius,
+    Space,
+    Stroke,
+    Touch,
+    Type,
+} from "@/constants/theme";
 
-export type SelectOption = { value: number; label: string };
+export type SelectOption = { value: string; label: string };
 
 type SelectDropdownProps = {
   label: string;
   placeholder: string;
   options: SelectOption[];
-  value: number | null;
-  onChange: (value: number) => void;
+  value: string | null;
+  onChange: (value: string) => void;
   required?: boolean;
   error?: string;
   emptyHint?: string;
+  disabled?: boolean;
 };
 
 export default function SelectDropdown({
@@ -34,6 +42,7 @@ export default function SelectDropdown({
   required,
   error,
   emptyHint,
+  disabled,
 }: SelectDropdownProps) {
   const colors = useThemeColors();
   const [open, setOpen] = useState(false);
@@ -48,11 +57,13 @@ export default function SelectDropdown({
         <>
           <Pressable
             accessibilityRole="button"
+            disabled={disabled}
             onPress={() => setOpen(true)}
             style={[
               styles.picker,
               {
                 borderColor: error ? colors.destructive : colors.inputBorder,
+                opacity: disabled ? 0.5 : 1,
               },
             ]}
           >

@@ -1,4 +1,16 @@
-import type { MaterialStock } from "./types";
+import type { ColourType, MaterialStock } from "./types";
+
+export const colourTypeMaterialMap = (
+  colourTypes: Pick<ColourType, "colour_type_id" | "material_type_id">[],
+): Map<string, string> =>
+  new Map(
+    colourTypes.map((type) => [type.colour_type_id, type.material_type_id]),
+  );
+
+export const materialTypeIdForStock = (
+  item: MaterialStock,
+  colourTypeToMaterialType: Map<string, string>,
+): string | undefined => colourTypeToMaterialType.get(item.colour_type_id);
 
 export const shuffleInPlace = <T>(items: T[]): T[] => {
   for (let index = items.length - 1; index > 0; index -= 1) {
@@ -13,8 +25,9 @@ export const shuffleInPlace = <T>(items: T[]): T[] => {
 export const pickRandomDistinctStock = (
   stock: MaterialStock[],
   count: number,
-  allowedMaterialTypeIds?: number[] | null,
-  excludeStockIds: number[] = [],
+  allowedMaterialTypeIds?: string[] | null,
+  excludeStockIds: string[] = [],
+  colourTypeToMaterialType: Map<string, string> = new Map(),
 ): MaterialStock[] => {
   if (!Number.isInteger(count) || count <= 0) {
     return [];
@@ -35,7 +48,13 @@ export const pickRandomDistinctStock = (
   );
   if (allowedMaterialTypeIds) {
     const allowed = new Set(allowedMaterialTypeIds);
-    pool = pool.filter((item) => allowed.has(item.material_type_id));
+    pool = pool.filter((item) => {
+      const materialTypeId = materialTypeIdForStock(
+        item,
+        colourTypeToMaterialType,
+      );
+      return materialTypeId !== undefined && allowed.has(materialTypeId);
+    });
   }
 
   const shuffled = shuffleInPlace([...pool]);
@@ -54,16 +73,18 @@ export const pickRandomDistinctStock = (
 };
 
 export const pickRandomCompatibleMethodId = (
-  methodIds: number[],
-  allowedByMethodId: Map<number, number[]>,
+  methodIds: string[],
+  allowedByMethodId: Map<string, string[]>,
   stock: MaterialStock[],
-  existingStockIds: number[],
+  existingStockIds: string[],
   needed: number,
-): number | null => {
+  colourTypeToMaterialType: Map<string, string> = new Map(),
+): string | null => {
   const existingTypes = new Set(
     stock
       .filter((item) => existingStockIds.includes(item.material_stock_id))
-      .map((item) => item.material_type_id),
+      .map((item) => materialTypeIdForStock(item, colourTypeToMaterialType))
+      .filter((id): id is string => id !== undefined),
   );
 
   const candidates = shuffleInPlace([...methodIds]).filter((methodId) => {
@@ -79,8 +100,13 @@ export const pickRandomCompatibleMethodId = (
   const withEnough = candidates.filter((methodId) => {
     const allowed = allowedByMethodId.get(methodId) ?? [];
     return (
-      pickRandomDistinctStock(stock, needed, allowed, existingStockIds)
-        .length >= needed
+      pickRandomDistinctStock(
+        stock,
+        needed,
+        allowed,
+        existingStockIds,
+        colourTypeToMaterialType,
+      ).length >= needed
     );
   });
 
