@@ -2,12 +2,17 @@ import { useFonts } from "expo-font";
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
+import { StyleSheet } from "react-native";
 import "react-native-reanimated";
 
+import { View } from "@/components/Themed";
+import PageThemeButton from "@/components/ui/PageThemeButton";
 import { useColorScheme } from "@/components/useColorScheme";
 import i18n from "@/constants/i18n";
+import { Space } from "@/constants/theme";
 import useAppearanceStore from "@/stores/useAppearanceStore";
-import { I18nextProvider } from "react-i18next";
+import usePageThemeStore from "@/stores/usePageThemeStore";
+import { I18nextProvider, useTranslation } from "react-i18next";
 
 export {
     // Catch any errors thrown by the Layout component.
@@ -34,6 +39,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     void useAppearanceStore.getState().hydrate();
+    void usePageThemeStore.getState().hydrate();
   }, []);
 
   useEffect(() => {
@@ -55,14 +61,37 @@ export default function RootLayout() {
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
+  const { t } = useTranslation();
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="maintenance"
+          options={{
+            title: t("tabs.maintenance"),
+            headerRight: () => (
+              <View style={styles.headerRight}>
+                <PageThemeButton pageId="maintenance" />
+              </View>
+            ),
+          }}
+        />
+        <Stack.Screen
+          name="page-theme"
+          options={{ title: t("pageTheme.title") }}
+        />
         <Stack.Screen name="modal" options={{ presentation: "modal" }} />
       </Stack>
     </ThemeProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  headerRight: {
+    marginRight: 15,
+    marginLeft: Space[3],
+  },
+});

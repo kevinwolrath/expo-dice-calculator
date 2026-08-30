@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
 import { Alert, Platform } from "react-native";
 
 import * as AlertHelper from "@/components/alert";
@@ -43,13 +44,15 @@ export default function ProductionMethodsScreen() {
     setMethods(mRows);
   }, []);
 
-  useEffect(() => {
-    (async () => {
-      await initDatabase();
-      await load();
-      await loadAll();
-    })();
-  }, [load, loadAll]);
+  useFocusEffect(
+    useCallback(() => {
+      void (async () => {
+        await initDatabase();
+        await load();
+        await loadAll();
+      })();
+    }, [load, loadAll]),
+  );
 
   const handleSaveMethod = async () => {
     if (!methodDescription.trim()) {

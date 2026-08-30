@@ -1,14 +1,17 @@
-import { Link, Tabs } from "expo-router";
+import { Link, Tabs, useSegments } from "expo-router";
 import { SymbolView } from "expo-symbols";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { ActivityIndicator, Pressable, StyleSheet } from "react-native";
 
 import { Screen, Text, View } from "@/components/Themed";
+import { PageThemeScope } from "@/components/pageTheme/PageThemeScope";
+import PageThemeButton from "@/components/ui/PageThemeButton";
 import PrimaryButton from "@/components/ui/PrimaryButton";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import { useClientOnlyValue } from "@/components/useClientOnlyValue";
 import { useColorScheme } from "@/components/useColorScheme";
 import Colors from "@/constants/Colors";
+import { pageIdFromSegments } from "@/constants/pageTheme";
 import { Space, Type } from "@/constants/theme";
 import { initDatabase } from "@/db";
 import { useTranslation } from "react-i18next";
@@ -17,6 +20,8 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
   const { t } = useTranslation();
   const headerShown = useClientOnlyValue(false, true);
+  const segments = useSegments();
+  const pageId = pageIdFromSegments(segments);
   const [databaseReady, setDatabaseReady] = useState(false);
   const [databaseError, setDatabaseError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
@@ -77,17 +82,14 @@ export default function TabLayout() {
   }
 
   return (
+    <PageThemeScope pageId={pageId}>
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme].tint,
         // Disable the static render of the header on web
         // to prevent a hydration error in React Navigation v6.
         headerShown,
-        headerRight: () => (
-          <View style={styles.headerActions}>
-            <ThemeToggle />
-          </View>
-        ),
+        headerRight: () => <HeaderActions pageId={pageId} />,
       }}
     >
       <Tabs.Screen
@@ -106,21 +108,27 @@ export default function TabLayout() {
             />
           ),
           headerRight: () => (
-            <View style={styles.headerActions}>
-              <ThemeToggle />
-              <Link href="/modal" asChild>
-                <Pressable>
-                  {({ pressed }) => (
-                    <SymbolView
-                      name={{ ios: "info.circle", android: "info", web: "info" }}
-                      size={22}
-                      tintColor={Colors[colorScheme].text}
-                      style={{ opacity: pressed ? 0.5 : 1 }}
-                    />
-                  )}
-                </Pressable>
-              </Link>
-            </View>
+            <HeaderActions
+              pageId="dicejob"
+              extra={
+                <Link href="/modal" asChild>
+                  <Pressable>
+                    {({ pressed }) => (
+                      <SymbolView
+                        name={{
+                          ios: "info.circle",
+                          android: "info",
+                          web: "info",
+                        }}
+                        size={22}
+                        tintColor={Colors[colorScheme].text}
+                        style={{ opacity: pressed ? 0.5 : 1 }}
+                      />
+                    )}
+                  </Pressable>
+                </Link>
+              }
+            />
           ),
         }}
       />
@@ -206,7 +214,48 @@ export default function TabLayout() {
           ),
         }}
       />
+
     </Tabs>
+    </PageThemeScope>
+  );
+}
+
+function HeaderActions({
+  extra,
+  pageId,
+}: {
+  extra?: ReactNode;
+  pageId?: ReturnType<typeof pageIdFromSegments>;
+}) {
+  const colorScheme = useColorScheme();
+  const { t } = useTranslation();
+  const activePageId = pageId;
+
+  return (
+    <View style={styles.headerActions}>
+      <ThemeToggle />
+      {activePageId ? <PageThemeButton pageId={activePageId} /> : null}
+      <Link href="/maintenance" asChild>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t("tabs.maintenance")}
+        >
+          {({ pressed }) => (
+            <SymbolView
+              name={{
+                ios: "gearshape.fill",
+                android: "settings",
+                web: "settings",
+              }}
+              size={22}
+              tintColor={Colors[colorScheme].text}
+              style={{ opacity: pressed ? 0.5 : 1 }}
+            />
+          )}
+        </Pressable>
+      </Link>
+      {extra}
+    </View>
   );
 }
 

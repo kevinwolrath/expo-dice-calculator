@@ -5,7 +5,8 @@
     "materialTypes": "Materialarten",
     "colourTypes": "Farbarten",
     "productionMethods": "Produktionsmethoden",
-    "diceNumberColours": "Zahlenfarben"
+    "diceNumberColours": "Zahlenfarben",
+    "maintenance": "Wartung"
   },
   "common": {
     "cancel": "Abbrechen",
@@ -167,6 +168,36 @@
     "empty": "Noch keine Zahlenfarben vorhanden.",
     "colourCount_one": "{{count}} Farbe",
     "colourCount_other": "{{count}} Farben"
+  },
+  "maintenance": {
+    "intro": "Speichern Sie eine JSON-Kopie der Datenbank, oder ersetzen Sie alle aktuellen Daten durch eine Sicherungsdatei.",
+    "export": "Datenbank als JSON exportieren",
+    "import": "Datenbank aus JSON importieren",
+    "exportSuccess": "Datenbank wurde exportiert.",
+    "importSuccess": "Datenbank wurde importiert.",
+    "exportError": "Die Datenbank konnte nicht exportiert werden.",
+    "importError": "Die Datenbank konnte nicht importiert werden.",
+    "importConfirmTitle": "Datenbank ersetzen?",
+    "importConfirmMessage": "Dadurch werden alle aktuellen Daten durch die ausgewählte Sicherung ersetzt. Das kann nicht rückgängig gemacht werden.",
+    "invalidFile": "Diese Datei ist keine gültige Datenbanksicherung."
+  },
+  "pageTheme": {
+    "title": "Seitenerscheinung",
+    "forPage": "Farben für {{page}}",
+    "preview": "Beispieltext",
+    "foreground": "Vordergrund",
+    "background": "Hintergrund",
+    "surface": "Liste",
+    "imageMode": "Hintergrundbild",
+    "centered": "Zentriert",
+    "tiled": "Gekachelt",
+    "chooseImage": "Hintergrundbild wählen",
+    "removeImage": "Bild entfernen",
+    "reset": "Diese Seite zurücksetzen",
+    "savedHint": "Änderungen werden automatisch auf diesem Gerät gespeichert.",
+    "missingPage": "Diese Seite kann nicht angepasst werden.",
+    "permissionDenied": "Für ein Hintergrundbild wird der Zugriff auf die Fotos benötigt.",
+    "imageError": "Das Hintergrundbild konnte nicht gespeichert werden."
   },
   "misc": {
     "noOptions": "Noch keine Optionen vorhanden",

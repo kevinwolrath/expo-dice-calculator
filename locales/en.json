@@ -5,7 +5,8 @@
     "materialTypes": "Material Types",
     "colourTypes": "Types",
     "productionMethods": "Methods",
-    "diceNumberColours": "Number Colours"
+    "diceNumberColours": "Number Colours",
+    "maintenance": "Maintenance"
   },
   "common": {
     "cancel": "Cancel",
@@ -167,6 +168,36 @@
     "empty": "No number colours yet.",
     "colourCount_one": "{{count}} colour",
     "colourCount_other": "{{count}} colours"
+  },
+  "maintenance": {
+    "intro": "Save a JSON copy of the database, or replace all current data from a backup file.",
+    "export": "Export database to JSON",
+    "import": "Import database from JSON",
+    "exportSuccess": "Database exported.",
+    "importSuccess": "Database imported.",
+    "exportError": "Could not export the database.",
+    "importError": "Could not import the database.",
+    "importConfirmTitle": "Replace database?",
+    "importConfirmMessage": "This replaces all current data with the selected backup. This cannot be undone.",
+    "invalidFile": "This file is not a valid database backup."
+  },
+  "pageTheme": {
+    "title": "Page appearance",
+    "forPage": "Colours for {{page}}",
+    "preview": "Sample text",
+    "foreground": "Foreground",
+    "background": "Background",
+    "surface": "List",
+    "imageMode": "Background image",
+    "centered": "Centered",
+    "tiled": "Tiled",
+    "chooseImage": "Choose background image",
+    "removeImage": "Remove image",
+    "reset": "Reset this page",
+    "savedHint": "Changes are saved on this device automatically.",
+    "missingPage": "This page cannot be customised.",
+    "permissionDenied": "Photo library access is needed to choose a background image.",
+    "imageError": "Could not save the background image."
   },
   "misc": {
     "noOptions": "No options yet",

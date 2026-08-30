@@ -1,3 +1,4 @@
+import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   Alert,
@@ -116,16 +117,18 @@ export default function JobsScreen() {
     setAllJobColours(colourRows);
   }, [loadMaterialTypes, loadStock, loadColourTypes]);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        await initDatabase();
-        await loadAll();
-      } catch (e) {
-        console.warn("Failed to initialise jobs screen", e);
-      }
-    })();
-  }, [loadAll]);
+  useFocusEffect(
+    useCallback(() => {
+      void (async () => {
+        try {
+          await initDatabase();
+          await loadAll();
+        } catch (e) {
+          console.warn("Failed to initialise jobs screen", e);
+        }
+      })();
+    }, [loadAll]),
+  );
 
   useEffect(() => {
     let cancelled = false;

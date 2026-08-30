@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
 import { Alert, Platform } from "react-native";
 
 import { showMessage } from "@/components/alert";
@@ -35,12 +36,14 @@ export default function DiceNumberColoursScreen() {
     }
   }, []);
 
-  useEffect(() => {
-    (async () => {
-      await initDatabase();
-      await load();
-    })();
-  }, [load]);
+  useFocusEffect(
+    useCallback(() => {
+      void (async () => {
+        await initDatabase();
+        await load();
+      })();
+    }, [load]),
+  );
 
   const handleSaveColour = async () => {
     if (!name.trim()) {
