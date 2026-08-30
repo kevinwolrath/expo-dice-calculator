@@ -2,11 +2,16 @@
  * Learn more about Light and Dark modes:
  * https://docs.expo.dev/develop/user-interface/color-themes/
  */
+import { useContext } from "react";
 import { Text as DefaultText, View as DefaultView } from "react-native";
 
 import { useColorScheme } from "./useColorScheme";
 
+import PageBackgroundImage from "@/components/pageTheme/PageBackgroundImage";
+import { PageThemeContext } from "@/components/pageTheme/PageThemeScope";
 import Colors from "@/constants/Colors";
+import type { PageTheme } from "@/constants/pageTheme";
+import usePageThemeStore from "@/stores/usePageThemeStore";
 
 type ThemeProps = {
   lightColor?: string;
@@ -16,8 +21,31 @@ type ThemeProps = {
 export type TextProps = ThemeProps & DefaultText["props"];
 export type ViewProps = ThemeProps & DefaultView["props"];
 
+type ThemeColors = (typeof Colors)[keyof typeof Colors];
+
+const applyPageTheme = (
+  base: ThemeColors,
+  pageTheme: PageTheme | undefined,
+  scheme: keyof typeof Colors,
+): ThemeColors => {
+  if (!pageTheme) return base;
+  const translucentCard =
+    scheme === "dark" ? "rgba(28, 28, 30, 0.9)" : "rgba(247, 247, 249, 0.9)";
+  return {
+    ...base,
+    text: pageTheme.foreground ?? base.text,
+    background: pageTheme.background ?? base.background,
+    card: pageTheme.surface ?? (pageTheme.imageUri ? translucentCard : base.card),
+  };
+};
+
 export function useThemeColors() {
-  return Colors[useColorScheme()];
+  const scheme = useColorScheme();
+  const pageId = useContext(PageThemeContext);
+  const pageTheme = usePageThemeStore((state) =>
+    pageId ? state.themes[pageId] : undefined,
+  );
+  return applyPageTheme(Colors[scheme], pageTheme, scheme);
 }
 
 export function useThemeColor(
@@ -26,12 +54,12 @@ export function useThemeColor(
 ) {
   const theme = useColorScheme();
   const colorFromProps = props[theme];
+  const colors = useThemeColors();
 
   if (colorFromProps) {
     return colorFromProps;
-  } else {
-    return Colors[theme][colorName];
   }
+  return colors[colorName];
 }
 
 export function Text(props: TextProps) {
@@ -60,12 +88,24 @@ export function View(props: ViewProps) {
 /** Full-screen surface with the theme background. Nested layout views stay transparent. */
 export function Screen(props: ViewProps) {
   const { style, lightColor, darkColor, ...otherProps } = props;
+  const pageId = useContext(PageThemeContext);
+  const pageTheme = usePageThemeStore((state) =>
+    pageId ? state.themes[pageId] : undefined,
+  );
   const backgroundColor = useThemeColor(
     { light: lightColor, dark: darkColor },
     "background",
   );
 
   return (
-    <DefaultView style={[{ flex: 1, backgroundColor }, style]} {...otherProps} />
+    <DefaultView style={{ flex: 1, backgroundColor }}>
+      {pageTheme?.imageUri ? (
+        <PageBackgroundImage
+          uri={pageTheme.imageUri}
+          mode={pageTheme.imageMode}
+        />
+      ) : null}
+      <DefaultView style={[{ flex: 1 }, style]} {...otherProps} />
+    </DefaultView>
   );
 }

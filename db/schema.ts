@@ -8,7 +8,7 @@ export const DATABASE_SCHEMA = `
 
 CREATE TABLE material_type
 (
-    material_type_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    material_type_id TEXT PRIMARY KEY,
 
     description TEXT NOT NULL UNIQUE,
 
@@ -21,7 +21,7 @@ CREATE TABLE material_type
 
 CREATE TABLE production_method
 (
-    production_method_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    production_method_id TEXT PRIMARY KEY,
 
     description TEXT NOT NULL UNIQUE,
 
@@ -38,15 +38,41 @@ CREATE TABLE production_method
 
 CREATE TABLE colour_type
 (
-    colour_type_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    colour_type_id TEXT PRIMARY KEY,
 
-    description TEXT NOT NULL UNIQUE,
+    description TEXT NOT NULL,
 
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    material_type_id TEXT NOT NULL,
+
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (material_type_id)
+        REFERENCES material_type(material_type_id),
+
+    UNIQUE (description, material_type_id)
 );
 
 CREATE INDEX ix_colour_type
 ON colour_type(colour_type_id);
+
+CREATE INDEX ix_colour_type_material
+ON colour_type(material_type_id);
+
+-------------------------------------------------------------
+-- Colour Brand
+-------------------------------------------------------------
+
+CREATE TABLE colour_brand
+(
+    colour_brand_id TEXT PRIMARY KEY,
+
+    colour_brand_name TEXT NOT NULL UNIQUE,
+
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX ix_colour_brand
+ON colour_brand(colour_brand_id);
 
 -------------------------------------------------------------
 -- Material Stock
@@ -54,13 +80,15 @@ ON colour_type(colour_type_id);
 
 CREATE TABLE material_stock
 (
-    material_stock_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    material_stock_id TEXT PRIMARY KEY,
 
     colour_name TEXT NOT NULL,
 
-    material_type_id INTEGER NOT NULL,
+    comment TEXT,
 
-    colour_type_id INTEGER NOT NULL,
+    colour_type_id TEXT NOT NULL,
+
+    colour_brand_id TEXT,
 
     quantity_in_stock INTEGER NOT NULL DEFAULT 0,
 
@@ -70,17 +98,17 @@ CREATE TABLE material_stock
 
     updated_at TEXT,
 
-    FOREIGN KEY (material_type_id)
-        REFERENCES material_type(material_type_id),
-
     FOREIGN KEY (colour_type_id)
         REFERENCES colour_type(colour_type_id),
+
+    FOREIGN KEY (colour_brand_id)
+        REFERENCES colour_brand(colour_brand_id),
 
     CHECK (quantity_in_stock >= 0)
 );
 
-CREATE INDEX ix_material_stock_material_type
-ON material_stock(material_type_id);
+CREATE INDEX ix_material_stock_colour_type
+ON material_stock(colour_type_id);
 
 -------------------------------------------------------------
 -- Job Number Colours
@@ -88,7 +116,7 @@ ON material_stock(material_type_id);
 
 CREATE TABLE dice_job_number_colour
 (
-    dice_job_number_colour_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    dice_job_number_colour_id TEXT PRIMARY KEY,
 
     dice_job_number_colour_name TEXT NOT NULL UNIQUE,
 
@@ -101,7 +129,7 @@ CREATE TABLE dice_job_number_colour
 
 CREATE TABLE dice_job
 (
-    dice_job_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    dice_job_id TEXT PRIMARY KEY,
 
     job_name TEXT NOT NULL,
 
@@ -109,13 +137,18 @@ CREATE TABLE dice_job
 
     colour_count INTEGER NOT NULL,
 
-    production_method_id INTEGER NOT NULL,
+    material_type_id TEXT NOT NULL,
 
-    dice_job_number_colour_id INTEGER NOT NULL,
+    production_method_id TEXT NOT NULL,
+
+    dice_job_number_colour_id TEXT NOT NULL,
 
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     updated_at TEXT,
+
+    FOREIGN KEY (material_type_id)
+        REFERENCES material_type(material_type_id),
 
     FOREIGN KEY (production_method_id)
         REFERENCES production_method(production_method_id),
@@ -132,17 +165,20 @@ ON dice_job(production_method_id);
 CREATE INDEX ix_dice_job_number_colour
 ON dice_job(dice_job_number_colour_id);
 
+CREATE INDEX ix_dice_job_material_type
+ON dice_job(material_type_id);
+
 -------------------------------------------------------------
 -- Job Colours
 -------------------------------------------------------------
 
 CREATE TABLE dice_job_colour
 (
-    dice_job_colour_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    dice_job_colour_id TEXT PRIMARY KEY,
 
-    dice_job_id INTEGER NOT NULL,
+    dice_job_id TEXT NOT NULL,
 
-    material_stock_id INTEGER NOT NULL,
+    material_stock_id TEXT NOT NULL,
 
     colour_order INTEGER,
 
@@ -164,15 +200,44 @@ ON dice_job_colour(dice_job_id);
 CREATE INDEX ix_job_colour_material
 ON dice_job_colour(material_stock_id);
 
+
+-------------------------------------------------------------
+-- Job Colours Type Exclusions
+-------------------------------------------------------------
+
+CREATE TABLE dice_job_colour_type_exclusion
+(
+    dice_job_colour_type_exclusion_id TEXT PRIMARY KEY,
+
+    dice_job_id TEXT NOT NULL,
+    
+    colour_type_id TEXT NOT NULL,
+
+    FOREIGN KEY (dice_job_id)
+        REFERENCES dice_job(dice_job_id)
+        ON DELETE CASCADE,
+
+    FOREIGN KEY (colour_type_id)
+        REFERENCES colour_type(colour_type_id),
+
+    UNIQUE (dice_job_id, colour_type_id)
+);
+
+CREATE INDEX ix_job_colour_type_exclusion_job
+ON dice_job_colour_type_exclusion(dice_job_id);
+
+CREATE INDEX ix_job_colour_type_exclusion
+ON dice_job_colour_type_exclusion(colour_type_id);
+
 -------------------------------------------------------------
 -- Allowed Materials for a Production Method
 -------------------------------------------------------------
 
 CREATE TABLE production_method_material
 (
-    production_method_id INTEGER NOT NULL,
+    production_method_id TEXT NOT NULL,
 
-    material_type_id INTEGER NOT NULL,
+    material_type_id TEXT NOT NULL,
 
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
 

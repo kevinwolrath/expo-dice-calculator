@@ -2,7 +2,7 @@ import { getDatabase } from "../client";
 import type { ProductionMethodMaterial } from "../types";
 
 export const listAllowedMaterialsForMethod = async (
-  productionMethodId: number,
+  productionMethodId: string,
 ): Promise<ProductionMethodMaterial[]> => {
   const db = await getDatabase();
   return db.getAllAsync<ProductionMethodMaterial>(
@@ -21,8 +21,8 @@ export const listAllAllowedMaterials = async (): Promise<
 };
 
 export const addAllowedMaterial = async (
-  productionMethodId: number,
-  materialTypeId: number,
+  productionMethodId: string,
+  materialTypeId: string,
 ): Promise<void> => {
   const db = await getDatabase();
   await db.runAsync(
@@ -33,8 +33,8 @@ export const addAllowedMaterial = async (
 };
 
 export const removeAllowedMaterial = async (
-  productionMethodId: number,
-  materialTypeId: number,
+  productionMethodId: string,
+  materialTypeId: string,
 ): Promise<void> => {
   const db = await getDatabase();
   await db.runAsync(

@@ -1,12 +1,12 @@
-import { Pressable, ScrollView, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
+import { Pressable, ScrollView, StyleSheet } from "react-native";
 
 import { Text, View, useThemeColors } from "@/components/Themed";
 import FieldError from "@/components/ui/FieldError";
 import FieldLabel from "@/components/ui/FieldLabel";
 import { FontSize, Radius, Space, Stroke, Type } from "@/constants/theme";
 
-type ChipOption = { value: number; label: string };
+type ChipOption = { value: string; label: string };
 
 type ChipSelectProps = {
   label: string;
@@ -18,13 +18,13 @@ type ChipSelectProps = {
 } & (
   | {
       multiple?: false;
-      value: number | null;
-      onChange: (value: number) => void;
+      value: string | null;
+      onChange: (value: string) => void;
     }
   | {
       multiple: true;
-      value: number[];
-      onChange: (value: number[]) => void;
+      value: string[];
+      onChange: (value: string[]) => void;
     }
 );
 

@@ -1,3 +1,4 @@
+import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   Alert,
@@ -10,7 +11,7 @@ import {
 } from "react-native";
 
 import { confirm, showMessage } from "@/components/alert";
-import { Text, View, useThemeColors } from "@/components/Themed";
+import { Text, useThemeColors, View } from "@/components/Themed";
 import EntityListItem from "@/components/ui/EntityListItem";
 import FieldLabel from "@/components/ui/FieldLabel";
 import FormActionRow from "@/components/ui/FormActionRow";
@@ -27,6 +28,7 @@ import {
   Type,
 } from "@/constants/theme";
 import {
+  colourTypeMaterialMap,
   createDiceJob,
   deleteDiceJob,
   initDatabase,
@@ -37,9 +39,9 @@ import {
   listDiceJobNumberColours,
   listDiceJobs,
   listProductionMethods,
-  pickRandomCompatibleMethodId,
   pickRandomDistinctStock,
   replaceDiceJobColours,
+  shuffleInPlace,
   updateDiceJob,
   type DiceJob,
   type DiceJobColour,
@@ -48,6 +50,8 @@ import {
 } from "@/db";
 import useInventoryStore from "@/stores/useInventoryStore";
 import { useTranslation } from "react-i18next";
+
+const MAX_COLOUR_COUNT = 6;
 
 const formatJobTimestamp = (value: string, locale: string) => {
   const iso = value.includes("T") ? value : `${value.replace(" ", "T")}Z`;
@@ -66,17 +70,23 @@ export default function JobsScreen() {
   const [methods, setMethods] = useState<ProductionMethod[]>([]);
   const [numberColours, setNumberColours] = useState<DiceJobNumberColour[]>([]);
   const stock = useInventoryStore((s) => s.stock);
+  const colourTypes = useInventoryStore((s) => s.colourTypes);
+  const materialTypes = useInventoryStore((s) => s.types);
   const loadStock = useInventoryStore((s) => s.loadStock);
+  const loadColourTypes = useInventoryStore((s) => s.loadColourTypes);
+  const loadMaterialTypes = useInventoryStore((s) => s.loadTypes);
+  const colourTypeToMaterialType = colourTypeMaterialMap(colourTypes);
 
   const [jobName, setJobName] = useState("");
   const [description, setDescription] = useState("");
   const [colourCount, setColourCount] = useState("");
-  const [jobColourStockIds, setJobColourStockIds] = useState<number[]>([]);
+  const [jobColourStockIds, setJobColourStockIds] = useState<string[]>([]);
   const [allJobColours, setAllJobColours] = useState<DiceJobColour[]>([]);
-  const [methodId, setMethodId] = useState<number | null>(null);
-  const [allowedTypeIds, setAllowedTypeIds] = useState<number[] | null>(null);
-  const [numberColourId, setNumberColourId] = useState<number | null>(null);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [materialTypeId, setMaterialTypeId] = useState<string | null>(null);
+  const [methodId, setMethodId] = useState<string | null>(null);
+  const [allowedTypeIds, setAllowedTypeIds] = useState<string[] | null>(null);
+  const [numberColourId, setNumberColourId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [showJobColourPicker, setShowJobColourPicker] = useState(false);
   const [editingColourIndex, setEditingColourIndex] = useState<number | null>(
@@ -87,6 +97,7 @@ export default function JobsScreen() {
     colourCount?: string;
     methodId?: string;
     numberColourId?: string;
+    materialTypeId?: string;
   }>({});
 
   const loadAll = useCallback(async () => {
@@ -96,24 +107,28 @@ export default function JobsScreen() {
         listProductionMethods(),
         listDiceJobNumberColours(),
         listAllDiceJobColours(),
+        loadMaterialTypes(),
         loadStock(),
+        loadColourTypes(),
       ]);
     setJobs(jobRows);
     setMethods(methodRows);
     setNumberColours(numberColourRows);
     setAllJobColours(colourRows);
-  }, [loadStock]);
+  }, [loadMaterialTypes, loadStock, loadColourTypes]);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        await initDatabase();
-        await loadAll();
-      } catch (e) {
-        console.warn("Failed to initialise jobs screen", e);
-      }
-    })();
-  }, [loadAll]);
+  useFocusEffect(
+    useCallback(() => {
+      void (async () => {
+        try {
+          await initDatabase();
+          await loadAll();
+        } catch (e) {
+          console.warn("Failed to initialise jobs screen", e);
+        }
+      })();
+    }, [loadAll]),
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -137,6 +152,7 @@ export default function JobsScreen() {
     setColourCount("");
     setJobColourStockIds([]);
     setMethodId(null);
+    setMaterialTypeId(null);
     setNumberColourId(null);
     setEditingId(null);
     setShowJobColourPicker(false);
@@ -150,6 +166,7 @@ export default function JobsScreen() {
     setDescription(job.description ?? "");
     setColourCount(String(job.colour_count));
     setMethodId(job.production_method_id);
+    setMaterialTypeId(job.material_type_id);
     setNumberColourId(job.dice_job_number_colour_id);
     setErrors({});
     void listDiceJobColours(job.dice_job_id).then((colours) => {
@@ -159,7 +176,9 @@ export default function JobsScreen() {
 
   const parseColourCount = (value = colourCount) => {
     const count = Number(value);
-    if (!Number.isInteger(count) || count <= 0) return null;
+    if (!Number.isInteger(count) || count <= 0 || count > MAX_COLOUR_COUNT) {
+      return null;
+    }
     return count;
   };
 
@@ -169,16 +188,98 @@ export default function JobsScreen() {
       cancel: t("common.no"),
     });
 
+  const handleGenerateRandomJob = async () => {
+    if (methods.length === 0) {
+      showMessage(t("common.error"), t("jobs.noProductionMethods"));
+      return;
+    }
+
+    const allowedRows = await listAllAllowedMaterials();
+    const allowedByMethodId = new Map<string, string[]>();
+    for (const row of allowedRows) {
+      const allowedTypeIds =
+        allowedByMethodId.get(row.production_method_id) ?? [];
+      allowedTypeIds.push(row.material_type_id);
+      allowedByMethodId.set(row.production_method_id, allowedTypeIds);
+    }
+
+    const activeMaterialTypeIds = new Set(
+      stock
+        .filter((item) => item.is_active !== 0)
+        .map((item) => colourTypeToMaterialType.get(item.colour_type_id))
+        .filter((id): id is string => id !== undefined),
+    );
+    const eligibleMaterialTypeIds = materialTypes
+      .map((type) => type.material_type_id)
+      .filter(
+        (typeId) =>
+          activeMaterialTypeIds.has(typeId) &&
+          methods.some((method) =>
+            (allowedByMethodId.get(method.production_method_id) ?? []).includes(
+              typeId,
+            ),
+          ),
+      );
+    const selectedMaterialTypeId = shuffleInPlace(eligibleMaterialTypeIds)[0];
+    if (!selectedMaterialTypeId) {
+      showMessage(t("common.error"), t("jobs.noCompatibleStock"));
+      return;
+    }
+
+    const eligibleMethodIds = methods
+      .filter((method) =>
+        (allowedByMethodId.get(method.production_method_id) ?? []).includes(
+          selectedMaterialTypeId,
+        ),
+      )
+      .map((method) => method.production_method_id);
+    const selectedMethodId = shuffleInPlace(eligibleMethodIds)[0];
+    if (!selectedMethodId) {
+      showMessage(t("common.error"), t("jobs.noCompatibleStock"));
+      return;
+    }
+
+    const availableColours = pickRandomDistinctStock(
+      stock,
+      stock.length,
+      [selectedMaterialTypeId],
+      [],
+      colourTypeToMaterialType,
+    );
+    const maxRandomColourCount = Math.min(
+      availableColours.length,
+      MAX_COLOUR_COUNT,
+    );
+    const selectedColourCount =
+      Math.floor(Math.random() * maxRandomColourCount) + 1;
+    const selectedColours = pickRandomDistinctStock(
+      stock,
+      selectedColourCount,
+      [selectedMaterialTypeId],
+      [],
+      colourTypeToMaterialType,
+    );
+
+    setMaterialTypeId(selectedMaterialTypeId);
+    setMethodId(selectedMethodId);
+    setColourCount(String(selectedColourCount));
+    setJobColourStockIds(selectedColours.map((item) => item.material_stock_id));
+    setErrors({});
+  };
+
   const handleGenerateColours = async (options?: {
     replace?: boolean;
     count?: number;
-    methodId?: number | null;
+    methodId?: string | null;
+    materialTypeId?: string | null;
   }) => {
     const count = options?.count ?? parseColourCount();
     if (count === null) {
       setErrors((current) => ({
         ...current,
-        colourCount: t("jobs.invalidCountMessage"),
+        colourCount: t("jobs.invalidCountMessage", {
+          max: MAX_COLOUR_COUNT,
+        }),
       }));
       return;
     }
@@ -198,52 +299,49 @@ export default function JobsScreen() {
       return;
     }
 
-    if (methods.length === 0) {
-      showMessage(t("common.error"), t("jobs.noProductionMethods"));
+    const selectedMethodId =
+      options?.methodId !== undefined ? options.methodId : methodId;
+    const selectedMaterialTypeId =
+      options?.materialTypeId !== undefined
+        ? options.materialTypeId
+        : materialTypeId;
+    if (!selectedMaterialTypeId) {
+      setErrors((current) => ({
+        ...current,
+        materialTypeId: t("common.required"),
+      }));
+      return;
+    }
+    if (!selectedMethodId) {
+      setErrors((current) => ({
+        ...current,
+        methodId: t("common.required"),
+      }));
       return;
     }
 
-    const allowedRows = await listAllAllowedMaterials();
-    const allowedByMethodId = new Map<number, number[]>();
-    for (const row of allowedRows) {
-      const current = allowedByMethodId.get(row.production_method_id) ?? [];
-      current.push(row.material_type_id);
-      allowedByMethodId.set(row.production_method_id, current);
-    }
-
-    let selectedMethodId =
-      options?.methodId !== undefined ? options.methodId : methodId;
-    if (!selectedMethodId) {
-      selectedMethodId = pickRandomCompatibleMethodId(
-        methods.map((method) => method.production_method_id),
-        allowedByMethodId,
-        stock,
-        existingIds,
-        missing,
-      );
-      if (!selectedMethodId) {
-        showMessage(t("common.error"), t("jobs.noCompatibleStock"));
-        return;
-      }
-      setMethodId(selectedMethodId);
-      setErrors((current) => ({ ...current, methodId: undefined }));
-    }
-
-    const allowedTypeIdsForMethod =
-      allowedByMethodId.get(selectedMethodId) ??
-      (await listAllowedMaterialsForMethod(selectedMethodId)).map(
-        (row) => row.material_type_id,
-      );
+    const allowedTypeIdsForMethod = (
+      await listAllowedMaterialsForMethod(selectedMethodId)
+    ).map((row) => row.material_type_id);
 
     if (allowedTypeIdsForMethod.length === 0) {
       showMessage(t("common.error"), t("jobs.noCompatibleStock"));
       return;
     }
 
+    if (!allowedTypeIdsForMethod.includes(selectedMaterialTypeId)) {
+      showMessage(t("common.error"), t("jobs.noCompatibleStock"));
+      return;
+    }
+
+    const allowedTypeIdsForGeneration = [selectedMaterialTypeId];
+
     const compatibleExistingIds = existingIds.filter((id) => {
       const item = stock.find((row) => row.material_stock_id === id);
       return item
-        ? allowedTypeIdsForMethod.includes(item.material_type_id)
+        ? allowedTypeIdsForGeneration.includes(
+            colourTypeToMaterialType.get(item.colour_type_id) ?? "",
+          )
         : false;
     });
     if (compatibleExistingIds.length !== existingIds.length) {
@@ -259,8 +357,9 @@ export default function JobsScreen() {
     const picked = pickRandomDistinctStock(
       stock,
       remaining,
-      allowedTypeIdsForMethod,
+      allowedTypeIdsForGeneration,
       compatibleExistingIds,
+      colourTypeToMaterialType,
     );
     if (picked.length === 0) {
       showMessage(t("common.error"), t("jobs.noCompatibleStock"));
@@ -296,7 +395,7 @@ export default function JobsScreen() {
     await handleGenerateColours({ replace: true, count });
   };
 
-  const handleProductionMethodChange = async (value: number) => {
+  const handleProductionMethodChange = async (value: string) => {
     if (value === methodId) return;
     setMethodId(value);
     setErrors((current) => ({ ...current, methodId: undefined }));
@@ -309,8 +408,22 @@ export default function JobsScreen() {
     if (!shouldRegenerate) return;
     await handleGenerateColours({ replace: true, methodId: value });
   };
+  const handleMaterialTypeChange = async (value: string) => {
+    if (value === materialTypeId) return;
+    setMaterialTypeId(value);
+    setMethodId(null);
+    setErrors((current) => ({ ...current, materialTypeId: undefined }));
 
-  const applyJobColourStockIds = (ids: number[]) => {
+    if (jobColourStockIds.length === 0) return;
+
+    const shouldRegenerate = await confirmRegenerate(
+      t("jobs.regenerateColoursOnMaterialType"),
+    );
+    if (!shouldRegenerate) return;
+    await handleGenerateColours({ replace: true, materialTypeId: value });
+  };
+
+  const applyJobColourStockIds = (ids: string[]) => {
     setJobColourStockIds(ids);
   };
 
@@ -319,7 +432,7 @@ export default function JobsScreen() {
     setShowJobColourPicker(true);
   };
 
-  const handleSelectJobColour = (materialStockId: number) => {
+  const handleSelectJobColour = (materialStockId: string) => {
     if (editingColourIndex === null) return;
     applyJobColourStockIds(
       jobColourStockIds.map((id, index) =>
@@ -346,16 +459,20 @@ export default function JobsScreen() {
     if (!jobName.trim()) nextErrors.jobName = t("common.required");
     const count = parseColourCount();
     if (count === null) {
-      nextErrors.colourCount = t("jobs.invalidCountMessage");
+      nextErrors.colourCount = t("jobs.invalidCountMessage", {
+        max: MAX_COLOUR_COUNT,
+      });
     } else if (jobColourStockIds.length !== count) {
       nextErrors.colourCount = t("jobs.generateColoursRequired");
     }
     if (!methodId) nextErrors.methodId = t("common.required");
+    if (!materialTypeId) nextErrors.materialTypeId = t("common.required");
     if (!numberColourId) nextErrors.numberColourId = t("common.required");
     setErrors(nextErrors);
     if (
       Object.keys(nextErrors).length > 0 ||
       !methodId ||
+      !materialTypeId ||
       !numberColourId ||
       count === null
     ) {
@@ -368,10 +485,11 @@ export default function JobsScreen() {
         job_name: jobName.trim(),
         description: description.trim() || null,
         colour_count: count,
+        material_type_id: materialTypeId,
         production_method_id: methodId,
         dice_job_number_colour_id: numberColourId,
       };
-      let jobId: number;
+      let jobId: string;
       if (editingId) {
         await updateDiceJob(editingId, payload);
         jobId = editingId;
@@ -389,7 +507,7 @@ export default function JobsScreen() {
     }
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: string) => {
     if (Platform.OS === "web") {
       if (
         window.confirm(`${t("jobs.deleteTitle")} - ${t("jobs.deleteMessage")}`)
@@ -417,19 +535,19 @@ export default function JobsScreen() {
     ]);
   };
 
-  const methodLabel = (id: number) =>
+  const methodLabel = (id: string) =>
     methods.find((m) => m.production_method_id === id)?.description ??
     t("jobs.unknownMethod");
 
-  const numberColourLabel = (id: number) =>
+  const numberColourLabel = (id: string) =>
     numberColours.find((c) => c.dice_job_number_colour_id === id)
       ?.dice_job_number_colour_name ?? t("jobs.unknownNumberColour");
 
-  const stockColourLabel = (id: number) =>
+  const stockColourLabel = (id: string) =>
     stock.find((item) => item.material_stock_id === id)?.colour_name ??
     t("jobs.unknownNumberColour");
 
-  const coloursForJob = (jobId: number) =>
+  const coloursForJob = (jobId: string) =>
     allJobColours
       .filter((colour) => colour.dice_job_id === jobId)
       .map((colour) => stockColourLabel(colour.material_stock_id));
@@ -441,11 +559,18 @@ export default function JobsScreen() {
     if (item.is_active === 0 || usedJobColourIds.has(item.material_stock_id)) {
       return false;
     }
-    if (allowedTypeIds === null) return true;
-    return allowedTypeIds.includes(item.material_type_id);
+    const itemMaterialTypeId =
+      colourTypeToMaterialType.get(item.colour_type_id) ?? "";
+    if (materialTypeId && itemMaterialTypeId !== materialTypeId) return false;
+    return (
+      allowedTypeIds === null || allowedTypeIds.includes(itemMaterialTypeId)
+    );
   });
 
-  const canGenerate = parseColourCount() !== null;
+  const hasValidColourCount = parseColourCount() !== null;
+  const canChooseColourCount = materialTypeId !== null;
+  const canChooseMethod = canChooseColourCount && hasValidColourCount;
+  const canGenerate = materialTypes.length > 0 && methods.length > 0;
 
   return (
     <ScreenList
@@ -474,29 +599,27 @@ export default function JobsScreen() {
             multiline
           />
           <View style={styles.colourCountBlock}>
-            <FormField
-              label={t("jobs.colourCount")}
-              required
-              error={errors.colourCount}
-              value={colourCount}
-              onChangeText={(value) => {
-                setColourCount(value);
-                setErrors((current) => ({
-                  ...current,
-                  colourCount: undefined,
-                }));
-              }}
-              onBlur={() => {
-                void handleColourCountBlur();
-              }}
-              keyboardType="number-pad"
-            />
             <PrimaryButton
               title={t("jobs.generate")}
-              disabled={!canGenerate}
               onPress={() => {
-                void handleGenerateColours();
+                void handleGenerateRandomJob();
               }}
+              disabled={!canGenerate}
+            />
+            <SelectDropdown
+              label={t("jobs.materialType")}
+              placeholder={t("jobs.selectMaterialType")}
+              required
+              error={errors.materialTypeId}
+              value={materialTypeId}
+              options={materialTypes.map((type) => ({
+                value: type.material_type_id,
+                label: type.description ?? type.material_type_id.toString(),
+              }))}
+              onChange={(value) => {
+                void handleMaterialTypeChange(value);
+              }}
+              emptyHint={t("jobs.addMaterialTypeHint")}
             />
             <SelectDropdown
               label={t("jobs.productionMethod")}
@@ -513,6 +636,25 @@ export default function JobsScreen() {
                 void handleProductionMethodChange(value);
               }}
               emptyHint={t("jobs.addProductionMethodHint")}
+              disabled={!canChooseMethod}
+            />
+            <FormField
+              label={t("jobs.colourCount")}
+              required
+              error={errors.colourCount}
+              value={colourCount}
+              onChangeText={(value) => {
+                setColourCount(value);
+                setErrors((current) => ({
+                  ...current,
+                  colourCount: undefined,
+                }));
+              }}
+              onBlur={() => {
+                void handleColourCountBlur();
+              }}
+              keyboardType="number-pad"
+              editable={canChooseColourCount}
             />
             {jobColourStockIds.length > 0 ? (
               <View style={styles.generatedColours}>

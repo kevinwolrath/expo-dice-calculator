@@ -1,5 +1,6 @@
 import { getDatabase } from "../client";
 import type { DiceJobNumberColour } from "../types";
+import { generateId } from "../uuid";
 
 export const listDiceJobNumberColours = async (): Promise<
   DiceJobNumberColour[]
@@ -11,7 +12,7 @@ export const listDiceJobNumberColours = async (): Promise<
 };
 
 export const getDiceJobNumberColour = async (
-  id: number,
+  id: string,
 ): Promise<DiceJobNumberColour | null> => {
   const db = await getDatabase();
   return db.getFirstAsync<DiceJobNumberColour>(
@@ -24,18 +25,20 @@ export const createDiceJobNumberColour = async (input: {
   dice_job_number_colour_name: string;
 }): Promise<DiceJobNumberColour> => {
   const db = await getDatabase();
-  const result = await db.runAsync(
-    "INSERT INTO dice_job_number_colour (dice_job_number_colour_name) VALUES (?);",
+  const id = generateId();
+  await db.runAsync(
+    "INSERT INTO dice_job_number_colour (dice_job_number_colour_id, dice_job_number_colour_name) VALUES (?, ?);",
+    id,
     input.dice_job_number_colour_name,
   );
-  const created = await getDiceJobNumberColour(result.lastInsertRowId);
+  const created = await getDiceJobNumberColour(id);
   if (!created)
     throw new Error("Failed to load created dice job number colour");
   return created;
 };
 
 export const updateDiceJobNumberColour = async (
-  id: number,
+  id: string,
   input: { dice_job_number_colour_name?: string },
 ): Promise<void> => {
   const db = await getDatabase();
@@ -48,7 +51,7 @@ export const updateDiceJobNumberColour = async (
   );
 };
 
-export const deleteDiceJobNumberColour = async (id: number): Promise<void> => {
+export const deleteDiceJobNumberColour = async (id: string): Promise<void> => {
   const db = await getDatabase();
   await db.runAsync(
     "DELETE FROM dice_job_number_colour WHERE dice_job_number_colour_id = ?;",

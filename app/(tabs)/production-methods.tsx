@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
 import { Alert, Platform } from "react-native";
 
 import * as AlertHelper from "@/components/alert";
@@ -26,29 +27,48 @@ export default function ProductionMethodsScreen() {
   const [methods, setMethods] = useState<ProductionMethod[]>([]);
 
   const [methodDescription, setMethodDescription] = useState("");
-  const [methodEditingId, setMethodEditingId] = useState<number | null>(null);
+  const [minimumColourCount, setMinimumColourCount] = useState("");
+  const [maximumColourCount, setMaximumColourCount] = useState("");
+  const [methodEditingId, setMethodEditingId] = useState<string | null>(null);
   const [savingMethod, setSavingMethod] = useState(false);
   const materialTypes = useInventoryStore((s) => s.types);
   const loadAll = useInventoryStore((s) => s.loadAll);
-  const [allowedMaterialIds, setAllowedMaterialIds] = useState<number[]>([]);
-  const [errors, setErrors] = useState<{ description?: string }>({});
+  const [allowedMaterialIds, setAllowedMaterialIds] = useState<string[]>([]);
+  const [errors, setErrors] = useState<{
+    description?: string;
+    colourCountRange?: string;
+  }>({});
 
   const load = useCallback(async () => {
     const mRows = await listProductionMethods();
     setMethods(mRows);
   }, []);
 
-  useEffect(() => {
-    (async () => {
-      await initDatabase();
-      await load();
-      await loadAll();
-    })();
-  }, [load, loadAll]);
+  useFocusEffect(
+    useCallback(() => {
+      void (async () => {
+        await initDatabase();
+        await load();
+        await loadAll();
+      })();
+    }, [load, loadAll]),
+  );
 
   const handleSaveMethod = async () => {
     if (!methodDescription.trim()) {
       setErrors({ description: t("common.required") });
+      return;
+    }
+    const minValue = minimumColourCount.trim()
+      ? Number(minimumColourCount)
+      : null;
+    const maxValue = maximumColourCount.trim()
+      ? Number(maximumColourCount)
+      : null;
+    if (minValue !== null && maxValue !== null && minValue > maxValue) {
+      setErrors({
+        colourCountRange: t("productionMethods.colourCountRangeError"),
+      });
       return;
     }
     setErrors({});
@@ -58,10 +78,14 @@ export default function ProductionMethodsScreen() {
       if (methodEditingId) {
         await updateProductionMethod(methodEditingId, {
           description: methodDescription.trim(),
+          minimum_colour_count: minValue,
+          maximum_colour_count: maxValue,
         });
       } else {
         const created = await createProductionMethod({
           description: methodDescription.trim(),
+          minimum_colour_count: minValue,
+          maximum_colour_count: maxValue,
         });
         productionMethodId = created.production_method_id;
       }
@@ -96,6 +120,16 @@ export default function ProductionMethodsScreen() {
   const handleEditMethod = async (method: ProductionMethod) => {
     setMethodEditingId(method.production_method_id);
     setMethodDescription(method.description ?? "");
+    setMinimumColourCount(
+      method.minimum_colour_count != null
+        ? String(method.minimum_colour_count)
+        : "",
+    );
+    setMaximumColourCount(
+      method.maximum_colour_count != null
+        ? String(method.maximum_colour_count)
+        : "",
+    );
     const allowed = await listAllowedMaterialsForMethod(
       method.production_method_id,
     );
@@ -105,12 +139,14 @@ export default function ProductionMethodsScreen() {
 
   const handleCancelMethod = () => {
     setMethodDescription("");
+    setMinimumColourCount("");
+    setMaximumColourCount("");
     setMethodEditingId(null);
     setAllowedMaterialIds([]);
     setErrors({});
   };
 
-  const handleDeleteMethod = (id: number) => {
+  const handleDeleteMethod = (id: string) => {
     if (Platform.OS === "web") {
       if (
         window.confirm(
@@ -162,6 +198,25 @@ export default function ProductionMethodsScreen() {
               setErrors({});
             }}
           />
+          <FormField
+            label={t("productionMethods.minimumColourCount")}
+            error={errors.colourCountRange}
+            value={minimumColourCount}
+            onChangeText={(value) => {
+              setMinimumColourCount(value);
+              setErrors({});
+            }}
+            keyboardType="number-pad"
+          />
+          <FormField
+            label={t("productionMethods.maximumColourCount")}
+            value={maximumColourCount}
+            onChangeText={(value) => {
+              setMaximumColourCount(value);
+              setErrors({});
+            }}
+            keyboardType="number-pad"
+          />
           <ChipSelect
             multiple
             wrap
@@ -188,6 +243,15 @@ export default function ProductionMethodsScreen() {
       renderItem={({ item }) => (
         <EntityListItem
           title={item.description ?? String(item.production_method_id)}
+          meta={
+            item.minimum_colour_count != null ||
+            item.maximum_colour_count != null
+              ? t("productionMethods.colourCountRange", {
+                  min: item.minimum_colour_count ?? "?",
+                  max: item.maximum_colour_count ?? "?",
+                })
+              : undefined
+          }
           onEdit={() => handleEditMethod(item)}
           onDelete={() => handleDeleteMethod(item.production_method_id)}
         />

@@ -40,7 +40,16 @@
         }
       ],
       "expo-sqlite",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "expo-sharing",
+      [
+        "expo-image-picker",
+        {
+          photosPermission:
+            "The app uses your photos as page background images.",
+          microphonePermission: false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

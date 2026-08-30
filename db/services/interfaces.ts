@@ -1,4 +1,6 @@
 import type {
+    ColourBrand,
+    ColourType,
     DiceJob,
     DiceJobColour,
     DiceJobNumberColour,
@@ -8,125 +10,146 @@ import type {
     ProductionMethodMaterial,
 } from "../types";
 
+export interface ColourBrandService {
+  listColourBrands(): Promise<ColourBrand[]>;
+  getColourBrand(id: string): Promise<ColourBrand | null>;
+}
+
+export interface ColourTypeService {
+  listColourTypes(): Promise<ColourType[]>;
+  getColourType(id: string): Promise<ColourType | null>;
+  createColourType(input: {
+    description: string;
+    material_type_id: string;
+  }): Promise<ColourType>;
+  updateColourType(
+    id: string,
+    input: { description?: string | null; material_type_id?: string },
+  ): Promise<void>;
+  deleteColourType(id: string): Promise<void>;
+}
+
 export interface MaterialTypeService {
   listMaterialTypes(): Promise<MaterialType[]>;
-  getMaterialType(id: number): Promise<MaterialType | null>;
+  getMaterialType(id: string): Promise<MaterialType | null>;
   createMaterialType(input: { description: string }): Promise<MaterialType>;
   updateMaterialType(
-    id: number,
+    id: string,
     input: { description?: string | null },
   ): Promise<void>;
-  deleteMaterialType(id: number): Promise<void>;
+  deleteMaterialType(id: string): Promise<void>;
 }
 
 export interface ProductionMethodService {
   listProductionMethods(): Promise<ProductionMethod[]>;
-  getProductionMethod(id: number): Promise<ProductionMethod | null>;
+  getProductionMethod(id: string): Promise<ProductionMethod | null>;
   createProductionMethod(input: {
     description: string;
   }): Promise<ProductionMethod>;
   updateProductionMethod(
-    id: number,
+    id: string,
     input: { description?: string | null },
   ): Promise<void>;
-  deleteProductionMethod(id: number): Promise<void>;
+  deleteProductionMethod(id: string): Promise<void>;
 }
 
 export interface MaterialStockService {
   listMaterialStock(): Promise<MaterialStock[]>;
-  getMaterialStock(id: number): Promise<MaterialStock | null>;
+  getMaterialStock(id: string): Promise<MaterialStock | null>;
   createMaterialStock(input: {
     colour_name: string;
-    material_type_id: number;
-    colour_type_id?: number;
+    colour_type_id: string;
+    colour_brand_id?: string | null;
     quantity_in_stock?: number;
     is_active?: boolean;
   }): Promise<MaterialStock>;
   updateMaterialStock(
-    id: number,
+    id: string,
     input: {
       colour_name?: string;
-      material_type_id?: number;
-      colour_type_id?: number;
+      colour_type_id?: string;
+      colour_brand_id?: string | null;
       quantity_in_stock?: number;
       is_active?: boolean;
     },
   ): Promise<void>;
-  deleteMaterialStock(id: number): Promise<void>;
+  deleteMaterialStock(id: string): Promise<void>;
 }
 
 export interface DiceJobService {
   listDiceJobs(): Promise<DiceJob[]>;
-  getDiceJob(id: number): Promise<DiceJob | null>;
+  getDiceJob(id: string): Promise<DiceJob | null>;
   createDiceJob(input: {
     job_name: string;
     description?: string | null;
     colour_count: number;
-    production_method_id: number;
-    dice_job_number_colour_id: number;
+    production_method_id: string;
+    dice_job_number_colour_id: string;
   }): Promise<DiceJob>;
   updateDiceJob(
-    id: number,
+    id: string,
     input: {
       job_name?: string;
       description?: string | null;
       colour_count?: number;
-      production_method_id?: number;
-      dice_job_number_colour_id?: number;
+      production_method_id?: string;
+      dice_job_number_colour_id?: string;
     },
   ): Promise<void>;
-  deleteDiceJob(id: number): Promise<void>;
+  deleteDiceJob(id: string): Promise<void>;
 }
 
 export interface DiceJobColourService {
-  listDiceJobColours(diceJobId: number): Promise<DiceJobColour[]>;
+  listDiceJobColours(diceJobId: string): Promise<DiceJobColour[]>;
   listAllDiceJobColours(): Promise<DiceJobColour[]>;
-  getDiceJobColour(id: number): Promise<DiceJobColour | null>;
+  getDiceJobColour(id: string): Promise<DiceJobColour | null>;
   createDiceJobColour(input: {
-    dice_job_id: number;
-    material_stock_id: number;
+    dice_job_id: string;
+    material_stock_id: string;
     colour_order?: number | null;
   }): Promise<DiceJobColour>;
   updateDiceJobColour(
-    id: number,
-    input: { material_stock_id?: number; colour_order?: number | null },
+    id: string,
+    input: { material_stock_id?: string; colour_order?: number | null },
   ): Promise<void>;
-  deleteDiceJobColour(id: number): Promise<void>;
+  deleteDiceJobColour(id: string): Promise<void>;
   replaceDiceJobColours(
-    diceJobId: number,
-    materialStockIds: number[],
+    diceJobId: string,
+    materialStockIds: string[],
   ): Promise<DiceJobColour[]>;
 }
 
 export interface DiceJobNumberColourService {
   listDiceJobNumberColours(): Promise<DiceJobNumberColour[]>;
-  getDiceJobNumberColour(id: number): Promise<DiceJobNumberColour | null>;
+  getDiceJobNumberColour(id: string): Promise<DiceJobNumberColour | null>;
   createDiceJobNumberColour(input: {
     dice_job_number_colour_name: string;
   }): Promise<DiceJobNumberColour>;
   updateDiceJobNumberColour(
-    id: number,
+    id: string,
     input: { dice_job_number_colour_name?: string },
   ): Promise<void>;
-  deleteDiceJobNumberColour(id: number): Promise<void>;
+  deleteDiceJobNumberColour(id: string): Promise<void>;
 }
 
 export interface ProductionMethodMaterialService {
   listAllowedMaterialsForMethod(
-    productionMethodId: number,
+    productionMethodId: string,
   ): Promise<ProductionMethodMaterial[]>;
   listAllAllowedMaterials(): Promise<ProductionMethodMaterial[]>;
   addAllowedMaterial(
-    productionMethodId: number,
-    materialTypeId: number,
+    productionMethodId: string,
+    materialTypeId: string,
   ): Promise<void>;
   removeAllowedMaterial(
-    productionMethodId: number,
-    materialTypeId: number,
+    productionMethodId: string,
+    materialTypeId: string,
   ): Promise<void>;
 }
 
 export type DBServices =
+  | ColourBrandService
+  | ColourTypeService
   | MaterialTypeService
   | ProductionMethodService
   | MaterialStockService

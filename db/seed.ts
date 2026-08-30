@@ -1,6 +1,8 @@
 import type * as SQLite from "expo-sqlite";
 
-// Techniques data (derived from Techniques.csv)
+import { COLOUR_CATALOG } from "./seedColourCatalog";
+import { generateId } from "./uuid";
+
 const TECHNIQUES: Array<{ technique: string; resin: boolean; clay: boolean }> =
   [
     { technique: "Dirty Pour", resin: true, clay: false },
@@ -17,14 +19,6 @@ const TECHNIQUES: Array<{ technique: string; resin: boolean; clay: boolean }> =
     { technique: "Layered", resin: true, clay: true },
   ];
 
-const COLOUR_TYPES = [
-  "Opaque",
-  "Transparent",
-  "Translucent",
-  "Metallic",
-  "Glow",
-] as const;
-
 const DICE_NUMBER_COLOURS: string[] = [
   "Black",
   "White",
@@ -35,80 +29,25 @@ const DICE_NUMBER_COLOURS: string[] = [
   "Blue",
 ];
 
-const SAMPLE_MATERIAL_STOCK: Array<{
-  colour_name: string;
-  type: "Resin" | "Clay";
-  quantity_in_stock: number;
-}> = [
-  { colour_name: "Red", type: "Resin", quantity_in_stock: 10 },
-  { colour_name: "Crimson", type: "Resin", quantity_in_stock: 8 },
-  { colour_name: "Maroon", type: "Resin", quantity_in_stock: 6 },
-  { colour_name: "Orange", type: "Resin", quantity_in_stock: 10 },
-  { colour_name: "Amber", type: "Resin", quantity_in_stock: 7 },
-  { colour_name: "Yellow", type: "Resin", quantity_in_stock: 10 },
-  { colour_name: "Gold", type: "Resin", quantity_in_stock: 8 },
-  { colour_name: "Lime", type: "Resin", quantity_in_stock: 7 },
-  { colour_name: "Green", type: "Resin", quantity_in_stock: 10 },
-  { colour_name: "Forest", type: "Resin", quantity_in_stock: 6 },
-  { colour_name: "Teal", type: "Resin", quantity_in_stock: 8 },
-  { colour_name: "Turquoise", type: "Resin", quantity_in_stock: 7 },
-  { colour_name: "Cyan", type: "Resin", quantity_in_stock: 8 },
-  { colour_name: "Sky Blue", type: "Resin", quantity_in_stock: 9 },
-  { colour_name: "Blue", type: "Resin", quantity_in_stock: 10 },
-  { colour_name: "Navy", type: "Resin", quantity_in_stock: 8 },
-  { colour_name: "Royal Blue", type: "Resin", quantity_in_stock: 7 },
-  { colour_name: "Purple", type: "Resin", quantity_in_stock: 9 },
-  { colour_name: "Violet", type: "Resin", quantity_in_stock: 7 },
-  { colour_name: "Lavender", type: "Resin", quantity_in_stock: 6 },
-  { colour_name: "Magenta", type: "Resin", quantity_in_stock: 7 },
-  { colour_name: "Pink", type: "Resin", quantity_in_stock: 9 },
-  { colour_name: "Hot Pink", type: "Resin", quantity_in_stock: 6 },
-  { colour_name: "Coral", type: "Resin", quantity_in_stock: 7 },
-  { colour_name: "Peach", type: "Resin", quantity_in_stock: 6 },
-  { colour_name: "Cream", type: "Resin", quantity_in_stock: 8 },
-  { colour_name: "Ivory", type: "Resin", quantity_in_stock: 7 },
-  { colour_name: "Pearl", type: "Resin", quantity_in_stock: 6 },
-  { colour_name: "White", type: "Resin", quantity_in_stock: 10 },
-  { colour_name: "Silver", type: "Resin", quantity_in_stock: 8 },
-  { colour_name: "Smoke", type: "Resin", quantity_in_stock: 7 },
-  { colour_name: "Grey", type: "Resin", quantity_in_stock: 8 },
-  { colour_name: "Charcoal", type: "Resin", quantity_in_stock: 7 },
-  { colour_name: "Black", type: "Resin", quantity_in_stock: 10 },
-  { colour_name: "Copper", type: "Resin", quantity_in_stock: 6 },
-  { colour_name: "Bronze", type: "Resin", quantity_in_stock: 6 },
-  { colour_name: "Clear", type: "Resin", quantity_in_stock: 12 },
-  { colour_name: "Neon Green", type: "Resin", quantity_in_stock: 5 },
-  { colour_name: "Neon Pink", type: "Resin", quantity_in_stock: 5 },
-  { colour_name: "Terracotta", type: "Clay", quantity_in_stock: 5 },
-  { colour_name: "Stone Grey", type: "Clay", quantity_in_stock: 5 },
-  { colour_name: "Ochre", type: "Clay", quantity_in_stock: 4 },
-  { colour_name: "Sand", type: "Clay", quantity_in_stock: 5 },
-  { colour_name: "Slate", type: "Clay", quantity_in_stock: 4 },
-  { colour_name: "Rust", type: "Clay", quantity_in_stock: 4 },
-  { colour_name: "Olive", type: "Clay", quantity_in_stock: 4 },
-  { colour_name: "Bone", type: "Clay", quantity_in_stock: 5 },
-  { colour_name: "Umber", type: "Clay", quantity_in_stock: 3 },
-  { colour_name: "Sienna", type: "Clay", quantity_in_stock: 3 },
-];
-
 export const seedInitialData = async (
   db: SQLite.SQLiteDatabase,
 ): Promise<void> => {
-  // Ensure material types exist (use INSERT OR IGNORE then read id)
   await db.runAsync(
-    "INSERT OR IGNORE INTO material_type (description) VALUES (?);",
+    "INSERT OR IGNORE INTO material_type (material_type_id, description) VALUES (?, ?);",
+    generateId(),
     "Resin",
   );
   await db.runAsync(
-    "INSERT OR IGNORE INTO material_type (description) VALUES (?);",
+    "INSERT OR IGNORE INTO material_type (material_type_id, description) VALUES (?, ?);",
+    generateId(),
     "Clay",
   );
 
-  const resinRow = await db.getFirstAsync<{ material_type_id: number }>(
+  const resinRow = await db.getFirstAsync<{ material_type_id: string }>(
     "SELECT material_type_id FROM material_type WHERE description = ?;",
     "Resin",
   );
-  const clayRow = await db.getFirstAsync<{ material_type_id: number }>(
+  const clayRow = await db.getFirstAsync<{ material_type_id: string }>(
     "SELECT material_type_id FROM material_type WHERE description = ?;",
     "Clay",
   );
@@ -119,16 +58,15 @@ export const seedInitialData = async (
 
   const resinId = resinRow.material_type_id;
   const clayId = clayRow.material_type_id;
-  const colourTypeIds = await ensureColourTypes(db);
 
-  // For each technique, ensure production_method exists and add allowed materials
   for (const t of TECHNIQUES) {
     await db.runAsync(
-      "INSERT OR IGNORE INTO production_method (description) VALUES (?);",
+      "INSERT OR IGNORE INTO production_method (production_method_id, description) VALUES (?, ?);",
+      generateId(),
       t.technique,
     );
 
-    const pm = await db.getFirstAsync<{ production_method_id: number }>(
+    const pm = await db.getFirstAsync<{ production_method_id: string }>(
       "SELECT production_method_id FROM production_method WHERE description = ?;",
       t.technique,
     );
@@ -155,86 +93,89 @@ export const seedInitialData = async (
 
   for (const name of DICE_NUMBER_COLOURS) {
     await db.runAsync(
-      "INSERT OR IGNORE INTO dice_job_number_colour (dice_job_number_colour_name) VALUES (?);",
+      "INSERT OR IGNORE INTO dice_job_number_colour (dice_job_number_colour_id, dice_job_number_colour_name) VALUES (?, ?);",
+      generateId(),
       name,
     );
   }
 
-  await seedMissingMaterialStock(db, resinId, clayId, colourTypeIds);
+  await replaceColourCatalog(db, resinId, clayId);
 };
 
-const colourTypeForStock = (colourName: string): (typeof COLOUR_TYPES)[number] => {
-  if (["Clear"].includes(colourName)) return "Transparent";
-  if (["Gold", "Silver", "Copper", "Bronze", "Pearl"].includes(colourName)) {
-    return "Metallic";
-  }
-  if (colourName.startsWith("Neon ")) return "Glow";
-  return "Opaque";
-};
-
-const ensureColourTypes = async (
+const replaceColourCatalog = async (
   db: SQLite.SQLiteDatabase,
-): Promise<Record<(typeof COLOUR_TYPES)[number], number>> => {
-  const ids = {} as Record<(typeof COLOUR_TYPES)[number], number>;
-  for (const description of COLOUR_TYPES) {
-    await db.runAsync(
-      "INSERT OR IGNORE INTO colour_type (description) VALUES (?);",
-      description,
-    );
-    const row = await db.getFirstAsync<{ colour_type_id: number }>(
-      "SELECT colour_type_id FROM colour_type WHERE description = ?;",
-      description,
-    );
-    if (!row) throw new Error(`Failed to ensure colour type ${description}`);
-    ids[description] = row.colour_type_id;
-  }
-  return ids;
-};
-
-export const seedMissingMaterialStock = async (
-  db: SQLite.SQLiteDatabase,
-  resinId?: number,
-  clayId?: number,
-  colourTypeIds?: Record<(typeof COLOUR_TYPES)[number], number>,
+  resinId: string,
+  clayId: string,
 ): Promise<void> => {
-  const resolvedResinId =
-    resinId ??
-    (
-      await db.getFirstAsync<{ material_type_id: number }>(
-        "SELECT material_type_id FROM material_type WHERE description = ?;",
-        "Resin",
-      )
-    )?.material_type_id;
-  const resolvedClayId =
-    clayId ??
-    (
-      await db.getFirstAsync<{ material_type_id: number }>(
-        "SELECT material_type_id FROM material_type WHERE description = ?;",
-        "Clay",
-      )
-    )?.material_type_id;
-  const resolvedColourTypeIds = colourTypeIds ?? (await ensureColourTypes(db));
+  await db.runAsync("DELETE FROM dice_job_colour_type_exclusion;");
+  await db.runAsync("DELETE FROM dice_job_colour;");
+  await db.runAsync("DELETE FROM material_stock;");
+  await db.runAsync("DELETE FROM colour_brand;");
+  await db.runAsync("DELETE FROM colour_type;");
 
-  if (!resolvedResinId || !resolvedClayId) return;
-
-  for (const stock of SAMPLE_MATERIAL_STOCK) {
-    const materialTypeId =
-      stock.type === "Resin" ? resolvedResinId : resolvedClayId;
-    const colourTypeId = resolvedColourTypeIds[colourTypeForStock(stock.colour_name)];
+  const colourTypeIds = new Map<string, string>();
+  const brands = [
+    ...new Set(
+      COLOUR_CATALOG.map((row) => row.colourBrand).filter((name) => name),
+    ),
+  ];
+  const brandIds = new Map<string, string>();
+  for (const name of brands) {
+    const id = generateId();
     await db.runAsync(
-      `INSERT INTO material_stock (colour_name, material_type_id, colour_type_id, quantity_in_stock)
-       SELECT ?, ?, ?, ?
-       WHERE NOT EXISTS (
-         SELECT 1 FROM material_stock
-         WHERE colour_name = ? AND material_type_id = ?
-       );`,
-      stock.colour_name,
-      materialTypeId,
-      colourTypeId,
-      stock.quantity_in_stock,
-      stock.colour_name,
+      "INSERT INTO colour_brand (colour_brand_id, colour_brand_name) VALUES (?, ?);",
+      id,
+      name,
+    );
+    brandIds.set(name, id);
+  }
+
+  const ensureColourTypeId = async (
+    description: string,
+    materialTypeId: string,
+  ): Promise<string> => {
+    const key = `${description}\0${materialTypeId}`;
+    const existing = colourTypeIds.get(key);
+    if (existing) return existing;
+    const id = generateId();
+    await db.runAsync(
+      "INSERT INTO colour_type (colour_type_id, description, material_type_id) VALUES (?, ?, ?);",
+      id,
+      description,
       materialTypeId,
     );
+    colourTypeIds.set(key, id);
+    return id;
+  };
+
+  for (const row of COLOUR_CATALOG) {
+    const colourBrandId = row.colourBrand
+      ? (brandIds.get(row.colourBrand) ?? null)
+      : null;
+    const quantity = row.inStock ? 1 : 0;
+    const isActive = row.inStock ? 1 : 0;
+    const materials: string[] = [];
+    if (row.resin) materials.push(resinId);
+    if (row.clay) materials.push(clayId);
+
+    for (const materialTypeId of materials) {
+      const colourTypeId = await ensureColourTypeId(
+        row.colourType,
+        materialTypeId,
+      );
+      await db.runAsync(
+        `INSERT INTO material_stock
+          (material_stock_id, colour_name, comment, colour_type_id, colour_brand_id, quantity_in_stock, is_active)
+         VALUES (?, ?, ?, ?, ?, ?, ?);`,
+        generateId(),
+        row.colourName,
+        row.comment,
+        colourTypeId,
+        colourBrandId,
+        quantity,
+        isActive,
+      );
+    }
   }
 };
 
