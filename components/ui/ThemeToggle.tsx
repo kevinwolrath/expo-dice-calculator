@@ -2,12 +2,11 @@ import { SymbolView } from "expo-symbols";
 import { Pressable } from "react-native";
 import { useTranslation } from "react-i18next";
 
-import { useThemeColors } from "@/components/Themed";
+import { HeaderColors } from "@/constants/Colors";
 import useAppearanceStore from "@/stores/useAppearanceStore";
 
 export default function ThemeToggle() {
   const { t } = useTranslation();
-  const colors = useThemeColors();
   const colorScheme = useAppearanceStore((state) => state.colorScheme);
   const toggleColorScheme = useAppearanceStore(
     (state) => state.toggleColorScheme,
@@ -31,7 +30,7 @@ export default function ThemeToggle() {
             : { ios: "moon.fill", android: "dark_mode", web: "dark_mode" }
         }
         size={22}
-        tintColor={colors.text}
+        tintColor={HeaderColors.icon}
       />
     </Pressable>
   );

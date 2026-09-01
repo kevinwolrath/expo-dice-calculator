@@ -22,8 +22,8 @@
     "no": "Nein"
   },
   "appearance": {
-    "useDark": "Dunkles Design verwenden",
-    "useLight": "Helles Design verwenden"
+    "useDark": "Nachtansicht",
+    "useLight": "Tagesansicht"
   },
   "startup": {
     "loadingTitle": "Würfelrechner wird vorbereitet",
@@ -37,6 +37,8 @@
     "jobName": "Auftragsname",
     "description": "Beschreibung",
     "colourCount": "Anzahl der Farben",
+    "set": "Setzen",
+    "manualColourCount": "Farbanzahl manuell festlegen",
     "generate": "Generieren",
     "generatedColours": "Auftragsfarben",
     "generateColoursRequired": "Drücken Sie Generieren, um leere Farbzeilen zu füllen",
@@ -54,9 +56,11 @@
     "regenerateColoursOnMethod": "Eine andere Produktionsmethode kann die aktuellen Farben ungültig machen. Neue Farben generieren?",
     "regenerateColoursOnMaterialType": "Eine andere Materialart kann die aktuellen Farben ungültig machen. Neue Farben generieren?",
     "materialType": "Materialart",
+    "manualMaterialType": "Materialart manuell festlegen",
     "selectMaterialType": "Materialart wählen",
     "addMaterialTypeHint": "Fügen Sie zuerst eine Materialart unter Einrichtung hinzu",
     "productionMethod": "Produktionsmethode",
+    "manualProductionMethod": "Produktionsmethode manuell festlegen",
     "selectProductionMethod": "Produktionsmethode wählen",
     "numberColour": "Nummernfarbe",
     "selectNumberColour": "Nummernfarbe wählen",
@@ -187,7 +191,6 @@
     "preview": "Beispieltext",
     "foreground": "Vordergrund",
     "background": "Hintergrund",
-    "surface": "Liste",
     "imageMode": "Hintergrundbild",
     "centered": "Zentriert",
     "tiled": "Gekachelt",
@@ -195,6 +198,7 @@
     "removeImage": "Bild entfernen",
     "reset": "Diese Seite zurücksetzen",
     "savedHint": "Änderungen werden automatisch auf diesem Gerät gespeichert.",
+    "nightLocked": "Die Nachtansicht verwendet immer einen schwarzen Hintergrund und weißen Text und kann nicht angepasst werden.",
     "missingPage": "Diese Seite kann nicht angepasst werden.",
     "permissionDenied": "Für ein Hintergrundbild wird der Zugriff auf die Fotos benötigt.",
     "imageError": "Das Hintergrundbild konnte nicht gespeichert werden."

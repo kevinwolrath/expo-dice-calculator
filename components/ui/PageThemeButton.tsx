@@ -4,12 +4,16 @@ import { Pressable } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { useColorScheme } from "@/components/useColorScheme";
-import Colors from "@/constants/Colors";
+import { HeaderColors } from "@/constants/Colors";
 import type { PageThemeId } from "@/constants/pageTheme";
 
 export default function PageThemeButton({ pageId }: { pageId: PageThemeId }) {
   const colorScheme = useColorScheme();
   const { t } = useTranslation();
+
+  if (colorScheme === "dark") {
+    return null;
+  }
 
   return (
     <Link
@@ -29,7 +33,7 @@ export default function PageThemeButton({ pageId }: { pageId: PageThemeId }) {
               web: "format_paint",
             }}
             size={22}
-            tintColor={Colors[colorScheme].text}
+            tintColor={HeaderColors.icon}
             style={{ opacity: pressed ? 0.5 : 1 }}
           />
         )}

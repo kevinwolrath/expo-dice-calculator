@@ -10,7 +10,7 @@ import PrimaryButton from "@/components/ui/PrimaryButton";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import { useClientOnlyValue } from "@/components/useClientOnlyValue";
 import { useColorScheme } from "@/components/useColorScheme";
-import Colors from "@/constants/Colors";
+import Colors, { HeaderColors } from "@/constants/Colors";
 import { pageIdFromSegments } from "@/constants/pageTheme";
 import { Space, Type } from "@/constants/theme";
 import { initDatabase } from "@/db";
@@ -89,6 +89,9 @@ export default function TabLayout() {
         // Disable the static render of the header on web
         // to prevent a hydration error in React Navigation v6.
         headerShown,
+        headerStyle: { backgroundColor: HeaderColors.background },
+        headerTintColor: HeaderColors.text,
+        headerTitleStyle: { color: HeaderColors.text },
         headerRight: () => <HeaderActions pageId={pageId} />,
       }}
     >
@@ -121,7 +124,7 @@ export default function TabLayout() {
                           web: "info",
                         }}
                         size={22}
-                        tintColor={Colors[colorScheme].text}
+                        tintColor={HeaderColors.icon}
                         style={{ opacity: pressed ? 0.5 : 1 }}
                       />
                     )}
@@ -227,7 +230,6 @@ function HeaderActions({
   extra?: ReactNode;
   pageId?: ReturnType<typeof pageIdFromSegments>;
 }) {
-  const colorScheme = useColorScheme();
   const { t } = useTranslation();
   const activePageId = pageId;
 
@@ -248,7 +250,7 @@ function HeaderActions({
                 web: "settings",
               }}
               size={22}
-              tintColor={Colors[colorScheme].text}
+              tintColor={HeaderColors.icon}
               style={{ opacity: pressed ? 0.5 : 1 }}
             />
           )}

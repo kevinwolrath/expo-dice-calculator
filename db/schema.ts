@@ -137,9 +137,15 @@ CREATE TABLE dice_job
 
     colour_count INTEGER NOT NULL,
 
+    colour_count_manual INTEGER NOT NULL DEFAULT 0,
+
     material_type_id TEXT NOT NULL,
 
+    material_type_manual INTEGER NOT NULL DEFAULT 0,
+
     production_method_id TEXT NOT NULL,
+
+    production_method_manual INTEGER NOT NULL DEFAULT 0,
 
     dice_job_number_colour_id TEXT NOT NULL,
 
