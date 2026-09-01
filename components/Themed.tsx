@@ -10,7 +10,11 @@ import { useColorScheme } from "./useColorScheme";
 import PageBackgroundImage from "@/components/pageTheme/PageBackgroundImage";
 import { PageThemeContext } from "@/components/pageTheme/PageThemeScope";
 import Colors from "@/constants/Colors";
-import type { PageTheme } from "@/constants/pageTheme";
+import {
+  CARD_TINT_ALPHA,
+  hexToRgba,
+  resolvePageAppearance,
+} from "@/constants/pageTheme";
 import usePageThemeStore from "@/stores/usePageThemeStore";
 
 type ThemeProps = {
@@ -25,17 +29,21 @@ type ThemeColors = (typeof Colors)[keyof typeof Colors];
 
 const applyPageTheme = (
   base: ThemeColors,
-  pageTheme: PageTheme | undefined,
-  scheme: keyof typeof Colors,
+  appearance: ReturnType<typeof resolvePageAppearance>,
+  scheme: "light" | "dark",
 ): ThemeColors => {
-  if (!pageTheme) return base;
-  const translucentCard =
-    scheme === "dark" ? "rgba(28, 28, 30, 0.9)" : "rgba(247, 247, 249, 0.9)";
+  if (scheme === "dark") {
+    return {
+      ...base,
+      text: appearance.foreground,
+      background: appearance.background,
+    };
+  }
   return {
     ...base,
-    text: pageTheme.foreground ?? base.text,
-    background: pageTheme.background ?? base.background,
-    card: pageTheme.surface ?? (pageTheme.imageUri ? translucentCard : base.card),
+    text: appearance.foreground,
+    background: appearance.background,
+    card: hexToRgba(appearance.background, CARD_TINT_ALPHA),
   };
 };
 
@@ -45,7 +53,8 @@ export function useThemeColors() {
   const pageTheme = usePageThemeStore((state) =>
     pageId ? state.themes[pageId] : undefined,
   );
-  return applyPageTheme(Colors[scheme], pageTheme, scheme);
+  const appearance = resolvePageAppearance(pageId, pageTheme, scheme);
+  return applyPageTheme(Colors[scheme], appearance, scheme);
 }
 
 export function useThemeColor(
@@ -89,9 +98,11 @@ export function View(props: ViewProps) {
 export function Screen(props: ViewProps) {
   const { style, lightColor, darkColor, ...otherProps } = props;
   const pageId = useContext(PageThemeContext);
+  const scheme = useColorScheme();
   const pageTheme = usePageThemeStore((state) =>
     pageId ? state.themes[pageId] : undefined,
   );
+  const appearance = resolvePageAppearance(pageId, pageTheme, scheme);
   const backgroundColor = useThemeColor(
     { light: lightColor, dark: darkColor },
     "background",
@@ -99,10 +110,10 @@ export function Screen(props: ViewProps) {
 
   return (
     <DefaultView style={{ flex: 1, backgroundColor }}>
-      {pageTheme?.imageUri ? (
+      {appearance.imageUri ? (
         <PageBackgroundImage
-          uri={pageTheme.imageUri}
-          mode={pageTheme.imageMode}
+          uri={appearance.imageUri}
+          mode={appearance.imageMode}
         />
       ) : null}
       <DefaultView style={[{ flex: 1 }, style]} {...otherProps} />

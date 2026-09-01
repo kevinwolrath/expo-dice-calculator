@@ -1,6 +1,13 @@
 const primary = "#2f95dc";
 const destructive = "#d9534f";
 
+/** Chrome colours that do not follow page themes or night view. */
+export const HeaderColors = {
+  background: primary,
+  text: "#ffffff",
+  icon: "#ffffff",
+} as const;
+
 export default {
   light: {
     text: "#000",

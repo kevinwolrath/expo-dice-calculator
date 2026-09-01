@@ -1,3 +1,4 @@
+import { type ReactNode } from "react";
 import { StyleSheet, TextInput, type TextInputProps } from "react-native";
 
 import { View, useThemeColors } from "@/components/Themed";
@@ -9,6 +10,7 @@ type FormFieldProps = TextInputProps & {
   label: string;
   required?: boolean;
   error?: string;
+  rightAccessory?: ReactNode;
 };
 
 export default function FormField({
@@ -17,6 +19,7 @@ export default function FormField({
   error,
   style,
   multiline,
+  rightAccessory,
   ...props
 }: FormFieldProps) {
   const colors = useThemeColors();
@@ -25,17 +28,20 @@ export default function FormField({
   return (
     <View style={styles.container}>
       <FieldLabel label={label} required={required} />
-      <TextInput
-        placeholderTextColor={colors.muted}
-        multiline={multiline}
-        style={[
-          styles.input,
-          { borderColor, color: colors.text },
-          multiline && styles.multiline,
-          style,
-        ]}
-        {...props}
-      />
+      <View style={styles.inputRow}>
+        <TextInput
+          placeholderTextColor={colors.muted}
+          multiline={multiline}
+          style={[
+            styles.input,
+            { borderColor, color: colors.text },
+            multiline && styles.multiline,
+            style,
+          ]}
+          {...props}
+        />
+        {rightAccessory}
+      </View>
       <FieldError message={error} />
     </View>
   );
@@ -43,7 +49,9 @@ export default function FormField({
 
 const styles = StyleSheet.create({
   container: { marginBottom: Space[3] },
+  inputRow: { flexDirection: "row", alignItems: "center", gap: Space[3] },
   input: {
+    flex: 1,
     borderWidth: Stroke.input,
     borderRadius: Radius.md,
     paddingHorizontal: Space[3],

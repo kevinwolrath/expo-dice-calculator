@@ -40,6 +40,7 @@ export const Layout = {
 export const Stroke = {
   hairline: StyleSheet.hairlineWidth,
   input: StyleSheet.hairlineWidth * 2,
+  item: 2,
 } as const;
 
 export const Type = StyleSheet.create({

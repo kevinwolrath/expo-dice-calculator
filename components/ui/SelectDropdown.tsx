@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import {
     Modal,
     Pressable,
@@ -31,6 +31,7 @@ type SelectDropdownProps = {
   error?: string;
   emptyHint?: string;
   disabled?: boolean;
+  rightAccessory?: ReactNode;
 };
 
 export default function SelectDropdown({
@@ -43,6 +44,7 @@ export default function SelectDropdown({
   error,
   emptyHint,
   disabled,
+  rightAccessory,
 }: SelectDropdownProps) {
   const colors = useThemeColors();
   const [open, setOpen] = useState(false);
@@ -55,29 +57,32 @@ export default function SelectDropdown({
         <Text style={[Type.hint, styles.hint]}>{emptyHint}</Text>
       ) : (
         <>
-          <Pressable
-            accessibilityRole="button"
-            disabled={disabled}
-            onPress={() => setOpen(true)}
-            style={[
-              styles.picker,
-              {
-                borderColor: error ? colors.destructive : colors.inputBorder,
-                opacity: disabled ? 0.5 : 1,
-              },
-            ]}
-          >
-            <Text
+          <View style={styles.pickerRow}>
+            <Pressable
+              accessibilityRole="button"
+              disabled={disabled}
+              onPress={() => setOpen(true)}
               style={[
-                styles.value,
-                { color: colors.text },
-                !selected && styles.placeholder,
+                styles.picker,
+                {
+                  borderColor: error ? colors.destructive : colors.inputBorder,
+                  opacity: disabled ? 0.5 : 1,
+                },
               ]}
             >
-              {selected ? selected.label : placeholder}
-            </Text>
-            <Text style={[styles.chevron, { color: colors.text }]}>⌄</Text>
-          </Pressable>
+              <Text
+                style={[
+                  styles.value,
+                  { color: colors.text },
+                  !selected && styles.placeholder,
+                ]}
+              >
+                {selected ? selected.label : placeholder}
+              </Text>
+              <Text style={[styles.chevron, { color: colors.text }]}>⌄</Text>
+            </Pressable>
+            {rightAccessory}
+          </View>
           <Modal
             visible={open}
             transparent
@@ -142,7 +147,9 @@ export default function SelectDropdown({
 const styles = StyleSheet.create({
   container: { marginBottom: Space[3] },
   hint: { opacity: 0.5 },
+  pickerRow: { flexDirection: "row", alignItems: "center", gap: Space[3] },
   picker: {
+    flex: 1,
     borderWidth: Stroke.input,
     borderRadius: Radius.md,
     minHeight: Touch.minHeight,

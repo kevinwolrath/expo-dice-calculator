@@ -22,8 +22,8 @@
     "no": "No"
   },
   "appearance": {
-    "useDark": "Use dark theme",
-    "useLight": "Use light theme"
+    "useDark": "Night view",
+    "useLight": "Day view"
   },
   "startup": {
     "loadingTitle": "Preparing Dice Calculator",
@@ -37,6 +37,8 @@
     "jobName": "Job name",
     "description": "Description",
     "colourCount": "Colour count",
+    "set": "Set",
+    "manualColourCount": "Set colour count manually",
     "generate": "Generate",
     "generatedColours": "Job colours",
     "generateColoursRequired": "Press Generate to fill empty colour rows",
@@ -54,9 +56,11 @@
     "regenerateColoursOnMethod": "Changing the production method can make the current colours invalid. Generate a new set?",
     "regenerateColoursOnMaterialType": "Changing the material type can make the current colours invalid. Generate a new set?",
     "materialType": "Material type",
+    "manualMaterialType": "Set material type manually",
     "selectMaterialType": "Choose a material type",
     "addMaterialTypeHint": "Add a material type in Setup first",
     "productionMethod": "Production method",
+    "manualProductionMethod": "Set production method manually",
     "selectProductionMethod": "Choose a production method",
     "numberColour": "Number colour",
     "selectNumberColour": "Choose a number colour",
@@ -187,7 +191,6 @@
     "preview": "Sample text",
     "foreground": "Foreground",
     "background": "Background",
-    "surface": "List",
     "imageMode": "Background image",
     "centered": "Centered",
     "tiled": "Tiled",
@@ -195,6 +198,7 @@
     "removeImage": "Remove image",
     "reset": "Reset this page",
     "savedHint": "Changes are saved on this device automatically.",
+    "nightLocked": "Night view always uses a black background and white text and cannot be customised.",
     "missingPage": "This page cannot be customised.",
     "permissionDenied": "Photo library access is needed to choose a background image.",
     "imageError": "Could not save the background image."

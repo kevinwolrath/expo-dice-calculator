@@ -1,11 +1,12 @@
 import { SymbolView } from "expo-symbols";
-import { Pressable, StyleSheet } from "react-native";
+import { Platform, Pressable, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { Text, View, useThemeColors } from "@/components/Themed";
 import Card from "@/components/ui/Card";
 import { useScrollToForm } from "@/components/ui/ScreenList";
-import { FontSize, Space, Type } from "@/constants/theme";
+import { hexToRgba } from "@/constants/pageTheme";
+import { FontSize, Space, Stroke, Type } from "@/constants/theme";
 
 type EntityListItemProps = {
   title: string;
@@ -26,33 +27,36 @@ export default function EntityListItem({
   const colors = useThemeColors();
   const scrollToForm = useScrollToForm();
 
+  const handleEdit = () => {
+    onEdit();
+    requestAnimationFrame(() => {
+      scrollToForm();
+    });
+  };
+
   return (
-    <Card>
-      <View style={styles.rowBetween}>
-        <Text style={[Type.heading, styles.itemTitle]}>{title}</Text>
-        <View style={styles.itemActions}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t("common.edit")}
-            onPress={() => {
-              onEdit();
-              requestAnimationFrame(() => {
-                scrollToForm();
-              });
-            }}
-            hitSlop={8}
-          >
-            <SymbolView
-              name={{ ios: "pencil", android: "edit", web: "edit" }}
-              size={20}
-              tintColor={colors.text}
-            />
-          </Pressable>
+    <Pressable
+      accessibilityRole={Platform.OS === "web" ? "none" : "button"}
+      accessibilityLabel={t("common.edit")}
+      onPress={handleEdit}
+      style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}
+    >
+      <Card
+        style={{
+          borderWidth: Stroke.item,
+          borderColor: hexToRgba(colors.text, 0.35),
+        }}
+      >
+        <View style={styles.rowBetween}>
+          <Text style={[Type.heading, styles.itemTitle]}>{title}</Text>
           {onDelete ? (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={t("common.delete")}
-              onPress={onDelete}
+              onPress={(event) => {
+                event.stopPropagation();
+                onDelete();
+              }}
               hitSlop={8}
             >
               <SymbolView
@@ -63,12 +67,12 @@ export default function EntityListItem({
             </Pressable>
           ) : null}
         </View>
-      </View>
-      {meta ? <Text style={[Type.meta, styles.itemMeta]}>{meta}</Text> : null}
-      {description ? (
-        <Text style={styles.itemDescription}>{description}</Text>
-      ) : null}
-    </Card>
+        {meta ? <Text style={[Type.meta, styles.itemMeta]}>{meta}</Text> : null}
+        {description ? (
+          <Text style={styles.itemDescription}>{description}</Text>
+        ) : null}
+      </Card>
+    </Pressable>
   );
 }
 
@@ -78,7 +82,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  itemActions: { flexDirection: "row", gap: Space[4] },
   itemTitle: {
     flexShrink: 1,
     paddingRight: Space[3],

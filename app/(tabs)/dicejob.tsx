@@ -8,6 +8,7 @@ import {
   View as RNView,
   ScrollView,
   StyleSheet,
+  Switch,
 } from "react-native";
 
 import { confirm, showMessage } from "@/components/alert";
@@ -80,10 +81,13 @@ export default function JobsScreen() {
   const [jobName, setJobName] = useState("");
   const [description, setDescription] = useState("");
   const [colourCount, setColourCount] = useState("");
+  const [colourCountManual, setColourCountManual] = useState(false);
   const [jobColourStockIds, setJobColourStockIds] = useState<string[]>([]);
   const [allJobColours, setAllJobColours] = useState<DiceJobColour[]>([]);
   const [materialTypeId, setMaterialTypeId] = useState<string | null>(null);
+  const [materialTypeManual, setMaterialTypeManual] = useState(false);
   const [methodId, setMethodId] = useState<string | null>(null);
+  const [methodManual, setMethodManual] = useState(false);
   const [allowedTypeIds, setAllowedTypeIds] = useState<string[] | null>(null);
   const [numberColourId, setNumberColourId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -150,9 +154,12 @@ export default function JobsScreen() {
     setJobName("");
     setDescription("");
     setColourCount("");
+    setColourCountManual(false);
     setJobColourStockIds([]);
     setMethodId(null);
+    setMethodManual(false);
     setMaterialTypeId(null);
+    setMaterialTypeManual(false);
     setNumberColourId(null);
     setEditingId(null);
     setShowJobColourPicker(false);
@@ -165,8 +172,11 @@ export default function JobsScreen() {
     setJobName(job.job_name);
     setDescription(job.description ?? "");
     setColourCount(String(job.colour_count));
+    setColourCountManual(job.colour_count_manual !== 0);
     setMethodId(job.production_method_id);
+    setMethodManual(job.production_method_manual !== 0);
     setMaterialTypeId(job.material_type_id);
+    setMaterialTypeManual(job.material_type_manual !== 0);
     setNumberColourId(job.dice_job_number_colour_id);
     setErrors({});
     void listDiceJobColours(job.dice_job_id).then((colours) => {
@@ -220,7 +230,16 @@ export default function JobsScreen() {
             ),
           ),
       );
-    const selectedMaterialTypeId = shuffleInPlace(eligibleMaterialTypeIds)[0];
+    const selectedMaterialTypeId = materialTypeManual
+      ? materialTypeId
+      : shuffleInPlace(
+          eligibleMaterialTypeIds.filter(
+            (typeId) =>
+              !methodManual ||
+              (methodId !== null &&
+                (allowedByMethodId.get(methodId) ?? []).includes(typeId)),
+          ),
+        )[0];
     if (!selectedMaterialTypeId) {
       showMessage(t("common.error"), t("jobs.noCompatibleStock"));
       return;
@@ -233,11 +252,16 @@ export default function JobsScreen() {
         ),
       )
       .map((method) => method.production_method_id);
-    const selectedMethodId = shuffleInPlace(eligibleMethodIds)[0];
+    const selectedMethodId = methodManual
+      ? methodId
+      : shuffleInPlace(eligibleMethodIds)[0];
     if (!selectedMethodId) {
       showMessage(t("common.error"), t("jobs.noCompatibleStock"));
       return;
     }
+    const selectedMethod = methods.find(
+      (method) => method.production_method_id === selectedMethodId,
+    );
 
     const availableColours = pickRandomDistinctStock(
       stock,
@@ -246,12 +270,29 @@ export default function JobsScreen() {
       [],
       colourTypeToMaterialType,
     );
-    const maxRandomColourCount = Math.min(
+    const minimumRandomColourCount = selectedMethod?.minimum_colour_count ?? 1;
+    const maximumRandomColourCount = Math.min(
       availableColours.length,
       MAX_COLOUR_COUNT,
+      selectedMethod?.maximum_colour_count ?? MAX_COLOUR_COUNT,
     );
-    const selectedColourCount =
-      Math.floor(Math.random() * maxRandomColourCount) + 1;
+    if (minimumRandomColourCount > maximumRandomColourCount) {
+      showMessage(t("common.error"), t("jobs.noCompatibleStock"));
+      return;
+    }
+    const selectedColourCount = colourCountManual
+      ? parseColourCount()
+      : Math.floor(
+          Math.random() *
+            (maximumRandomColourCount - minimumRandomColourCount + 1),
+        ) + minimumRandomColourCount;
+    if (selectedColourCount === null) {
+      setErrors((current) => ({
+        ...current,
+        colourCount: t("jobs.invalidCountMessage", { max: MAX_COLOUR_COUNT }),
+      }));
+      return;
+    }
     const selectedColours = pickRandomDistinctStock(
       stock,
       selectedColourCount,
@@ -485,8 +526,11 @@ export default function JobsScreen() {
         job_name: jobName.trim(),
         description: description.trim() || null,
         colour_count: count,
+        colour_count_manual: colourCountManual ? 1 : 0,
         material_type_id: materialTypeId,
+        material_type_manual: materialTypeManual ? 1 : 0,
         production_method_id: methodId,
+        production_method_manual: methodManual ? 1 : 0,
         dice_job_number_colour_id: numberColourId,
       };
       let jobId: string;
@@ -567,9 +611,7 @@ export default function JobsScreen() {
     );
   });
 
-  const hasValidColourCount = parseColourCount() !== null;
   const canChooseColourCount = materialTypeId !== null;
-  const canChooseMethod = canChooseColourCount && hasValidColourCount;
   const canGenerate = materialTypes.length > 0 && methods.length > 0;
 
   return (
@@ -620,6 +662,21 @@ export default function JobsScreen() {
                 void handleMaterialTypeChange(value);
               }}
               emptyHint={t("jobs.addMaterialTypeHint")}
+              rightAccessory={
+                <View style={styles.manualControl}>
+                  <Text style={styles.manualControlLabel}>{t("jobs.set")}</Text>
+                  <Switch
+                    value={materialTypeManual}
+                    onValueChange={setMaterialTypeManual}
+                    trackColor={{
+                      false: colors.inputBorder,
+                      true: colors.primary,
+                    }}
+                    thumbColor={colors.onPrimary}
+                    accessibilityLabel={t("jobs.manualMaterialType")}
+                  />
+                </View>
+              }
             />
             <SelectDropdown
               label={t("jobs.productionMethod")}
@@ -636,7 +693,22 @@ export default function JobsScreen() {
                 void handleProductionMethodChange(value);
               }}
               emptyHint={t("jobs.addProductionMethodHint")}
-              disabled={!canChooseMethod}
+              disabled={!canChooseColourCount}
+              rightAccessory={
+                <View style={styles.manualControl}>
+                  <Text style={styles.manualControlLabel}>{t("jobs.set")}</Text>
+                  <Switch
+                    value={methodManual}
+                    onValueChange={setMethodManual}
+                    trackColor={{
+                      false: colors.inputBorder,
+                      true: colors.primary,
+                    }}
+                    thumbColor={colors.onPrimary}
+                    accessibilityLabel={t("jobs.manualProductionMethod")}
+                  />
+                </View>
+              }
             />
             <FormField
               label={t("jobs.colourCount")}
@@ -655,6 +727,21 @@ export default function JobsScreen() {
               }}
               keyboardType="number-pad"
               editable={canChooseColourCount}
+              rightAccessory={
+                <View style={styles.manualControl}>
+                  <Text style={styles.manualControlLabel}>{t("jobs.set")}</Text>
+                  <Switch
+                    value={colourCountManual}
+                    onValueChange={setColourCountManual}
+                    trackColor={{
+                      false: colors.inputBorder,
+                      true: colors.primary,
+                    }}
+                    thumbColor={colors.onPrimary}
+                    accessibilityLabel={t("jobs.manualColourCount")}
+                  />
+                </View>
+              }
             />
             {jobColourStockIds.length > 0 ? (
               <View style={styles.generatedColours}>
@@ -802,6 +889,8 @@ export default function JobsScreen() {
 const styles = StyleSheet.create({
   selectField: { marginBottom: Space[3] },
   colourCountBlock: { marginBottom: Space[3] },
+  manualControl: { flexDirection: "row", alignItems: "center", gap: Space[1] },
+  manualControlLabel: { fontSize: FontSize.md },
   generatedColours: { marginTop: Space[2], gap: Space[2] },
   selectHint: { opacity: 0.5 },
   pickerContainer: {

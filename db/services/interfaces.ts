@@ -83,7 +83,11 @@ export interface DiceJobService {
     job_name: string;
     description?: string | null;
     colour_count: number;
+    colour_count_manual: number;
+    material_type_id: string;
+    material_type_manual: number;
     production_method_id: string;
+    production_method_manual: number;
     dice_job_number_colour_id: string;
   }): Promise<DiceJob>;
   updateDiceJob(
@@ -92,7 +96,11 @@ export interface DiceJobService {
       job_name?: string;
       description?: string | null;
       colour_count?: number;
+      colour_count_manual?: number;
+      material_type_id?: string;
+      material_type_manual?: number;
       production_method_id?: string;
+      production_method_manual?: number;
       dice_job_number_colour_id?: string;
     },
   ): Promise<void>;

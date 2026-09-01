@@ -8,6 +8,7 @@ import "react-native-reanimated";
 import { View } from "@/components/Themed";
 import PageThemeButton from "@/components/ui/PageThemeButton";
 import { useColorScheme } from "@/components/useColorScheme";
+import { HeaderColors } from "@/constants/Colors";
 import i18n from "@/constants/i18n";
 import { Space } from "@/constants/theme";
 import useAppearanceStore from "@/stores/useAppearanceStore";
@@ -65,7 +66,13 @@ function RootLayoutNav() {
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Stack>
+      <Stack
+        screenOptions={{
+          headerStyle: { backgroundColor: HeaderColors.background },
+          headerTintColor: HeaderColors.text,
+          headerTitleStyle: { color: HeaderColors.text },
+        }}
+      >
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen

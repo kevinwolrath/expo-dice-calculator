@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "expo-dice-calculator",
+    "name": "Roll your Dice",
     "slug": "dice-job-manager",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -45,9 +45,8 @@
       [
         "expo-image-picker",
         {
-          photosPermission:
-            "The app uses your photos as page background images.",
-          microphonePermission: false
+          "photosPermission": "The app uses your photos as page background images.",
+          "microphonePermission": false
         }
       ]
     ],

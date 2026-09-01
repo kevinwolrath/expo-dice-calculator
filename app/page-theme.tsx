@@ -11,8 +11,10 @@ import Card from "@/components/ui/Card";
 import ChipSelect from "@/components/ui/ChipSelect";
 import ColorField from "@/components/ui/ColorField";
 import PrimaryButton from "@/components/ui/PrimaryButton";
-import Colors from "@/constants/Colors";
-import { isPageThemeId } from "@/constants/pageTheme";
+import {
+  PAGE_DEFAULT_COLORS,
+  isPageThemeId,
+} from "@/constants/pageTheme";
 import { Layout, Space, Type } from "@/constants/theme";
 import { useColorScheme } from "@/components/useColorScheme";
 import usePageThemeStore from "@/stores/usePageThemeStore";
@@ -22,7 +24,6 @@ export default function PageThemeScreen() {
   const router = useRouter();
   const colors = useThemeColors();
   const scheme = useColorScheme();
-  const defaults = Colors[scheme];
   const params = useLocalSearchParams<{ page?: string | string[] }>();
   const rawPage = Array.isArray(params.page) ? params.page[0] : params.page;
   const pageId = isPageThemeId(rawPage) ? rawPage : null;
@@ -56,6 +57,19 @@ export default function PageThemeScreen() {
       </Screen>
     );
   }
+
+  if (scheme === "dark") {
+    return (
+      <Screen>
+        <View style={styles.content}>
+          <Text style={Type.heading}>{t("pageTheme.nightLocked")}</Text>
+          <PrimaryButton title={t("common.done")} onPress={() => router.back()} />
+        </View>
+      </Screen>
+    );
+  }
+
+  const defaults = PAGE_DEFAULT_COLORS[pageId];
 
   const handlePickImage = async () => {
     setPicking(true);
@@ -114,31 +128,16 @@ export default function PageThemeScreen() {
             <Text
               style={[
                 Type.heading,
-                { color: theme.foreground ?? defaults.text },
+                { color: theme.foreground ?? defaults.foreground },
               ]}
             >
               {t("pageTheme.preview")}
             </Text>
-            <View
-              style={[
-                styles.previewCard,
-                { backgroundColor: theme.surface ?? defaults.card },
-              ]}
-            >
-              <Text
-                style={[
-                  Type.meta,
-                  { color: theme.foreground ?? defaults.text },
-                ]}
-              >
-                {t("pageTheme.surface")}
-              </Text>
-            </View>
           </View>
           <ColorField
             label={t("pageTheme.foreground")}
             value={theme.foreground}
-            fallback={defaults.text}
+            fallback={defaults.foreground}
             onChange={(foreground) => void setPageTheme(pageId, { foreground })}
           />
           <ColorField
@@ -146,12 +145,6 @@ export default function PageThemeScreen() {
             value={theme.background}
             fallback={defaults.background}
             onChange={(background) => void setPageTheme(pageId, { background })}
-          />
-          <ColorField
-            label={t("pageTheme.surface")}
-            value={theme.surface}
-            fallback={defaults.card}
-            onChange={(surface) => void setPageTheme(pageId, { surface })}
           />
           <ChipSelect
             label={t("pageTheme.imageMode")}
@@ -210,13 +203,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginBottom: Space[3],
-    gap: Space[2],
-    padding: Space[3],
-  },
-  previewCard: {
-    borderRadius: 8,
-    paddingHorizontal: Space[3],
-    paddingVertical: Space[2],
   },
   previewImage: {
     ...StyleSheet.absoluteFill,

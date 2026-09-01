@@ -15,17 +15,65 @@ export type PageImageMode = "center" | "tile";
 export type PageTheme = {
   foreground: string | null;
   background: string | null;
-  surface: string | null;
   imageUri: string | null;
   imageMode: PageImageMode;
 };
 
 export type PageThemeMap = Record<PageThemeId, PageTheme>;
 
+export const NIGHT_FOREGROUND = "#ffffff";
+export const NIGHT_BACKGROUND = "#000000";
+
+/** Light-mode colours for each page. Custom values override these. Night view ignores them. */
+export const PAGE_DEFAULT_COLORS: Record<
+  PageThemeId,
+  { foreground: string; background: string }
+> = {
+  dicejob: { foreground: "#0e3a5c", background: "#d7ebf8" },
+  stock: { foreground: "#6a1b14", background: "#f8d6d1" },
+  "material-types": { foreground: "#2a4714", background: "#dcebc4" },
+  "colour-types": { foreground: "#3c1760", background: "#e6d4f4" },
+  "production-methods": { foreground: "#5a3a0c", background: "#f4dfb6" },
+  "dice-number-colours": { foreground: "#11463f", background: "#cce8e1" },
+  maintenance: { foreground: "#1d1d24", background: "#e2e3ea" },
+};
+
+export type ResolvedPageAppearance = {
+  foreground: string;
+  background: string;
+  imageUri: string | null;
+  imageMode: PageImageMode;
+};
+
+export const resolvePageAppearance = (
+  pageId: PageThemeId | null,
+  theme: PageTheme | undefined,
+  scheme: "light" | "dark",
+): ResolvedPageAppearance => {
+  if (scheme === "dark") {
+    return {
+      foreground: NIGHT_FOREGROUND,
+      background: NIGHT_BACKGROUND,
+      imageUri: null,
+      imageMode: "center",
+    };
+  }
+
+  const defaults = pageId
+    ? PAGE_DEFAULT_COLORS[pageId]
+    : { foreground: "#000000", background: "#ffffff" };
+
+  return {
+    foreground: theme?.foreground ?? defaults.foreground,
+    background: theme?.background ?? defaults.background,
+    imageUri: theme?.imageUri ?? null,
+    imageMode: theme?.imageMode ?? "center",
+  };
+};
+
 export const defaultPageTheme = (): PageTheme => ({
   foreground: null,
   background: null,
-  surface: null,
   imageUri: null,
   imageMode: "center",
 });
@@ -64,6 +112,19 @@ export const normalizeHexColor = (value: string): string | null => {
   return trimmed.toLowerCase();
 };
 
+export const hexToRgba = (hex: string, alpha: number): string => {
+  const normalized = normalizeHexColor(hex);
+  if (!normalized) return `rgba(255, 255, 255, ${alpha})`;
+  const value = normalized.slice(1);
+  const r = parseInt(value.slice(0, 2), 16);
+  const g = parseInt(value.slice(2, 4), 16);
+  const b = parseInt(value.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
+/** List/form cards stay readable while the page background or image shows through. */
+export const CARD_TINT_ALPHA = 0.72;
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
@@ -76,9 +137,6 @@ const parseTheme = (value: unknown): PageTheme => {
   }
   if (typeof value.background === "string") {
     theme.background = normalizeHexColor(value.background);
-  }
-  if (typeof value.surface === "string") {
-    theme.surface = normalizeHexColor(value.surface);
   }
   if (typeof value.imageUri === "string" && value.imageUri.length > 0) {
     theme.imageUri = value.imageUri;
