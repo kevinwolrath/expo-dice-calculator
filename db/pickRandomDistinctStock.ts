@@ -1,16 +1,41 @@
-import type { ColourType, MaterialStock } from "./types";
+import type { ColourType, ColourTypeMaterialType, MaterialStock } from "./types";
+
+export const colourTypeExclusionKey = (description: string) =>
+  description.trim().toLowerCase();
+
+export const expandColourTypeExclusions = (
+  excludedColourTypeIds: string[],
+  colourTypes: Pick<ColourType, "colour_type_id" | "description">[],
+): string[] => {
+  const excludedKeys = new Set(
+    excludedColourTypeIds.flatMap((id) => {
+      const type = colourTypes.find((item) => item.colour_type_id === id);
+      return type ? [colourTypeExclusionKey(type.description)] : [];
+    }),
+  );
+  return colourTypes
+    .filter((type) =>
+      excludedKeys.has(colourTypeExclusionKey(type.description)),
+    )
+    .map((type) => type.colour_type_id);
+};
 
 export const colourTypeMaterialMap = (
-  colourTypes: Pick<ColourType, "colour_type_id" | "material_type_id">[],
-): Map<string, string> =>
-  new Map(
-    colourTypes.map((type) => [type.colour_type_id, type.material_type_id]),
-  );
+  links: Pick<ColourTypeMaterialType, "colour_type_id" | "material_type_id">[],
+): Map<string, string[]> => {
+  const map = new Map<string, string[]>();
+  for (const link of links) {
+    const current = map.get(link.colour_type_id) ?? [];
+    current.push(link.material_type_id);
+    map.set(link.colour_type_id, current);
+  }
+  return map;
+};
 
-export const materialTypeIdForStock = (
+export const materialTypeIdsForStock = (
   item: MaterialStock,
-  colourTypeToMaterialType: Map<string, string>,
-): string | undefined => colourTypeToMaterialType.get(item.colour_type_id);
+  colourTypeToMaterialTypes: Map<string, string[]>,
+): string[] => colourTypeToMaterialTypes.get(item.colour_type_id) ?? [];
 
 export const shuffleInPlace = <T>(items: T[]): T[] => {
   for (let index = items.length - 1; index > 0; index -= 1) {
@@ -27,13 +52,20 @@ export const pickRandomDistinctStock = (
   count: number,
   allowedMaterialTypeIds?: string[] | null,
   excludeStockIds: string[] = [],
-  colourTypeToMaterialType: Map<string, string> = new Map(),
+  colourTypeToMaterialTypes: Map<string, string[]> = new Map(),
+  excludeColourTypeIds: string[] = [],
+  colourTypes: Pick<ColourType, "colour_type_id" | "description">[] = [],
 ): MaterialStock[] => {
   if (!Number.isInteger(count) || count <= 0) {
     return [];
   }
 
   const excludedIds = new Set(excludeStockIds);
+  const excludedColourTypes = new Set(
+    colourTypes.length > 0
+      ? expandColourTypeExclusions(excludeColourTypeIds, colourTypes)
+      : excludeColourTypeIds,
+  );
   const excludedNames = new Set(
     stock
       .filter((item) => excludedIds.has(item.material_stock_id))
@@ -44,16 +76,17 @@ export const pickRandomDistinctStock = (
     (item) =>
       item.is_active !== 0 &&
       !excludedIds.has(item.material_stock_id) &&
+      !excludedColourTypes.has(item.colour_type_id) &&
       !excludedNames.has(item.colour_name.trim().toLowerCase()),
   );
   if (allowedMaterialTypeIds) {
     const allowed = new Set(allowedMaterialTypeIds);
     pool = pool.filter((item) => {
-      const materialTypeId = materialTypeIdForStock(
+      const materialTypeIds = materialTypeIdsForStock(
         item,
-        colourTypeToMaterialType,
+        colourTypeToMaterialTypes,
       );
-      return materialTypeId !== undefined && allowed.has(materialTypeId);
+      return materialTypeIds.some((id) => allowed.has(id));
     });
   }
 
@@ -78,23 +111,21 @@ export const pickRandomCompatibleMethodId = (
   stock: MaterialStock[],
   existingStockIds: string[],
   needed: number,
-  colourTypeToMaterialType: Map<string, string> = new Map(),
+  colourTypeToMaterialTypes: Map<string, string[]> = new Map(),
+  excludeColourTypeIds: string[] = [],
+  colourTypes: Pick<ColourType, "colour_type_id" | "description">[] = [],
 ): string | null => {
-  const existingTypes = new Set(
-    stock
-      .filter((item) => existingStockIds.includes(item.material_stock_id))
-      .map((item) => materialTypeIdForStock(item, colourTypeToMaterialType))
-      .filter((id): id is string => id !== undefined),
-  );
-
   const candidates = shuffleInPlace([...methodIds]).filter((methodId) => {
     const allowed = allowedByMethodId.get(methodId) ?? [];
     if (allowed.length === 0) return false;
     const allowedSet = new Set(allowed);
-    for (const typeId of existingTypes) {
-      if (!allowedSet.has(typeId)) return false;
-    }
-    return true;
+    return existingStockIds.every((stockId) => {
+      const item = stock.find((row) => row.material_stock_id === stockId);
+      if (!item) return false;
+      return materialTypeIdsForStock(item, colourTypeToMaterialTypes).some(
+        (id) => allowedSet.has(id),
+      );
+    });
   });
 
   const withEnough = candidates.filter((methodId) => {
@@ -105,7 +136,9 @@ export const pickRandomCompatibleMethodId = (
         needed,
         allowed,
         existingStockIds,
-        colourTypeToMaterialType,
+        colourTypeToMaterialTypes,
+        excludeColourTypeIds,
+        colourTypes,
       ).length >= needed
     );
   });

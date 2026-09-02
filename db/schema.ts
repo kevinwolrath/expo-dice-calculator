@@ -40,23 +40,43 @@ CREATE TABLE colour_type
 (
     colour_type_id TEXT PRIMARY KEY,
 
-    description TEXT NOT NULL,
+    description TEXT NOT NULL UNIQUE,
 
-    material_type_id TEXT NOT NULL,
-
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    FOREIGN KEY (material_type_id)
-        REFERENCES material_type(material_type_id),
-
-    UNIQUE (description, material_type_id)
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX ix_colour_type
 ON colour_type(colour_type_id);
 
-CREATE INDEX ix_colour_type_material
-ON colour_type(material_type_id);
+-------------------------------------------------------------
+-- Colour Type allowed Material Types
+-------------------------------------------------------------
+
+CREATE TABLE colour_type_material_type
+(
+    colour_type_id TEXT NOT NULL,
+
+    material_type_id TEXT NOT NULL,
+
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY
+    (
+        colour_type_id,
+        material_type_id
+    ),
+
+    FOREIGN KEY (colour_type_id)
+        REFERENCES colour_type(colour_type_id)
+        ON DELETE CASCADE,
+
+    FOREIGN KEY (material_type_id)
+        REFERENCES material_type(material_type_id)
+        ON DELETE CASCADE
+);
+
+CREATE INDEX ix_colour_type_material_type_material
+ON colour_type_material_type(material_type_id);
 
 -------------------------------------------------------------
 -- Colour Brand

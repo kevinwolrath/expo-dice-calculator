@@ -1,8 +1,10 @@
 import type {
     ColourBrand,
     ColourType,
+    ColourTypeMaterialType,
     DiceJob,
     DiceJobColour,
+    DiceJobColourTypeExclusion,
     DiceJobNumberColour,
     MaterialStock,
     MaterialType,
@@ -20,13 +22,32 @@ export interface ColourTypeService {
   getColourType(id: string): Promise<ColourType | null>;
   createColourType(input: {
     description: string;
-    material_type_id: string;
+    material_type_ids: string[];
   }): Promise<ColourType>;
   updateColourType(
     id: string,
-    input: { description?: string | null; material_type_id?: string },
+    input: { description?: string | null; material_type_ids?: string[] },
   ): Promise<void>;
   deleteColourType(id: string): Promise<void>;
+}
+
+export interface ColourTypeMaterialTypeService {
+  listMaterialsForColourType(
+    colourTypeId: string,
+  ): Promise<ColourTypeMaterialType[]>;
+  listAllColourTypeMaterials(): Promise<ColourTypeMaterialType[]>;
+  addColourTypeMaterial(
+    colourTypeId: string,
+    materialTypeId: string,
+  ): Promise<void>;
+  removeColourTypeMaterial(
+    colourTypeId: string,
+    materialTypeId: string,
+  ): Promise<void>;
+  replaceColourTypeMaterials(
+    colourTypeId: string,
+    materialTypeIds: string[],
+  ): Promise<void>;
 }
 
 export interface MaterialTypeService {
@@ -127,6 +148,16 @@ export interface DiceJobColourService {
   ): Promise<DiceJobColour[]>;
 }
 
+export interface DiceJobColourTypeExclusionService {
+  listDiceJobColourTypeExclusions(
+    diceJobId: string,
+  ): Promise<DiceJobColourTypeExclusion[]>;
+  replaceDiceJobColourTypeExclusions(
+    diceJobId: string,
+    colourTypeIds: string[],
+  ): Promise<DiceJobColourTypeExclusion[]>;
+}
+
 export interface DiceJobNumberColourService {
   listDiceJobNumberColours(): Promise<DiceJobNumberColour[]>;
   getDiceJobNumberColour(id: string): Promise<DiceJobNumberColour | null>;
@@ -158,10 +189,12 @@ export interface ProductionMethodMaterialService {
 export type DBServices =
   | ColourBrandService
   | ColourTypeService
+  | ColourTypeMaterialTypeService
   | MaterialTypeService
   | ProductionMethodService
   | MaterialStockService
   | DiceJobService
   | DiceJobColourService
   | DiceJobNumberColourService
+  | DiceJobColourTypeExclusionService
   | ProductionMethodMaterialService;

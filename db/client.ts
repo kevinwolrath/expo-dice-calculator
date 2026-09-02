@@ -8,7 +8,7 @@ const DATABASE_NAME = "dice_calculator.db";
 // Bump this and add a branch below whenever `schema.ts` changes.
 // We're using a destructive prototype migration: create a fresh schema
 // by dropping existing tables when the version increases.
-export const DATABASE_VERSION = 13;
+export const DATABASE_VERSION = 14;
 
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 let initPromise: Promise<SQLite.SQLiteDatabase> | null = null;
@@ -100,6 +100,7 @@ async function initializeDatabase(): Promise<SQLite.SQLiteDatabase> {
     await db.execAsync("DROP TABLE IF EXISTS dice_job_number_colour;");
     await db.execAsync("DROP TABLE IF EXISTS material_stock;");
     await db.execAsync("DROP TABLE IF EXISTS colour_brand;");
+    await db.execAsync("DROP TABLE IF EXISTS colour_type_material_type;");
     await db.execAsync("DROP TABLE IF EXISTS colour_type;");
     await db.execAsync("DROP TABLE IF EXISTS production_method;");
     await db.execAsync("DROP TABLE IF EXISTS material_type;");

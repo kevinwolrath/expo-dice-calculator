@@ -1,6 +1,7 @@
 import type {
   ColourBrand,
   ColourType,
+  ColourTypeMaterialType,
   ColourTypeService,
   MaterialStock,
   MaterialStockService,
@@ -14,6 +15,7 @@ import {
   deleteMaterialType,
   initDatabase,
   createColourType as insertColourType,
+  listAllColourTypeMaterials,
   listColourBrands,
   listColourTypes,
   listMaterialStock,
@@ -47,6 +49,7 @@ type UpdateColourTypeInput = Parameters<
 type InventoryState = {
   types: MaterialType[];
   colourTypes: ColourType[];
+  colourTypeMaterials: ColourTypeMaterialType[];
   colourBrands: ColourBrand[];
   stock: MaterialStock[];
   loading: boolean;
@@ -73,6 +76,7 @@ type InventoryState = {
 export const useInventoryStore = create<InventoryState>((set) => ({
   types: [],
   colourTypes: [],
+  colourTypeMaterials: [],
   colourBrands: [],
   materialTypes: [],
   stock: [],
@@ -82,13 +86,15 @@ export const useInventoryStore = create<InventoryState>((set) => ({
     set({ loading: true });
     try {
       await initDatabase();
-      const [types, colourTypes, colourBrands, stock] = await Promise.all([
-        listMaterialTypes(),
-        listColourTypes(),
-        listColourBrands(),
-        listMaterialStock(),
-      ]);
-      set({ types, colourTypes, colourBrands, stock });
+      const [types, colourTypes, colourTypeMaterials, colourBrands, stock] =
+        await Promise.all([
+          listMaterialTypes(),
+          listColourTypes(),
+          listAllColourTypeMaterials(),
+          listColourBrands(),
+          listMaterialStock(),
+        ]);
+      set({ types, colourTypes, colourTypeMaterials, colourBrands, stock });
     } finally {
       set({ loading: false });
     }
@@ -108,7 +114,8 @@ export const useInventoryStore = create<InventoryState>((set) => ({
     set({ loading: true });
     try {
       const colourTypes = await listColourTypes();
-      set({ colourTypes });
+      const colourTypeMaterials = await listAllColourTypeMaterials();
+      set({ colourTypes, colourTypeMaterials });
     } finally {
       set({ loading: false });
     }
@@ -221,7 +228,6 @@ export const useInventoryStore = create<InventoryState>((set) => ({
         {
           colour_type_id: tempId,
           description: input.description,
-          material_type_id: input.material_type_id,
           created_at: new Date().toISOString(),
         },
       ],
@@ -230,11 +236,13 @@ export const useInventoryStore = create<InventoryState>((set) => ({
     try {
       const created = await insertColourType(input);
       const colourTypes = await listColourTypes();
-      set({ colourTypes });
+      const colourTypeMaterials = await listAllColourTypeMaterials();
+      set({ colourTypes, colourTypeMaterials });
       return created;
     } catch (e) {
       const colourTypes = await listColourTypes();
-      set({ colourTypes });
+      const colourTypeMaterials = await listAllColourTypeMaterials();
+      set({ colourTypes, colourTypeMaterials });
       throw e;
     } finally {
       set({ loading: false });
@@ -252,7 +260,6 @@ export const useInventoryStore = create<InventoryState>((set) => ({
                 input.description !== undefined && input.description !== null
                   ? input.description
                   : item.description,
-              material_type_id: input.material_type_id ?? item.material_type_id,
             }
           : item,
       ),
@@ -261,7 +268,8 @@ export const useInventoryStore = create<InventoryState>((set) => ({
     try {
       await patchColourType(id, input);
       const colourTypes = await listColourTypes();
-      set({ colourTypes });
+      const colourTypeMaterials = await listAllColourTypeMaterials();
+      set({ colourTypes, colourTypeMaterials });
     } catch (e) {
       set({ colourTypes: prev });
       throw e;
@@ -279,7 +287,8 @@ export const useInventoryStore = create<InventoryState>((set) => ({
     try {
       await removeColourType(id);
       const colourTypes = await listColourTypes();
-      set({ colourTypes });
+      const colourTypeMaterials = await listAllColourTypeMaterials();
+      set({ colourTypes, colourTypeMaterials });
     } catch (e) {
       set({ colourTypes: prev });
       throw e;

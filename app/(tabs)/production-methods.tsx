@@ -5,7 +5,7 @@ import { Alert, Platform } from "react-native";
 import * as AlertHelper from "@/components/alert";
 import ChipSelect from "@/components/ui/ChipSelect";
 import EntityListItem from "@/components/ui/EntityListItem";
-import FormActionRow from "@/components/ui/FormActionRow";
+import FormActionRow, { isFormDirty } from "@/components/ui/FormActionRow";
 import FormField from "@/components/ui/FormField";
 import ScreenList from "@/components/ui/ScreenList";
 import {
@@ -137,6 +137,24 @@ export default function ProductionMethodsScreen() {
     setErrors({});
   };
 
+  const emptyForm = {
+    methodDescription: "",
+    minimumColourCount: "",
+    maximumColourCount: "",
+    allowedMaterialIds: [] as string[],
+  };
+  const formDirty =
+    methodEditingId !== null ||
+    isFormDirty(
+      {
+        methodDescription,
+        minimumColourCount,
+        maximumColourCount,
+        allowedMaterialIds,
+      },
+      emptyForm,
+    );
+
   const handleCancelMethod = () => {
     setMethodDescription("");
     setMinimumColourCount("");
@@ -237,6 +255,7 @@ export default function ProductionMethodsScreen() {
             onSave={handleSaveMethod}
             onCancel={handleCancelMethod}
             saving={savingMethod}
+            dirty={formDirty}
           />
         </>
       }

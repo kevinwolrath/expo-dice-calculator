@@ -3,7 +3,7 @@ import { Alert, Platform } from "react-native";
 
 import { showMessage } from "@/components/alert";
 import EntityListItem from "@/components/ui/EntityListItem";
-import FormActionRow from "@/components/ui/FormActionRow";
+import FormActionRow, { isFormDirty } from "@/components/ui/FormActionRow";
 import FormField from "@/components/ui/FormField";
 import ScreenList from "@/components/ui/ScreenList";
 import type { MaterialType } from "@/db";
@@ -54,6 +54,11 @@ export default function MaterialTypesScreen() {
     setDescription(item.description ?? "");
     setErrors({});
   };
+
+  const emptyForm = { description: "" };
+  const formDirty =
+    typeEditingId !== null ||
+    isFormDirty({ description }, emptyForm);
 
   const handleCancelType = () => {
     setDescription("");
@@ -120,6 +125,7 @@ export default function MaterialTypesScreen() {
             onSave={handleSaveType}
             onCancel={handleCancelType}
             saving={loading}
+            dirty={formDirty}
           />
         </>
       }

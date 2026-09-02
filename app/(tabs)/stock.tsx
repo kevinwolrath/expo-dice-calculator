@@ -3,7 +3,7 @@ import { Alert, Platform } from "react-native";
 
 import { showMessage } from "@/components/alert";
 import EntityListItem from "@/components/ui/EntityListItem";
-import FormActionRow from "@/components/ui/FormActionRow";
+import FormActionRow, { isFormDirty } from "@/components/ui/FormActionRow";
 import FormField from "@/components/ui/FormField";
 import ScreenList from "@/components/ui/ScreenList";
 import SelectDropdown from "@/components/ui/SelectDropdown";
@@ -16,6 +16,7 @@ export default function StockScreen() {
   const items = useInventoryStore((s) => s.stock);
   const types = useInventoryStore((s) => s.types);
   const colourTypes = useInventoryStore((s) => s.colourTypes);
+  const colourTypeMaterials = useInventoryStore((s) => s.colourTypeMaterials);
   const colourBrands = useInventoryStore((s) => s.colourBrands);
   const loadAll = useInventoryStore((s) => s.loadAll);
   const createStock = useInventoryStore((s) => s.createStock);
@@ -44,7 +45,12 @@ export default function StockScreen() {
   const colourTypeLabel = (id: string) => {
     const colourType = colourTypes.find((type) => type.colour_type_id === id);
     if (!colourType) return String(id);
-    return `${colourType.description} (${materialTypeLabel(colourType.material_type_id)})`;
+    const materials = colourTypeMaterials
+      .filter((row) => row.colour_type_id === id)
+      .map((row) => materialTypeLabel(row.material_type_id));
+    return materials.length > 0
+      ? `${colourType.description} (${materials.join(", ")})`
+      : colourType.description;
   };
 
   const colourBrandLabel = (id: string | null) => {
@@ -99,6 +105,19 @@ export default function StockScreen() {
     setQuantity(String(item.quantity_in_stock));
     setErrors({});
   };
+
+  const emptyForm = {
+    colourName: "",
+    colourTypeId: null,
+    colourBrandId: null,
+    quantity: "0",
+  };
+  const formDirty =
+    editingId !== null ||
+    isFormDirty(
+      { colourName, colourTypeId, colourBrandId, quantity },
+      emptyForm,
+    );
 
   const handleCancel = () => {
     setColourName("");
@@ -200,6 +219,7 @@ export default function StockScreen() {
             onSave={handleSave}
             onCancel={handleCancel}
             saving={saving}
+            dirty={formDirty}
           />
         </>
       }

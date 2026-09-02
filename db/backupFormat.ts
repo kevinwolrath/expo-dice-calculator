@@ -4,6 +4,7 @@ export const BACKUP_TABLES = [
   "material_type",
   "production_method",
   "colour_type",
+  "colour_type_material_type",
   "colour_brand",
   "material_stock",
   "dice_job_number_colour",
