@@ -48,14 +48,32 @@ export const replaceColourTypeMaterials = async (
   colourTypeId: string,
   materialTypeIds: string[],
 ): Promise<void> => {
-  const current = await listMaterialsForColourType(colourTypeId);
-  const currentIds = current.map((row) => row.material_type_id);
-  await Promise.all([
-    ...currentIds
-      .filter((id) => !materialTypeIds.includes(id))
-      .map((id) => removeColourTypeMaterial(colourTypeId, id)),
-    ...materialTypeIds
-      .filter((id) => !currentIds.includes(id))
-      .map((id) => addColourTypeMaterial(colourTypeId, id)),
-  ]);
+  const db = await getDatabase();
+  await db.withTransactionAsync(async () => {
+    const current = await db.getAllAsync<{ material_type_id: string }>(
+      "SELECT material_type_id FROM colour_type_material_type WHERE colour_type_id = ?;",
+      colourTypeId,
+    );
+    const currentIds = current.map((row) => row.material_type_id);
+
+    for (const id of currentIds) {
+      if (!materialTypeIds.includes(id)) {
+        await db.runAsync(
+          "DELETE FROM colour_type_material_type WHERE colour_type_id = ? AND material_type_id = ?;",
+          colourTypeId,
+          id,
+        );
+      }
+    }
+
+    for (const id of materialTypeIds) {
+      if (!currentIds.includes(id)) {
+        await db.runAsync(
+          "INSERT OR IGNORE INTO colour_type_material_type (colour_type_id, material_type_id) VALUES (?, ?);",
+          colourTypeId,
+          id,
+        );
+      }
+    }
+  });
 };
