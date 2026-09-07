@@ -9,6 +9,7 @@ beforeEach(() => {
   useInventoryStore.setState({
     types: [],
     colourTypes: [],
+    colourTypeMaterials: [],
     colourBrands: [],
     stock: [],
     loading: false,
@@ -55,20 +56,18 @@ test("createColourType appends a new colour type", async () => {
     {
       colour_type_id: "1",
       description: "Mica powder",
-      material_type_id: "1",
       created_at: new Date().toISOString(),
     },
     {
       colour_type_id: "2",
       description: "Glitter",
-      material_type_id: "1",
       created_at: new Date().toISOString(),
     },
   ]);
 
   await useInventoryStore.getState().createColourType({
     description: "Glitter",
-    material_type_id: "1",
+    material_type_ids: ["1"],
   });
   const state = useInventoryStore.getState();
   expect(
@@ -78,7 +77,7 @@ test("createColourType appends a new colour type", async () => {
   ).toBeDefined();
   expect(dbMock.createColourType).toHaveBeenCalledWith({
     description: "Glitter",
-    material_type_id: "1",
+    material_type_ids: ["1"],
   });
 });
 

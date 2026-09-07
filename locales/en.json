@@ -26,7 +26,7 @@
     "useLight": "Day view"
   },
   "startup": {
-    "loadingTitle": "Preparing Dice Calculator",
+    "loadingTitle": "Preparing to Roll your Dice",
     "loadingMessage": "Loading the database...",
     "errorTitle": "Database unavailable",
     "errorMessage": "The database could not be loaded.",
@@ -34,11 +34,15 @@
   },
   "jobs": {
     "title": "Dice Jobs",
-    "jobName": "Job name",
-    "description": "Description",
+    "jobName": "name",
+    "description": "Notes",
     "colourCount": "Colour count",
     "set": "Set",
     "manualColourCount": "Set colour count manually",
+    "excludedColourTypes": "Excluded colour types",
+    "selectExcludedColourType": "Exclude a colour type",
+    "noColourTypesToExclude": "No colour types left to exclude",
+    "noExcludedColourTypes": "No colour types excluded",
     "generate": "Generate",
     "generatedColours": "Job colours",
     "generateColoursRequired": "Press Generate to fill empty colour rows",
@@ -104,8 +108,7 @@
   "colourTypes": {
     "title": "Colour Types",
     "description": "Description",
-    "materialType": "Material type",
-    "selectMaterialType": "Choose a material type",
+    "allowedMaterials": "Allowed material types",
     "addMaterialTypesHint": "Add material types in Material Types",
     "add": "Add type",
     "save": "Save type",

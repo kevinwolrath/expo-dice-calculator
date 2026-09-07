@@ -4,7 +4,7 @@ import { Alert, Platform } from "react-native";
 
 import { showMessage } from "@/components/alert";
 import EntityListItem from "@/components/ui/EntityListItem";
-import FormActionRow from "@/components/ui/FormActionRow";
+import FormActionRow, { isFormDirty } from "@/components/ui/FormActionRow";
 import FormField from "@/components/ui/FormField";
 import ScreenList from "@/components/ui/ScreenList";
 import {
@@ -76,6 +76,10 @@ export default function DiceNumberColoursScreen() {
     setErrors({});
   };
 
+  const emptyForm = { name: "" };
+  const formDirty =
+    colourEditingId !== null || isFormDirty({ name }, emptyForm);
+
   const handleCancelColour = () => {
     setName("");
     setColourEditingId(null);
@@ -141,6 +145,7 @@ export default function DiceNumberColoursScreen() {
             onSave={handleSaveColour}
             onCancel={handleCancelColour}
             saving={loading}
+            dirty={formDirty}
           />
         </>
       }

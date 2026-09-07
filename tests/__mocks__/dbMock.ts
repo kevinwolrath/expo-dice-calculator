@@ -72,7 +72,6 @@ export const listColourTypes = isJest
       {
         colour_type_id: "1",
         description: "Mica powder",
-        material_type_id: "1",
         created_at: new Date().toISOString(),
       },
     ])
@@ -80,7 +79,6 @@ export const listColourTypes = isJest
       {
         colour_type_id: "1",
         description: "Mica powder",
-        material_type_id: "1",
         created_at: new Date().toISOString(),
       },
     ];
@@ -89,13 +87,11 @@ export const createColourType = isJest
   ? jestGlobal.fn().mockResolvedValue({
       colour_type_id: "2",
       description: "Glitter",
-      material_type_id: "1",
       created_at: new Date().toISOString(),
     })
   : async () => ({
       colour_type_id: "2",
       description: "Glitter",
-      material_type_id: "1",
       created_at: new Date().toISOString(),
     });
 
@@ -105,6 +101,22 @@ export const updateColourType = isJest
 export const deleteColourType = isJest
   ? jestGlobal.fn().mockResolvedValue(undefined)
   : async () => undefined;
+
+export const listAllColourTypeMaterials = isJest
+  ? jestGlobal.fn().mockResolvedValue([
+      {
+        colour_type_id: "1",
+        material_type_id: "1",
+        created_at: new Date().toISOString(),
+      },
+    ])
+  : async () => [
+      {
+        colour_type_id: "1",
+        material_type_id: "1",
+        created_at: new Date().toISOString(),
+      },
+    ];
 
 export const listColourBrands = isJest
   ? jestGlobal.fn().mockResolvedValue([
@@ -162,6 +174,7 @@ export default {
   createColourType,
   updateColourType,
   deleteColourType,
+  listAllColourTypeMaterials,
   listColourBrands,
   createMaterialStock,
   updateMaterialStock,

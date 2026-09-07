@@ -27,6 +27,11 @@ export type MaterialStock = {
 export type ColourType = {
   colour_type_id: string;
   description: string;
+  created_at: string;
+};
+
+export type ColourTypeMaterialType = {
+  colour_type_id: string;
   material_type_id: string;
   created_at: string;
 };
@@ -70,4 +75,10 @@ export type ProductionMethodMaterial = {
   production_method_id: string;
   material_type_id: string;
   created_at: string;
+};
+
+export type DiceJobColourTypeExclusion = {
+  dice_job_colour_type_exclusion_id: string;
+  dice_job_id: string;
+  colour_type_id: string;
 };

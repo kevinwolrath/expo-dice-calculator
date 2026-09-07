@@ -111,6 +111,7 @@ const replaceColourCatalog = async (
   await db.runAsync("DELETE FROM dice_job_colour;");
   await db.runAsync("DELETE FROM material_stock;");
   await db.runAsync("DELETE FROM colour_brand;");
+  await db.runAsync("DELETE FROM colour_type_material_type;");
   await db.runAsync("DELETE FROM colour_type;");
 
   const colourTypeIds = new Map<string, string>();
@@ -130,19 +131,15 @@ const replaceColourCatalog = async (
     brandIds.set(name, id);
   }
 
-  const ensureColourTypeId = async (
-    description: string,
-    materialTypeId: string,
-  ): Promise<string> => {
-    const key = `${description}\0${materialTypeId}`;
+  const ensureColourTypeId = async (description: string): Promise<string> => {
+    const key = description.trim().toLowerCase();
     const existing = colourTypeIds.get(key);
     if (existing) return existing;
     const id = generateId();
     await db.runAsync(
-      "INSERT INTO colour_type (colour_type_id, description, material_type_id) VALUES (?, ?, ?);",
+      "INSERT INTO colour_type (colour_type_id, description) VALUES (?, ?);",
       id,
       description,
-      materialTypeId,
     );
     colourTypeIds.set(key, id);
     return id;
@@ -157,25 +154,28 @@ const replaceColourCatalog = async (
     const materials: string[] = [];
     if (row.resin) materials.push(resinId);
     if (row.clay) materials.push(clayId);
+    if (materials.length === 0) continue;
 
+    const colourTypeId = await ensureColourTypeId(row.colourType);
     for (const materialTypeId of materials) {
-      const colourTypeId = await ensureColourTypeId(
-        row.colourType,
+      await db.runAsync(
+        "INSERT OR IGNORE INTO colour_type_material_type (colour_type_id, material_type_id) VALUES (?, ?);",
+        colourTypeId,
         materialTypeId,
       );
-      await db.runAsync(
-        `INSERT INTO material_stock
+    }
+    await db.runAsync(
+      `INSERT INTO material_stock
           (material_stock_id, colour_name, comment, colour_type_id, colour_brand_id, quantity_in_stock, is_active)
          VALUES (?, ?, ?, ?, ?, ?, ?);`,
-        generateId(),
-        row.colourName,
-        row.comment,
-        colourTypeId,
-        colourBrandId,
-        quantity,
-        isActive,
-      );
-    }
+      generateId(),
+      row.colourName,
+      row.comment,
+      colourTypeId,
+      colourBrandId,
+      quantity,
+      isActive,
+    );
   }
 };
 

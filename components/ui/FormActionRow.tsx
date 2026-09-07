@@ -6,6 +6,9 @@ import PrimaryButton from "@/components/ui/PrimaryButton";
 import { useScrollToForm } from "@/components/ui/ScreenList";
 import { Space } from "@/constants/theme";
 
+export const isFormDirty = (current: unknown, clean: unknown) =>
+  JSON.stringify(current) !== JSON.stringify(clean);
+
 type FormActionRowProps = {
   addTitle: string;
   onAdd: () => void;
@@ -13,6 +16,7 @@ type FormActionRowProps = {
   onSave: () => void;
   onCancel: () => void;
   saving?: boolean;
+  dirty?: boolean;
 };
 
 export default function FormActionRow({
@@ -22,6 +26,7 @@ export default function FormActionRow({
   onSave,
   onCancel,
   saving = false,
+  dirty = false,
 }: FormActionRowProps) {
   const { t } = useTranslation();
   const scrollToForm = useScrollToForm();
@@ -36,7 +41,7 @@ export default function FormActionRow({
             scrollToForm();
           });
         }}
-        disabled={saving}
+        disabled={saving || dirty}
       />
       <PrimaryButton
         title={saving ? t("common.saving") : saveTitle}
