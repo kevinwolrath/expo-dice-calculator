@@ -13,6 +13,7 @@ import {
 
 import { confirm, showMessage } from "@/components/alert";
 import { Text, useThemeColors, View } from "@/components/Themed";
+import DicePreview from "@/components/ui/DicePreview";
 import EntityListItem from "@/components/ui/EntityListItem";
 import FieldLabel from "@/components/ui/FieldLabel";
 import FormActionRow, { isFormDirty } from "@/components/ui/FormActionRow";
@@ -31,10 +32,9 @@ import {
 } from "@/constants/theme";
 import {
   colourTypeMaterialMap,
-  expandColourTypeExclusions,
-  materialTypeIdsForStock,
   createDiceJob,
   deleteDiceJob,
+  expandColourTypeExclusions,
   initDatabase,
   listAllAllowedMaterials,
   listAllDiceJobColours,
@@ -44,6 +44,7 @@ import {
   listDiceJobNumberColours,
   listDiceJobs,
   listProductionMethods,
+  materialTypeIdsForStock,
   pickRandomDistinctStock,
   replaceDiceJobColours,
   replaceDiceJobColourTypeExclusions,
@@ -102,6 +103,7 @@ export default function JobsScreen() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [showJobColourPicker, setShowJobColourPicker] = useState(false);
+  const [showDicePreview, setShowDicePreview] = useState(false);
   const [editingColourIndex, setEditingColourIndex] = useState<number | null>(
     null,
   );
@@ -629,6 +631,9 @@ export default function JobsScreen() {
     stock.find((item) => item.material_stock_id === id)?.colour_name ??
     t("jobs.unknownNumberColour");
 
+  const stockColour = (id: string) =>
+    stock.find((item) => item.material_stock_id === id)?.colour ?? "#d9d9d9";
+
   const coloursForJob = (jobId: string) =>
     allJobColours
       .filter((colour) => colour.dice_job_id === jobId)
@@ -645,10 +650,7 @@ export default function JobsScreen() {
       item,
       colourTypeToMaterialTypes,
     );
-    if (
-      materialTypeId &&
-      !itemMaterialTypeIds.includes(materialTypeId)
-    ) {
+    if (materialTypeId && !itemMaterialTypeIds.includes(materialTypeId)) {
       return false;
     }
     if (excludedColourTypeIdsForJob.includes(item.colour_type_id)) return false;
@@ -693,348 +695,434 @@ export default function JobsScreen() {
     );
 
   return (
-    <ScreenList
-      data={jobs}
-      keyExtractor={(item) => String(item.dice_job_id)}
-      countLabel={t("jobs.jobCount", { count: jobs.length })}
-      emptyText={t("jobs.empty")}
-      form={
-        <>
-          <FormField
-            label={t("jobs.jobName")}
-            required
-            error={errors.jobName}
-            value={jobName}
-            onChangeText={(value) => {
-              setJobName(value);
-              setErrors((current) => ({ ...current, jobName: undefined }));
-            }}
-            placeholder={t("jobs.jobNamePlaceholder")}
-          />
-          <FormField
-            label={t("jobs.description")}
-            value={description}
-            onChangeText={setDescription}
-            placeholder={t("jobs.descriptionPlaceholder")}
-            multiline
-          />
-          <View style={styles.colourCountBlock}>
-            <SelectDropdown
-              label={t("jobs.excludedColourTypes")}
-              placeholder={t("jobs.selectExcludedColourType")}
-              value={null}
-              options={colourTypes
-                .filter(
-                  (type) =>
-                    !excludedColourTypeIds.includes(type.colour_type_id),
-                )
-                .reduce<{ value: string; label: string }[]>((options, type) => {
+    <View style={styles.page}>
+      <ScreenList
+        data={jobs}
+        keyExtractor={(item) => String(item.dice_job_id)}
+        countLabel={t("jobs.jobCount", { count: jobs.length })}
+        emptyText={t("jobs.empty")}
+        form={
+          <>
+            <FormField
+              label={t("jobs.jobName")}
+              required
+              error={errors.jobName}
+              value={jobName}
+              onChangeText={(value) => {
+                setJobName(value);
+                setErrors((current) => ({ ...current, jobName: undefined }));
+              }}
+              placeholder={t("jobs.jobNamePlaceholder")}
+            />
+            <FormField
+              label={t("jobs.description")}
+              value={description}
+              onChangeText={setDescription}
+              placeholder={t("jobs.descriptionPlaceholder")}
+              multiline
+            />
+            <View style={styles.colourCountBlock}>
+              <SelectDropdown
+                label={t("jobs.excludedColourTypes")}
+                placeholder={t("jobs.selectExcludedColourType")}
+                value={null}
+                options={colourTypes
+                  .filter(
+                    (type) =>
+                      !excludedColourTypeIds.includes(type.colour_type_id),
+                  )
+                  .reduce<{ value: string; label: string }[]>(
+                    (options, type) => {
+                      const label = type.description;
+                      if (
+                        options.some(
+                          (option) =>
+                            option.label.trim().toLowerCase() ===
+                            label.trim().toLowerCase(),
+                        )
+                      ) {
+                        return options;
+                      }
+                      return [
+                        ...options,
+                        { value: type.colour_type_id, label },
+                      ];
+                    },
+                    [],
+                  )}
+                onChange={(value) => {
+                  const expanded = expandColourTypeExclusions(
+                    [value],
+                    colourTypes,
+                  );
+                  setExcludedColourTypeIds((current) => [
+                    ...new Set([...current, ...expanded]),
+                  ]);
+                }}
+                emptyHint={t("jobs.noColourTypesToExclude")}
+              />
+              <RemovableChipList
+                items={excludedColourTypeIds.reduce<
+                  { value: string; label: string }[]
+                >((items, id) => {
+                  const type = colourTypes.find(
+                    (item) => item.colour_type_id === id,
+                  );
+                  if (!type) return items;
                   const label = type.description;
                   if (
-                    options.some(
-                      (option) =>
-                        option.label.trim().toLowerCase() ===
+                    items.some(
+                      (item) =>
+                        item.label.trim().toLowerCase() ===
                         label.trim().toLowerCase(),
                     )
                   ) {
-                    return options;
+                    return items;
                   }
-                  return [...options, { value: type.colour_type_id, label }];
+                  return [...items, { value: id, label }];
                 }, [])}
-              onChange={(value) => {
-                const expanded = expandColourTypeExclusions(
-                  [value],
-                  colourTypes,
-                );
-                setExcludedColourTypeIds((current) => [
-                  ...new Set([...current, ...expanded]),
-                ]);
-              }}
-              emptyHint={t("jobs.noColourTypesToExclude")}
-            />
-            <RemovableChipList
-              items={excludedColourTypeIds.reduce<
-                { value: string; label: string }[]
-              >((items, id) => {
-                const type = colourTypes.find(
-                  (item) => item.colour_type_id === id,
-                );
-                if (!type) return items;
-                const label = type.description;
-                if (
-                  items.some(
-                    (item) =>
-                      item.label.trim().toLowerCase() ===
-                      label.trim().toLowerCase(),
-                  )
-                ) {
-                  return items;
-                }
-                return [...items, { value: id, label }];
-              }, [])}
-              onRemove={(value) => {
-                const expanded = expandColourTypeExclusions(
-                  [value],
-                  colourTypes,
-                );
-                setExcludedColourTypeIds((current) =>
-                  current.filter((id) => !expanded.includes(id)),
-                );
-              }}
-              emptyText={t("jobs.noExcludedColourTypes")}
-            />
-            <PrimaryButton
-              title={t("jobs.generate")}
-              onPress={() => {
-                void handleGenerateRandomJob();
-              }}
-              disabled={!canGenerate}
-            />
-            <SelectDropdown
-              label={t("jobs.materialType")}
-              placeholder={t("jobs.selectMaterialType")}
-              required
-              error={errors.materialTypeId}
-              value={materialTypeId}
-              options={materialTypes.map((type) => ({
-                value: type.material_type_id,
-                label: type.description ?? type.material_type_id.toString(),
-              }))}
-              onChange={(value) => {
-                void handleMaterialTypeChange(value);
-              }}
-              emptyHint={t("jobs.addMaterialTypeHint")}
-              rightAccessory={
-                <View style={styles.manualControl}>
-                  <Text style={styles.manualControlLabel}>{t("jobs.set")}</Text>
-                  <Switch
-                    value={materialTypeManual}
-                    onValueChange={setMaterialTypeManual}
-                    trackColor={{
-                      false: colors.inputBorder,
-                      true: colors.primary,
-                    }}
-                    thumbColor={colors.onPrimary}
-                    accessibilityLabel={t("jobs.manualMaterialType")}
-                  />
-                </View>
-              }
-            />
-            <SelectDropdown
-              label={t("jobs.productionMethod")}
-              placeholder={t("jobs.selectProductionMethod")}
-              required
-              error={errors.methodId}
-              value={methodId}
-              options={methods.map((method) => ({
-                value: method.production_method_id,
-                label:
-                  method.description ?? method.production_method_id.toString(),
-              }))}
-              onChange={(value) => {
-                void handleProductionMethodChange(value);
-              }}
-              emptyHint={t("jobs.addProductionMethodHint")}
-              disabled={!canChooseColourCount}
-              rightAccessory={
-                <View style={styles.manualControl}>
-                  <Text style={styles.manualControlLabel}>{t("jobs.set")}</Text>
-                  <Switch
-                    value={methodManual}
-                    onValueChange={setMethodManual}
-                    trackColor={{
-                      false: colors.inputBorder,
-                      true: colors.primary,
-                    }}
-                    thumbColor={colors.onPrimary}
-                    accessibilityLabel={t("jobs.manualProductionMethod")}
-                  />
-                </View>
-              }
-            />
-            <FormField
-              label={t("jobs.colourCount")}
-              required
-              error={errors.colourCount}
-              value={colourCount}
-              onChangeText={(value) => {
-                setColourCount(value);
-                setErrors((current) => ({
-                  ...current,
-                  colourCount: undefined,
-                }));
-              }}
-              onBlur={() => {
-                void handleColourCountBlur();
-              }}
-              keyboardType="number-pad"
-              editable={canChooseColourCount}
-              rightAccessory={
-                <View style={styles.manualControl}>
-                  <Text style={styles.manualControlLabel}>{t("jobs.set")}</Text>
-                  <Switch
-                    value={colourCountManual}
-                    onValueChange={setColourCountManual}
-                    trackColor={{
-                      false: colors.inputBorder,
-                      true: colors.primary,
-                    }}
-                    thumbColor={colors.onPrimary}
-                    accessibilityLabel={t("jobs.manualColourCount")}
-                  />
-                </View>
-              }
-            />
-            {jobColourStockIds.length > 0 ? (
-              <View style={styles.generatedColours}>
-                <FieldLabel label={t("jobs.generatedColours")} />
-                {jobColourStockIds.map((id, index) => (
-                  <EntityListItem
-                    key={`${id}-${index}`}
-                    title={`${index + 1}. ${stockColourLabel(id)}`}
-                    onEdit={() => handleEditJobColour(index)}
-                    onDelete={() => {
-                      void handleDeleteJobColour(index);
-                    }}
-                  />
-                ))}
-                <Modal
-                  visible={showJobColourPicker}
-                  transparent
-                  animationType="fade"
-                  onRequestClose={() => {
-                    setShowJobColourPicker(false);
-                    setEditingColourIndex(null);
+                onRemove={(value) => {
+                  const expanded = expandColourTypeExclusions(
+                    [value],
+                    colourTypes,
+                  );
+                  setExcludedColourTypeIds((current) =>
+                    current.filter((id) => !expanded.includes(id)),
+                  );
+                }}
+                emptyText={t("jobs.noExcludedColourTypes")}
+              />
+              <View style={styles.generateRow}>
+                <PrimaryButton
+                  title={t("jobs.generate")}
+                  style={styles.generateButton}
+                  onPress={() => {
+                    void handleGenerateRandomJob();
                   }}
+                  disabled={!canGenerate}
+                />
+                <PrimaryButton
+                  title={t("jobs.preview")}
+                  onPress={() => setShowDicePreview(true)}
+                />
+              </View>
+              <Modal
+                visible={showDicePreview}
+                animationType="fade"
+                onRequestClose={() => setShowDicePreview(false)}
+              >
+                <RNView
+                  style={[
+                    styles.dicePreviewScreen,
+                    { backgroundColor: colors.background },
+                  ]}
                 >
-                  <RNView
-                    style={[
-                      styles.modalBackdrop,
-                      { backgroundColor: colors.overlay },
-                    ]}
-                  >
-                    <Pressable
-                      style={StyleSheet.absoluteFill}
-                      onPress={() => {
-                        setShowJobColourPicker(false);
-                        setEditingColourIndex(null);
+                  <Pressable
+                    style={StyleSheet.absoluteFill}
+                    onPress={() => setShowDicePreview(false)}
+                  />
+                  <DicePreview
+                    variant="modal"
+                    colours={jobColourStockIds.map(stockColour)}
+                    numberColourName={
+                      numberColourId
+                        ? numberColourLabel(numberColourId)
+                        : null
+                    }
+                    stroke={colors.text}
+                  />
+                </RNView>
+              </Modal>
+              <SelectDropdown
+                label={t("jobs.materialType")}
+                placeholder={t("jobs.selectMaterialType")}
+                required
+                error={errors.materialTypeId}
+                value={materialTypeId}
+                options={materialTypes.map((type) => ({
+                  value: type.material_type_id,
+                  label: type.description ?? type.material_type_id.toString(),
+                }))}
+                onChange={(value) => {
+                  void handleMaterialTypeChange(value);
+                }}
+                emptyHint={t("jobs.addMaterialTypeHint")}
+                rightAccessory={
+                  <View style={styles.manualControl}>
+                    <Text style={styles.manualControlLabel}>
+                      {t("jobs.set")}
+                    </Text>
+                    <Switch
+                      value={materialTypeManual}
+                      onValueChange={setMaterialTypeManual}
+                      trackColor={{
+                        false: colors.inputBorder,
+                        true: colors.primary,
+                      }}
+                      thumbColor={colors.onPrimary}
+                      accessibilityLabel={t("jobs.manualMaterialType")}
+                    />
+                  </View>
+                }
+              />
+              <SelectDropdown
+                label={t("jobs.productionMethod")}
+                placeholder={t("jobs.selectProductionMethod")}
+                required
+                error={errors.methodId}
+                value={methodId}
+                options={methods.map((method) => ({
+                  value: method.production_method_id,
+                  label:
+                    method.description ??
+                    method.production_method_id.toString(),
+                }))}
+                onChange={(value) => {
+                  void handleProductionMethodChange(value);
+                }}
+                emptyHint={t("jobs.addProductionMethodHint")}
+                disabled={!canChooseColourCount}
+                rightAccessory={
+                  <View style={styles.manualControl}>
+                    <Text style={styles.manualControlLabel}>
+                      {t("jobs.set")}
+                    </Text>
+                    <Switch
+                      value={methodManual}
+                      onValueChange={setMethodManual}
+                      trackColor={{
+                        false: colors.inputBorder,
+                        true: colors.primary,
+                      }}
+                      thumbColor={colors.onPrimary}
+                      accessibilityLabel={t("jobs.manualProductionMethod")}
+                    />
+                  </View>
+                }
+              />
+              <FormField
+                label={t("jobs.colourCount")}
+                required
+                error={errors.colourCount}
+                value={colourCount}
+                onChangeText={(value) => {
+                  setColourCount(value);
+                  setErrors((current) => ({
+                    ...current,
+                    colourCount: undefined,
+                  }));
+                }}
+                onBlur={() => {
+                  void handleColourCountBlur();
+                }}
+                keyboardType="number-pad"
+                editable={canChooseColourCount}
+                rightAccessory={
+                  <View style={styles.manualControl}>
+                    <Text style={styles.manualControlLabel}>
+                      {t("jobs.set")}
+                    </Text>
+                    <Switch
+                      value={colourCountManual}
+                      onValueChange={setColourCountManual}
+                      trackColor={{
+                        false: colors.inputBorder,
+                        true: colors.primary,
+                      }}
+                      thumbColor={colors.onPrimary}
+                      accessibilityLabel={t("jobs.manualColourCount")}
+                    />
+                  </View>
+                }
+              />
+              {jobColourStockIds.length > 0 ? (
+                <View style={styles.generatedColours}>
+                  <FieldLabel label={t("jobs.generatedColours")} />
+                  {jobColourStockIds.map((id, index) => (
+                    <EntityListItem
+                      key={`${id}-${index}`}
+                      title={`${index + 1}. ${stockColourLabel(id)}`}
+                      onEdit={() => handleEditJobColour(index)}
+                      onDelete={() => {
+                        void handleDeleteJobColour(index);
                       }}
                     />
+                  ))}
+                  <Modal
+                    visible={showJobColourPicker}
+                    transparent
+                    animationType="fade"
+                    onRequestClose={() => {
+                      setShowJobColourPicker(false);
+                      setEditingColourIndex(null);
+                    }}
+                  >
                     <RNView
                       style={[
-                        styles.optionsSheet,
-                        {
-                          backgroundColor: colors.card,
-                          borderColor: colors.border,
-                        },
+                        styles.modalBackdrop,
+                        { backgroundColor: colors.overlay },
                       ]}
                     >
-                      <Text
-                        style={[styles.optionsTitle, { color: colors.text }]}
+                      <Pressable
+                        style={StyleSheet.absoluteFill}
+                        onPress={() => {
+                          setShowJobColourPicker(false);
+                          setEditingColourIndex(null);
+                        }}
+                      />
+                      <RNView
+                        style={[
+                          styles.optionsSheet,
+                          {
+                            backgroundColor: colors.card,
+                            borderColor: colors.border,
+                          },
+                        ]}
                       >
-                        {t("jobs.selectJobColour")}
-                      </Text>
-                      {replacementStock.length === 0 ? (
                         <Text
-                          style={[Type.hint, styles.selectHint, styles.option]}
+                          style={[styles.optionsTitle, { color: colors.text }]}
                         >
-                          {t("jobs.noReplacementColours")}
+                          {t("jobs.selectJobColour")}
                         </Text>
-                      ) : (
-                        <ScrollView>
-                          {replacementStock.map((item) => {
-                            const selected =
-                              editingColourIndex !== null &&
-                              jobColourStockIds[editingColourIndex] ===
-                                item.material_stock_id;
-                            return (
-                              <Pressable
-                                key={item.material_stock_id}
-                                onPress={() =>
-                                  handleSelectJobColour(item.material_stock_id)
-                                }
-                                style={[
-                                  styles.option,
-                                  selected && {
-                                    backgroundColor: colors.primary,
-                                  },
-                                ]}
-                              >
-                                <Text
+                        {replacementStock.length === 0 ? (
+                          <Text
+                            style={[
+                              Type.hint,
+                              styles.selectHint,
+                              styles.option,
+                            ]}
+                          >
+                            {t("jobs.noReplacementColours")}
+                          </Text>
+                        ) : (
+                          <ScrollView>
+                            {replacementStock.map((item) => {
+                              const selected =
+                                editingColourIndex !== null &&
+                                jobColourStockIds[editingColourIndex] ===
+                                  item.material_stock_id;
+                              return (
+                                <Pressable
+                                  key={item.material_stock_id}
+                                  onPress={() =>
+                                    handleSelectJobColour(
+                                      item.material_stock_id,
+                                    )
+                                  }
                                   style={[
-                                    styles.optionLabel,
-                                    { color: colors.text },
-                                    selected && styles.selectedOptionLabel,
-                                    selected && { color: colors.onPrimary },
+                                    styles.option,
+                                    selected && {
+                                      backgroundColor: colors.primary,
+                                    },
                                   ]}
                                 >
-                                  {item.colour_name}
-                                </Text>
-                              </Pressable>
-                            );
-                          })}
-                        </ScrollView>
-                      )}
+                                  <Text
+                                    style={[
+                                      styles.optionLabel,
+                                      { color: colors.text },
+                                      selected && styles.selectedOptionLabel,
+                                      selected && { color: colors.onPrimary },
+                                    ]}
+                                  >
+                                    {item.colour_name}
+                                  </Text>
+                                </Pressable>
+                              );
+                            })}
+                          </ScrollView>
+                        )}
+                      </RNView>
                     </RNView>
-                  </RNView>
-                </Modal>
-              </View>
-            ) : null}
-          </View>
-          <SelectDropdown
-            label={t("jobs.numberColour")}
-            placeholder={t("jobs.selectNumberColour")}
-            required
-            error={errors.numberColourId}
-            value={numberColourId}
-            options={numberColours.map((colour) => ({
-              value: colour.dice_job_number_colour_id,
-              label: colour.dice_job_number_colour_name,
-            }))}
-            onChange={(value) => {
-              setNumberColourId(value);
-              setErrors((current) => ({
-                ...current,
-                numberColourId: undefined,
-              }));
-            }}
-            emptyHint={t("jobs.addNumberColourHint")}
+                  </Modal>
+                </View>
+              ) : null}
+            </View>
+            <SelectDropdown
+              label={t("jobs.numberColour")}
+              placeholder={t("jobs.selectNumberColour")}
+              required
+              error={errors.numberColourId}
+              value={numberColourId}
+              options={numberColours.map((colour) => ({
+                value: colour.dice_job_number_colour_id,
+                label: colour.dice_job_number_colour_name,
+              }))}
+              onChange={(value) => {
+                setNumberColourId(value);
+                setErrors((current) => ({
+                  ...current,
+                  numberColourId: undefined,
+                }));
+              }}
+              emptyHint={t("jobs.addNumberColourHint")}
+            />
+            <FormActionRow
+              addTitle={t("jobs.addJob")}
+              onAdd={resetForm}
+              saveTitle={t("jobs.save")}
+              onSave={handleCreate}
+              onCancel={resetForm}
+              saving={saving}
+              dirty={formDirty}
+            />
+          </>
+        }
+        renderItem={({ item }) => {
+          const colourNames = coloursForJob(item.dice_job_id);
+          return (
+            <EntityListItem
+              title={item.job_name}
+              meta={`${formatJobTimestamp(item.created_at, i18n.language)} • ${methodLabel(item.production_method_id)} • ${t("jobs.colourCountValue", { count: item.colour_count })} • ${numberColourLabel(item.dice_job_number_colour_id)}${
+                colourNames.length ? ` • ${colourNames.join(", ")}` : ""
+              }`}
+              description={item.description}
+              onEdit={() => handleEdit(item)}
+              onDelete={() => handleDelete(item.dice_job_id)}
+            />
+          );
+        }}
+      />
+      {jobColourStockIds.length > 0 ? (
+        <View pointerEvents="none" style={styles.fixedDice}>
+          <DicePreview
+            colours={jobColourStockIds.map(stockColour)}
+            numberColourName={
+              numberColourId ? numberColourLabel(numberColourId) : null
+            }
+            stroke={colors.text}
           />
-          <FormActionRow
-            addTitle={t("jobs.addJob")}
-            onAdd={resetForm}
-            saveTitle={t("jobs.save")}
-            onSave={handleCreate}
-            onCancel={resetForm}
-            saving={saving}
-            dirty={formDirty}
-          />
-        </>
-      }
-      renderItem={({ item }) => {
-        const colourNames = coloursForJob(item.dice_job_id);
-        return (
-          <EntityListItem
-            title={item.job_name}
-            meta={`${formatJobTimestamp(item.created_at, i18n.language)} • ${methodLabel(item.production_method_id)} • ${t("jobs.colourCountValue", { count: item.colour_count })} • ${numberColourLabel(item.dice_job_number_colour_id)}${
-              colourNames.length ? ` • ${colourNames.join(", ")}` : ""
-            }`}
-            description={item.description}
-            onEdit={() => handleEdit(item)}
-            onDelete={() => handleDelete(item.dice_job_id)}
-          />
-        );
-      }}
-    />
+        </View>
+      ) : null}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  page: { flex: 1 },
+  fixedDice: {
+    position: Platform.OS === "web" ? "fixed" : "absolute",
+    top: 100,
+    left: 0,
+    right: 0,
+    zIndex: 2,
+    elevation: 2,
+  },
   selectField: { marginBottom: Space[3] },
   colourCountBlock: { marginBottom: Space[3] },
   manualControl: { flexDirection: "row", alignItems: "center", gap: Space[1] },
   manualControlLabel: { fontSize: FontSize.md },
-  generatedColours: { marginTop: Space[2], gap: Space[2] },
+  generateRow: {
+    flexDirection: "row",
+    alignItems: "stretch",
+    gap: Space[3],
+  },
+  generateButton: { flex: 1 },
+  dicePreviewScreen: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: Space[6],
+  },
   selectHint: { opacity: 0.5 },
   pickerContainer: {
     borderWidth: Stroke.input,

@@ -15,6 +15,7 @@ export type ProductionMethod = {
 export type MaterialStock = {
   material_stock_id: string;
   colour_name: string;
+  colour: string;
   comment: string | null;
   colour_type_id: string;
   colour_brand_id: string | null;

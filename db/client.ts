@@ -8,7 +8,7 @@ const DATABASE_NAME = "dice_calculator.db";
 // Bump this and add a branch below whenever `schema.ts` changes.
 // We're using a destructive prototype migration: create a fresh schema
 // by dropping existing tables when the version increases.
-export const DATABASE_VERSION = 14;
+export const DATABASE_VERSION = 15;
 
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 let initPromise: Promise<SQLite.SQLiteDatabase> | null = null;

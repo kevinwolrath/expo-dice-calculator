@@ -27,6 +27,7 @@ export const listMaterialStock = isJest
       {
         material_stock_id: "1",
         colour_name: "Red",
+        colour: "#c0392b",
         comment: null,
         colour_type_id: "1",
         colour_brand_id: null,
@@ -39,6 +40,7 @@ export const listMaterialStock = isJest
       {
         material_stock_id: "1",
         colour_name: "Red",
+        colour: "#c0392b",
         comment: null,
         colour_type_id: "1",
         colour_brand_id: null,
@@ -138,6 +140,7 @@ export const createMaterialStock = isJest
   ? jestGlobal.fn().mockResolvedValue({
       material_stock_id: "2",
       colour_name: "Blue",
+      colour: "#2471a3",
       comment: null,
       colour_type_id: "1",
       colour_brand_id: null,
@@ -148,6 +151,7 @@ export const createMaterialStock = isJest
   : async () => ({
       material_stock_id: "2",
       colour_name: "Blue",
+      colour: "#2471a3",
       comment: null,
       colour_type_id: "1",
       colour_brand_id: null,

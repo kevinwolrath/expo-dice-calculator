@@ -26,6 +26,7 @@ const stock = (
 ): MaterialStock => ({
   material_stock_id: id,
   colour_name: name,
+  colour: "#9e9e9e",
   comment: null,
   colour_type_id: colourTypeId,
   colour_brand_id: null,

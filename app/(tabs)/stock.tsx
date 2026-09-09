@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
 import { Alert, Platform } from "react-native";
+import { useTranslation } from "react-i18next";
 
 import { showMessage } from "@/components/alert";
+import ColorField from "@/components/ui/ColorField";
 import EntityListItem from "@/components/ui/EntityListItem";
 import FormActionRow, { isFormDirty } from "@/components/ui/FormActionRow";
 import FormField from "@/components/ui/FormField";
 import ScreenList from "@/components/ui/ScreenList";
 import SelectDropdown from "@/components/ui/SelectDropdown";
+import { colourFromName } from "@/constants/colourFromName";
 import type { MaterialStock } from "@/db";
 import useInventoryStore from "@/stores/useInventoryStore";
-import { useTranslation } from "react-i18next";
 
 export default function StockScreen() {
   const { t } = useTranslation();
@@ -24,6 +26,8 @@ export default function StockScreen() {
   const deleteStock = useInventoryStore((s) => s.deleteStock);
 
   const [colourName, setColourName] = useState("");
+  const [colour, setColour] = useState(colourFromName(""));
+  const [colourManual, setColourManual] = useState(false);
   const [colourTypeId, setColourTypeId] = useState<string | null>(null);
   const [colourBrandId, setColourBrandId] = useState<string | null>(null);
   const [quantity, setQuantity] = useState("0");
@@ -75,6 +79,7 @@ export default function StockScreen() {
       if (editingId) {
         await updateStock(editingId, {
           colour_name: colourName.trim(),
+          colour,
           colour_type_id: colourTypeId,
           colour_brand_id: colourBrandId,
           quantity_in_stock: Number(quantity) || 0,
@@ -82,6 +87,7 @@ export default function StockScreen() {
       } else {
         const created = await createStock({
           colour_name: colourName.trim(),
+          colour,
           colour_type_id: colourTypeId,
           colour_brand_id: colourBrandId,
           quantity_in_stock: Number(quantity) || 0,
@@ -100,6 +106,8 @@ export default function StockScreen() {
   const handleEdit = (item: MaterialStock) => {
     setEditingId(item.material_stock_id);
     setColourName(item.colour_name);
+    setColour(item.colour);
+    setColourManual(true);
     setColourTypeId(item.colour_type_id);
     setColourBrandId(item.colour_brand_id);
     setQuantity(String(item.quantity_in_stock));
@@ -108,6 +116,7 @@ export default function StockScreen() {
 
   const emptyForm = {
     colourName: "",
+    colour: colourFromName(""),
     colourTypeId: null,
     colourBrandId: null,
     quantity: "0",
@@ -115,12 +124,14 @@ export default function StockScreen() {
   const formDirty =
     editingId !== null ||
     isFormDirty(
-      { colourName, colourTypeId, colourBrandId, quantity },
+      { colourName, colour, colourTypeId, colourBrandId, quantity },
       emptyForm,
     );
 
   const handleCancel = () => {
     setColourName("");
+    setColour(colourFromName(""));
+    setColourManual(false);
     setColourTypeId(null);
     setColourBrandId(null);
     setQuantity("0");
@@ -173,7 +184,19 @@ export default function StockScreen() {
             value={colourName}
             onChangeText={(value) => {
               setColourName(value);
+              if (!colourManual) setColour(colourFromName(value));
               setErrors((current) => ({ ...current, colourName: undefined }));
+            }}
+          />
+          <ColorField
+            label={t("stock.colour")}
+            value={colour}
+            fallback={colourFromName(colourName)}
+            allowEmpty={false}
+            onChange={(value) => {
+              if (!value) return;
+              setColour(value);
+              setColourManual(true);
             }}
           />
           <SelectDropdown

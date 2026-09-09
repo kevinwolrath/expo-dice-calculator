@@ -1,5 +1,6 @@
 import type * as SQLite from "expo-sqlite";
 
+import { colourFromName } from "../constants/colourFromName";
 import { COLOUR_CATALOG } from "./seedColourCatalog";
 import { generateId } from "./uuid";
 
@@ -166,10 +167,11 @@ const replaceColourCatalog = async (
     }
     await db.runAsync(
       `INSERT INTO material_stock
-          (material_stock_id, colour_name, comment, colour_type_id, colour_brand_id, quantity_in_stock, is_active)
-         VALUES (?, ?, ?, ?, ?, ?, ?);`,
+          (material_stock_id, colour_name, colour, comment, colour_type_id, colour_brand_id, quantity_in_stock, is_active)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
       generateId(),
       row.colourName,
+      colourFromName(row.colourName),
       row.comment,
       colourTypeId,
       colourBrandId,
