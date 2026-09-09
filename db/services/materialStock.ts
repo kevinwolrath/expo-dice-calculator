@@ -1,3 +1,4 @@
+import { colourFromName } from "../../constants/colourFromName";
 import { getDatabase } from "../client";
 import type { MaterialStock } from "../types";
 import { generateId } from "../uuid";
@@ -21,6 +22,7 @@ export const getMaterialStock = async (
 
 export const createMaterialStock = async (input: {
   colour_name: string;
+  colour?: string;
   colour_type_id: string;
   colour_brand_id?: string | null;
   quantity_in_stock?: number;
@@ -28,10 +30,12 @@ export const createMaterialStock = async (input: {
 }): Promise<MaterialStock> => {
   const db = await getDatabase();
   const id = generateId();
+  const colour = input.colour ?? colourFromName(input.colour_name);
   await db.runAsync(
-    "INSERT INTO material_stock (material_stock_id, colour_name, colour_type_id, colour_brand_id, quantity_in_stock, is_active) VALUES (?, ?, ?, ?, ?, ?);",
+    "INSERT INTO material_stock (material_stock_id, colour_name, colour, colour_type_id, colour_brand_id, quantity_in_stock, is_active) VALUES (?, ?, ?, ?, ?, ?, ?);",
     id,
     input.colour_name,
+    colour,
     input.colour_type_id,
     input.colour_brand_id ?? null,
     input.quantity_in_stock ?? 0,
@@ -46,6 +50,7 @@ export const updateMaterialStock = async (
   id: string,
   input: {
     colour_name?: string;
+    colour?: string;
     colour_type_id?: string;
     colour_brand_id?: string | null;
     quantity_in_stock?: number;
@@ -57,9 +62,10 @@ export const updateMaterialStock = async (
   if (!current) throw new Error(`Material stock ${id} not found`);
   await db.runAsync(
     `UPDATE material_stock
-     SET colour_name = ?, colour_type_id = ?, colour_brand_id = ?, quantity_in_stock = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP
+     SET colour_name = ?, colour = ?, colour_type_id = ?, colour_brand_id = ?, quantity_in_stock = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP
      WHERE material_stock_id = ?;`,
     input.colour_name ?? current.colour_name,
+    input.colour ?? current.colour,
     input.colour_type_id ?? current.colour_type_id,
     input.colour_brand_id !== undefined
       ? input.colour_brand_id

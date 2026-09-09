@@ -10,6 +10,7 @@ import {
 import { Text, View, useThemeColors } from "@/components/Themed";
 import FieldError from "@/components/ui/FieldError";
 import FieldLabel from "@/components/ui/FieldLabel";
+import { hexToRgba } from "@/constants/pageTheme";
 import {
     FontSize,
     Radius,
@@ -66,6 +67,7 @@ export default function SelectDropdown({
                 styles.picker,
                 {
                   borderColor: error ? colors.destructive : colors.inputBorder,
+                  backgroundColor: hexToRgba(colors.background, 0.92),
                   opacity: disabled ? 0.5 : 1,
                 },
               ]}

@@ -12,6 +12,7 @@ type ColorFieldProps = {
   value: string | null;
   fallback: string;
   onChange: (value: string | null) => void;
+  allowEmpty?: boolean;
 };
 
 export default function ColorField({
@@ -19,6 +20,7 @@ export default function ColorField({
   value,
   fallback,
   onChange,
+  allowEmpty = true,
 }: ColorFieldProps) {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -32,7 +34,12 @@ export default function ColorField({
   const commit = (next: string) => {
     setDraft(next);
     if (!next.trim()) {
-      onChange(null);
+      if (allowEmpty) {
+        onChange(null);
+        return;
+      }
+      setDraft(fallback);
+      onChange(fallback);
       return;
     }
     const hex = normalizeHexColor(next);
@@ -79,7 +86,7 @@ export default function ColorField({
             { borderColor: colors.inputBorder, color: colors.text },
           ]}
         />
-        {value ? (
+        {allowEmpty && value ? (
           <Pressable onPress={() => commit("")} hitSlop={8}>
             <Text style={{ color: colors.primary }}>{t("common.delete")}</Text>
           </Pressable>

@@ -4,6 +4,7 @@ import { StyleSheet, TextInput, type TextInputProps } from "react-native";
 import { View, useThemeColors } from "@/components/Themed";
 import FieldError from "@/components/ui/FieldError";
 import FieldLabel from "@/components/ui/FieldLabel";
+import { hexToRgba } from "@/constants/pageTheme";
 import { FontSize, Radius, Space, Stroke, Touch } from "@/constants/theme";
 
 type FormFieldProps = TextInputProps & {
@@ -34,7 +35,7 @@ export default function FormField({
           multiline={multiline}
           style={[
             styles.input,
-            { borderColor, color: colors.text },
+            { borderColor, color: colors.text, backgroundColor: hexToRgba(colors.background, 0.92) },
             multiline && styles.multiline,
             style,
           ]}

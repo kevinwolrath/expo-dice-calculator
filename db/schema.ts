@@ -104,6 +104,8 @@ CREATE TABLE material_stock
 
     colour_name TEXT NOT NULL,
 
+    colour TEXT NOT NULL,
+
     comment TEXT,
 
     colour_type_id TEXT NOT NULL,

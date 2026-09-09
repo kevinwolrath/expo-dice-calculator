@@ -44,7 +44,9 @@
     "noColourTypesToExclude": "Keine weiteren Farbarten zum Ausschließen",
     "noExcludedColourTypes": "Keine Farbarten ausgeschlossen",
     "generate": "Generieren",
+    "preview": "Vorschau",
     "generatedColours": "Auftragsfarben",
+    "dicePreview": "Würfelset",
     "generateColoursRequired": "Drücken Sie Generieren, um leere Farbzeilen zu füllen",
     "coloursAlreadyFilled": "Alle Farbzeilen sind bereits gefüllt.",
     "notEnoughColours": "{{count}} unterschiedliche Farben werden benötigt, aber nur {{available}} sind im Bestand verfügbar.",
@@ -143,6 +145,7 @@
   "stock": {
     "title": "Materialbestand",
     "colourName": "Farbname",
+    "colour": "Farbe",
     "colourType": "Farbart",
     "colourBrand": "Marke",
     "quantity": "Menge",

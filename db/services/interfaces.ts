@@ -79,6 +79,7 @@ export interface MaterialStockService {
   getMaterialStock(id: string): Promise<MaterialStock | null>;
   createMaterialStock(input: {
     colour_name: string;
+    colour?: string;
     colour_type_id: string;
     colour_brand_id?: string | null;
     quantity_in_stock?: number;
@@ -88,6 +89,7 @@ export interface MaterialStockService {
     id: string,
     input: {
       colour_name?: string;
+      colour?: string;
       colour_type_id?: string;
       colour_brand_id?: string | null;
       quantity_in_stock?: number;

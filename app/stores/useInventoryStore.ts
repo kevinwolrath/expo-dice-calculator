@@ -25,6 +25,7 @@ import {
   updateMaterialStock,
   updateMaterialType,
 } from "@/db";
+import { colourFromName } from "@/constants/colourFromName";
 import { create } from "zustand";
 
 type CreateMaterialTypeInput = Parameters<
@@ -306,6 +307,7 @@ export const useInventoryStore = create<InventoryState>((set) => ({
         {
           material_stock_id: tempId,
           colour_name: input.colour_name,
+          colour: input.colour ?? colourFromName(input.colour_name),
           comment: null,
           colour_type_id: input.colour_type_id,
           colour_brand_id: input.colour_brand_id ?? null,
