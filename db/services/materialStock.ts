@@ -30,7 +30,7 @@ export const createMaterialStock = async (input: {
 }): Promise<MaterialStock> => {
   const db = await getDatabase();
   const id = generateId();
-  const colour = input.colour ?? colourFromName(input.colour_name);
+  const colour = colourFromName(input.colour ?? input.colour_name);
   await db.runAsync(
     "INSERT INTO material_stock (material_stock_id, colour_name, colour, colour_type_id, colour_brand_id, quantity_in_stock, is_active) VALUES (?, ?, ?, ?, ?, ?, ?);",
     id,
