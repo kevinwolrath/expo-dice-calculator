@@ -7,7 +7,7 @@ Files:
 - assets.ts – Metro `require()` map for bundled images
 - tavern_background.jpg – full-screen portrait background (day)
 - tavern_background_dark.jpg – unused at runtime (night is locked black)
-- dice_job_manager_banner.jpg – Jobs screen/header banner (not wired yet)
+- dice_job_manager_banner.jpg – Jobs screen/header banner
 - app_icon.png / splash_screen.jpg – build-time Expo icon/splash, not swapped at runtime
 - panel_background.png / button_*.png – optional decoration, not used as 9-slice chrome
 - dice_d20.png / dice_d12.png / dice_d8.png / dice_d6.png – transparent dice artwork
