@@ -3,6 +3,7 @@ import { useCallback, useState } from "react";
 import { Alert, Platform } from "react-native";
 
 import * as AlertHelper from "@/components/alert";
+import { usePackSurface } from "@/components/usePackSurface";
 import ChipSelect from "@/components/ui/ChipSelect";
 import EntityListItem from "@/components/ui/EntityListItem";
 import FormActionRow, { isFormDirty } from "@/components/ui/FormActionRow";
@@ -24,6 +25,7 @@ import { useTranslation } from "react-i18next";
 
 export default function ProductionMethodsScreen() {
   const { t } = useTranslation();
+  const { icon } = usePackSurface();
   const [methods, setMethods] = useState<ProductionMethod[]>([]);
 
   const [methodDescription, setMethodDescription] = useState("");
@@ -208,6 +210,7 @@ export default function ProductionMethodsScreen() {
         <>
           <FormField
             label={t("productionMethods.description")}
+            icon={icon("method")}
             required
             error={errors.description}
             value={methodDescription}
@@ -218,6 +221,7 @@ export default function ProductionMethodsScreen() {
           />
           <FormField
             label={t("productionMethods.minimumColourCount")}
+            icon={icon("colour")}
             error={errors.colourCountRange}
             value={minimumColourCount}
             onChangeText={(value) => {
@@ -228,6 +232,7 @@ export default function ProductionMethodsScreen() {
           />
           <FormField
             label={t("productionMethods.maximumColourCount")}
+            icon={icon("colour")}
             value={maximumColourCount}
             onChangeText={(value) => {
               setMaximumColourCount(value);

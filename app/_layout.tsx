@@ -2,17 +2,16 @@ import { useFonts } from "expo-font";
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
-import { StyleSheet } from "react-native";
 import "react-native-reanimated";
 
-import { View } from "@/components/Themed";
-import PageThemeButton from "@/components/ui/PageThemeButton";
+import { useChromeColors } from "@/components/Themed";
+import HeaderActions from "@/components/ui/HeaderActions";
+import { appHeaderStyleOptions } from "@/components/ui/HeaderSceneBackground";
 import { useColorScheme } from "@/components/useColorScheme";
-import { HeaderColors } from "@/constants/Colors";
 import i18n from "@/constants/i18n";
-import { Space } from "@/constants/theme";
 import useAppearanceStore from "@/stores/useAppearanceStore";
 import usePageThemeStore from "@/stores/usePageThemeStore";
+import useThemePackStore from "@/stores/useThemePackStore";
 import { I18nextProvider, useTranslation } from "react-i18next";
 
 export {
@@ -41,6 +40,7 @@ export default function RootLayout() {
   useEffect(() => {
     void useAppearanceStore.getState().hydrate();
     void usePageThemeStore.getState().hydrate();
+    void useThemePackStore.getState().hydrate();
   }, []);
 
   useEffect(() => {
@@ -63,14 +63,14 @@ export default function RootLayout() {
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
   const { t } = useTranslation();
+  const chrome = useChromeColors();
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <Stack
         screenOptions={{
-          headerStyle: { backgroundColor: HeaderColors.background },
-          headerTintColor: HeaderColors.text,
-          headerTitleStyle: { color: HeaderColors.text },
+          ...appHeaderStyleOptions(chrome),
+          headerRight: () => <HeaderActions />,
         }}
       >
         <Stack.Screen name="index" options={{ headerShown: false }} />
@@ -79,11 +79,7 @@ function RootLayoutNav() {
           name="maintenance"
           options={{
             title: t("tabs.maintenance"),
-            headerRight: () => (
-              <View style={styles.headerRight}>
-                <PageThemeButton pageId="maintenance" />
-              </View>
-            ),
+            headerRight: () => <HeaderActions pageId="maintenance" />,
           }}
         />
         <Stack.Screen
@@ -96,9 +92,3 @@ function RootLayoutNav() {
   );
 }
 
-const styles = StyleSheet.create({
-  headerRight: {
-    marginRight: 15,
-    marginLeft: Space[3],
-  },
-});

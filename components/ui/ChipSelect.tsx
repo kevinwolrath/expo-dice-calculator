@@ -1,10 +1,12 @@
 import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, StyleSheet } from "react-native";
 
-import { Text, View, useThemeColors } from "@/components/Themed";
+import { Text, View } from "@/components/Themed";
 import FieldError from "@/components/ui/FieldError";
 import FieldLabel from "@/components/ui/FieldLabel";
-import { FontSize, Radius, Space, Stroke, Type } from "@/constants/theme";
+import FieldPanel from "@/components/ui/FieldPanel";
+import { inputTypeface, useControlColors } from "@/components/ui/fieldControl";
+import { Control, FontSize, Space, Type } from "@/constants/theme";
 
 type ChipOption = { value: string; label: string };
 
@@ -31,7 +33,7 @@ type ChipSelectProps = {
 export default function ChipSelect(props: ChipSelectProps) {
   const { label, options, emptyHint, wrap, required, error } = props;
   const { t } = useTranslation();
-  const colors = useThemeColors();
+  const control = useControlColors();
   const chips = (
     <>
       {options.map((option) => {
@@ -55,14 +57,25 @@ export default function ChipSelect(props: ChipSelectProps) {
             style={[
               styles.chip,
               wrap && styles.chipWrapped,
-              { borderColor: colors.primary },
-              selected && { backgroundColor: colors.primary },
+              {
+                backgroundColor: selected
+                  ? control.selectedFill
+                  : control.fill,
+                borderColor: selected ? control.focus : control.border,
+                borderWidth: Control.borderWidth,
+                borderRadius: Control.radius,
+                paddingHorizontal: Control.paddingX,
+              },
             ]}
           >
             <Text
               style={[
                 styles.chipLabel,
-                { color: selected ? colors.onPrimary : colors.primary },
+                inputTypeface,
+                {
+                  color: control.text,
+                  fontWeight: selected ? "600" : "400",
+                },
               ]}
             >
               {option.label}
@@ -74,7 +87,7 @@ export default function ChipSelect(props: ChipSelectProps) {
   );
 
   return (
-    <View style={styles.container}>
+    <FieldPanel error={Boolean(error)}>
       <FieldLabel label={label} required={required} />
       {options.length === 0 ? (
         <Text style={[Type.hint, styles.hint]}>
@@ -92,22 +105,20 @@ export default function ChipSelect(props: ChipSelectProps) {
         </ScrollView>
       )}
       <FieldError message={error} />
-    </View>
+    </FieldPanel>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { marginBottom: Space[3] },
   hint: { opacity: 0.5 },
   row: { flexDirection: "row" },
   wrapRow: { flexDirection: "row", flexWrap: "wrap" },
   chip: {
-    paddingHorizontal: 14,
-    paddingVertical: Space[2],
-    borderRadius: Radius.pill,
-    borderWidth: Stroke.input,
+    minHeight: 44,
+    justifyContent: "center",
     marginRight: Space[2],
+    paddingVertical: Space[2],
   },
   chipWrapped: { marginBottom: Space[2] },
-  chipLabel: { fontSize: FontSize.sm, fontWeight: "600" },
+  chipLabel: { fontSize: FontSize.sm },
 });

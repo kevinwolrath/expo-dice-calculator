@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet, useWindowDimensions } from "react-native";
 import Svg, { Polygon, Text as SvgText } from "react-native-svg";
 
 import { View, useThemeColors } from "@/components/Themed";
@@ -138,8 +138,8 @@ const d20 = (): Point[][] => {
 };
 
 const CLUSTER = {
-  width: 300,
-  height: 268,
+  width: 268,
+  height: 210,
 } as const;
 
 const DICE: {
@@ -158,43 +158,32 @@ const DICE: {
     numeral: "20",
     faces: d20(),
     colourOffset: 0,
-    left: 6,
-    top: 2,
-    size: 112,
-    rotate: "-16deg",
+    left: 30,
+    top: 0,
+    size: 64,
+    rotate: "-14deg",
     zIndex: 2,
-  },
-  {
-    id: "d6",
-    numeral: "6",
-    faces: d6(),
-    colourOffset: 1,
-    left: 168,
-    top: 6,
-    size: 86,
-    rotate: "12deg",
-    zIndex: 3,
   },
   {
     id: "d12",
     numeral: "12",
     faces: d12(),
     colourOffset: 5,
-    left: 188,
-    top: 86,
-    size: 98,
-    rotate: "-8deg",
+    left: 156,
+    top: 4,
+    size: 62,
+    rotate: "10deg",
     zIndex: 2,
   },
   {
-    id: "d100",
-    numeral: "00",
+    id: "d10",
+    numeral: "0",
     faces: d10(),
-    colourOffset: 4,
-    left: 8,
-    top: 138,
-    size: 92,
-    rotate: "14deg",
+    colourOffset: 3,
+    left: 4,
+    top: 76,
+    size: 50,
+    rotate: "12deg",
     zIndex: 3,
   },
   {
@@ -202,21 +191,21 @@ const DICE: {
     numeral: "8",
     faces: d8(),
     colourOffset: 2,
-    left: 102,
-    top: 152,
-    size: 90,
+    left: 100,
+    top: 68,
+    size: 54,
     rotate: "-6deg",
     zIndex: 4,
   },
   {
-    id: "d10",
-    numeral: "0",
-    faces: d10(),
-    colourOffset: 3,
-    left: 176,
-    top: 154,
-    size: 90,
-    rotate: "10deg",
+    id: "d6",
+    numeral: "6",
+    faces: d6(),
+    colourOffset: 1,
+    left: 202,
+    top: 78,
+    size: 48,
+    rotate: "14deg",
     zIndex: 3,
   },
   {
@@ -224,13 +213,34 @@ const DICE: {
     numeral: "4",
     faces: d4(),
     colourOffset: 0,
-    left: 104,
-    top: 78,
-    size: 80,
+    left: 50,
+    top: 146,
+    size: 44,
     rotate: "4deg",
-    zIndex: 6,
+    zIndex: 5,
+  },
+  {
+    id: "d100",
+    numeral: "00",
+    faces: d10(),
+    colourOffset: 4,
+    left: 162,
+    top: 142,
+    size: 44,
+    rotate: "-10deg",
+    zIndex: 3,
   },
 ];
+
+const modalDiceScale = (width: number, height: number) => {
+  const isShortScreen = height < 750;
+  const isMediumScreen = height < 1000;
+  const heightScale = isShortScreen ? 1.02 : isMediumScreen ? 1.05 : 1.16;
+  const innerWidth = Math.min(width * 0.92, 560) - 40;
+  const widthScale = innerWidth / CLUSTER.width;
+  const maxAreaHeight = isShortScreen ? 240 : isMediumScreen ? 260 : 280;
+  return Math.min(heightScale, widthScale, maxAreaHeight / CLUSTER.height);
+};
 
 const shadeForFace = (index: number, count: number) =>
   0.1 - (index / Math.max(count - 1, 1)) * 0.22;
@@ -285,7 +295,7 @@ export default function DicePreview({
   colours,
   numberColourName,
   stroke,
-  variant = "background",
+  variant = "modal",
 }: {
   colours: string[];
   numberColourName?: string | null;
@@ -293,23 +303,32 @@ export default function DicePreview({
   variant?: "background" | "modal";
 }) {
   const colors = useThemeColors();
+  const layout = useWindowDimensions();
   const fills = colours.length > 0 ? colours : ["#d9d9d9"];
   const numberFill = numberColourName
     ? colourFromName(numberColourName)
     : stroke;
   const isBackground = variant === "background";
   const diceStroke = isBackground ? hexToRgba(stroke, 0.28) : stroke;
+  const scale = isBackground
+    ? 0.72
+    : modalDiceScale(layout.width, layout.height);
 
   const cluster = (
-    <View style={styles.cluster}>
+    <View
+      style={[
+        styles.cluster,
+        { width: CLUSTER.width * scale, height: CLUSTER.height * scale },
+      ]}
+    >
       {DICE.map((die) => (
         <View
           key={die.id}
           style={[
             styles.die,
             {
-              left: die.left,
-              top: die.top,
+              left: die.left * scale,
+              top: die.top * scale,
               zIndex: die.zIndex,
               transform: [{ rotate: die.rotate }],
               ...(isBackground
@@ -325,7 +344,7 @@ export default function DicePreview({
             numeral={die.numeral}
             numberFill={numberFill}
             stroke={diceStroke}
-            size={die.size}
+            size={Math.round(die.size * scale)}
           />
         </View>
       ))}
@@ -336,7 +355,10 @@ export default function DicePreview({
     return (
       <View
         accessibilityLabel="Complete dice set colour preview"
-        style={styles.modalWrap}
+        style={[
+          styles.modalWrap,
+          { height: Math.round(CLUSTER.height * scale) },
+        ]}
       >
         {cluster}
       </View>
@@ -374,7 +396,8 @@ const styles = StyleSheet.create({
   modalWrap: {
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: Space[2],
+    width: "100%",
+    maxHeight: 280,
   },
   oval: {
     borderRadius: 999,
@@ -384,16 +407,14 @@ const styles = StyleSheet.create({
     opacity: 0.18,
   },
   cluster: {
-    width: CLUSTER.width,
-    height: CLUSTER.height,
     position: "relative",
   },
   die: {
     position: "absolute",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.22,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.18,
+    shadowRadius: 2,
+    elevation: 2,
   },
 });

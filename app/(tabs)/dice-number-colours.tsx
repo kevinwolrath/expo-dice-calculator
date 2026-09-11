@@ -3,6 +3,7 @@ import { useCallback, useState } from "react";
 import { Alert, Platform } from "react-native";
 
 import { showMessage } from "@/components/alert";
+import { usePackSurface } from "@/components/usePackSurface";
 import EntityListItem from "@/components/ui/EntityListItem";
 import FormActionRow, { isFormDirty } from "@/components/ui/FormActionRow";
 import FormField from "@/components/ui/FormField";
@@ -19,6 +20,7 @@ import { useTranslation } from "react-i18next";
 
 export default function DiceNumberColoursScreen() {
   const { t } = useTranslation();
+  const { icon } = usePackSurface();
   const [colours, setColours] = useState<DiceJobNumberColour[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -130,6 +132,7 @@ export default function DiceNumberColoursScreen() {
         <>
           <FormField
             label={t("diceNumberColours.name")}
+            icon={icon("dice")}
             required
             error={errors.name}
             value={name}

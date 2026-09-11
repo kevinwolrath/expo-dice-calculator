@@ -3,13 +3,14 @@ import { SymbolView } from "expo-symbols";
 import { Pressable } from "react-native";
 import { useTranslation } from "react-i18next";
 
+import { useChromeColors } from "@/components/Themed";
 import { useColorScheme } from "@/components/useColorScheme";
-import { HeaderColors } from "@/constants/Colors";
 import type { PageThemeId } from "@/constants/pageTheme";
 
 export default function PageThemeButton({ pageId }: { pageId: PageThemeId }) {
   const colorScheme = useColorScheme();
   const { t } = useTranslation();
+  const chrome = useChromeColors();
 
   if (colorScheme === "dark") {
     return null;
@@ -33,7 +34,7 @@ export default function PageThemeButton({ pageId }: { pageId: PageThemeId }) {
               web: "format_paint",
             }}
             size={22}
-            tintColor={HeaderColors.icon}
+            tintColor={chrome.icon}
             style={{ opacity: pressed ? 0.5 : 1 }}
           />
         )}

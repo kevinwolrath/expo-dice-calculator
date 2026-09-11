@@ -1,27 +1,33 @@
 import { useFocusEffect } from "expo-router";
+import { SymbolView } from "expo-symbols";
 import { useCallback, useEffect, useState } from "react";
 import {
   Alert,
+  Image,
   Modal,
   Platform,
   Pressable,
   View as RNView,
   ScrollView,
   StyleSheet,
-  Switch,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { confirm, showMessage } from "@/components/alert";
 import { Text, useThemeColors, View } from "@/components/Themed";
+import { usePackSurface } from "@/components/usePackSurface";
 import DicePreview from "@/components/ui/DicePreview";
 import EntityListItem from "@/components/ui/EntityListItem";
 import FieldLabel from "@/components/ui/FieldLabel";
 import FormActionRow, { isFormDirty } from "@/components/ui/FormActionRow";
 import FormField from "@/components/ui/FormField";
-import PrimaryButton from "@/components/ui/PrimaryButton";
+import JobsGenerateBar from "@/components/ui/JobsGenerateBar";
+import LockFieldCard from "@/components/ui/LockFieldCard";
+import PreviewSettingsFooter from "@/components/ui/PreviewSettingsFooter";
 import RemovableChipList from "@/components/ui/RemovableChipList";
 import ScreenList from "@/components/ui/ScreenList";
 import SelectDropdown from "@/components/ui/SelectDropdown";
+import { packIcon } from "@/constants/themePackAssets";
 import {
   FontSize,
   Radius,
@@ -73,6 +79,8 @@ const formatJobTimestamp = (value: string, locale: string) => {
 export default function JobsScreen() {
   const { t, i18n } = useTranslation();
   const colors = useThemeColors();
+  const { icon, assets, isNight } = usePackSurface();
+  const insets = useSafeAreaInsets();
   const [jobs, setJobs] = useState<DiceJob[]>([]);
   const [methods, setMethods] = useState<ProductionMethod[]>([]);
   const [numberColours, setNumberColours] = useState<DiceJobNumberColour[]>([]);
@@ -662,6 +670,10 @@ export default function JobsScreen() {
 
   const canChooseColourCount = materialTypeId !== null;
   const canGenerate = materialTypes.length > 0 && methods.length > 0;
+  const canPreview =
+    jobColourStockIds.length > 0 &&
+    materialTypeId !== null &&
+    methodId !== null;
   const emptyForm = {
     jobName: "",
     description: "",
@@ -695,16 +707,26 @@ export default function JobsScreen() {
     );
 
   return (
-    <View style={styles.page}>
-      <ScreenList
+    <ScreenList
         data={jobs}
         keyExtractor={(item) => String(item.dice_job_id)}
         countLabel={t("jobs.jobCount", { count: jobs.length })}
         emptyText={t("jobs.empty")}
+        hero={
+          !isNight && assets.banner ? (
+            <Image
+              source={assets.banner}
+              resizeMode="cover"
+              accessibilityIgnoresInvertColors
+              style={styles.hero}
+            />
+          ) : null
+        }
         form={
           <>
             <FormField
               label={t("jobs.jobName")}
+              icon={icon("dice")}
               required
               error={errors.jobName}
               value={jobName}
@@ -716,6 +738,7 @@ export default function JobsScreen() {
             />
             <FormField
               label={t("jobs.description")}
+              icon={icon("notes")}
               value={description}
               onChangeText={setDescription}
               placeholder={t("jobs.descriptionPlaceholder")}
@@ -792,149 +815,232 @@ export default function JobsScreen() {
                 }}
                 emptyText={t("jobs.noExcludedColourTypes")}
               />
-              <View style={styles.generateRow}>
-                <PrimaryButton
-                  title={t("jobs.generate")}
-                  style={styles.generateButton}
-                  onPress={() => {
-                    void handleGenerateRandomJob();
-                  }}
-                  disabled={!canGenerate}
-                />
-                <PrimaryButton
-                  title={t("jobs.preview")}
-                  onPress={() => setShowDicePreview(true)}
-                />
-              </View>
+              <JobsGenerateBar
+                generateTitle={t("jobs.generate")}
+                previewTitle={t("jobs.preview")}
+                onGenerate={() => {
+                  void handleGenerateRandomJob();
+                }}
+                onPreview={() => setShowDicePreview(true)}
+                generateDisabled={!canGenerate}
+                previewDisabled={!canPreview}
+              />
               <Modal
                 visible={showDicePreview}
+                transparent
                 animationType="fade"
+                statusBarTranslucent
                 onRequestClose={() => setShowDicePreview(false)}
               >
-                <RNView
-                  style={[
-                    styles.dicePreviewScreen,
-                    { backgroundColor: colors.background },
-                  ]}
-                >
-                  <Pressable
-                    style={StyleSheet.absoluteFill}
-                    onPress={() => setShowDicePreview(false)}
+                <RNView style={styles.dicePreviewRoot}>
+                  <RNView
+                    pointerEvents="none"
+                    style={styles.dicePreviewScrim}
                   />
-                  <DicePreview
-                    variant="modal"
-                    colours={jobColourStockIds.map(stockColour)}
-                    numberColourName={
-                      numberColourId
-                        ? numberColourLabel(numberColourId)
-                        : null
-                    }
-                    stroke={colors.text}
-                  />
+                  <RNView
+                    style={[
+                      styles.dicePreviewCenter,
+                      {
+                        paddingTop: Math.max(insets.top, 16),
+                        paddingBottom: Math.max(insets.bottom, 16),
+                      },
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.dicePreviewCard,
+                        isNight
+                          ? styles.dicePreviewCardNight
+                          : styles.dicePreviewCardDay,
+                      ]}
+                    >
+                      <ScrollView
+                        bounces={false}
+                        keyboardShouldPersistTaps="handled"
+                        style={styles.dicePreviewScroll}
+                        contentContainerStyle={styles.dicePreviewScrollContent}
+                      >
+                      <View style={styles.dicePreviewHeader}>
+                        <View style={styles.dicePreviewTitleRow}>
+                          {icon("dice") ? (
+                            <Image
+                              source={icon("dice")}
+                              style={styles.dicePreviewTitleIcon}
+                              accessibilityIgnoresInvertColors
+                            />
+                          ) : null}
+                          <Text style={styles.dicePreviewTitle}>
+                            {t("jobs.dicePreview")}
+                          </Text>
+                        </View>
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel={t("common.close")}
+                          onPress={() => setShowDicePreview(false)}
+                          style={styles.dicePreviewClose}
+                        >
+                          <SymbolView
+                            name={{
+                              ios: "xmark",
+                              android: "close",
+                              web: "close",
+                            }}
+                            size={22}
+                            tintColor="#F6EAD3"
+                          />
+                        </Pressable>
+                      </View>
+                      <DicePreview
+                        variant="modal"
+                        colours={jobColourStockIds.map(stockColour)}
+                        numberColourName={
+                          numberColourId
+                            ? numberColourLabel(numberColourId)
+                            : null
+                        }
+                        stroke={isNight ? "#ffffff" : "#F6EAD3"}
+                      />
+                      <Text style={styles.dicePreviewHint}>
+                        {t("jobs.generateUntilHint")}
+                      </Text>
+                      <Pressable
+                        accessibilityRole="button"
+                        disabled={!canGenerate}
+                        onPress={() => {
+                          void handleGenerateRandomJob();
+                        }}
+                        style={({ pressed }) => [
+                          styles.dicePreviewGenerate,
+                          !canGenerate && styles.dicePreviewGenerateDisabled,
+                          pressed && canGenerate && styles.dicePreviewGeneratePressed,
+                        ]}
+                      >
+                        <SymbolView
+                          name={{
+                            ios: "wand.and.stars",
+                            android: "auto_fix_high",
+                            web: "auto_awesome",
+                          }}
+                          size={22}
+                          tintColor="#FFFFFF"
+                        />
+                        <Text style={styles.dicePreviewGenerateLabel}>
+                          {t("jobs.generateNewColours")}
+                        </Text>
+                      </Pressable>
+                      <PreviewSettingsFooter
+                        colourCount={colourCount}
+                        numberColour={
+                          numberColourId
+                            ? numberColourLabel(numberColourId)
+                            : null
+                        }
+                        material={
+                          materialTypeId
+                            ? (materialTypes.find(
+                                (type) =>
+                                  type.material_type_id === materialTypeId,
+                              )?.description ?? null)
+                            : null
+                        }
+                        method={
+                          methodId
+                            ? (methods.find(
+                                (method) =>
+                                  method.production_method_id === methodId,
+                              )?.description ?? null)
+                            : null
+                        }
+                      />
+                      </ScrollView>
+                    </View>
+                  </RNView>
                 </RNView>
               </Modal>
-              <SelectDropdown
+              <LockFieldCard
+                icon={packIcon(assets, "material")}
                 label={t("jobs.materialType")}
-                placeholder={t("jobs.selectMaterialType")}
                 required
                 error={errors.materialTypeId}
-                value={materialTypeId}
-                options={materialTypes.map((type) => ({
-                  value: type.material_type_id,
-                  label: type.description ?? type.material_type_id.toString(),
-                }))}
-                onChange={(value) => {
-                  void handleMaterialTypeChange(value);
-                }}
-                emptyHint={t("jobs.addMaterialTypeHint")}
-                rightAccessory={
-                  <View style={styles.manualControl}>
-                    <Text style={styles.manualControlLabel}>
-                      {t("jobs.set")}
-                    </Text>
-                    <Switch
-                      value={materialTypeManual}
-                      onValueChange={setMaterialTypeManual}
-                      trackColor={{
-                        false: colors.inputBorder,
-                        true: colors.primary,
-                      }}
-                      thumbColor={colors.onPrimary}
-                      accessibilityLabel={t("jobs.manualMaterialType")}
-                    />
-                  </View>
-                }
-              />
-              <SelectDropdown
+                locked={materialTypeManual}
+                onLockedChange={setMaterialTypeManual}
+                lockLabel={t("jobs.set")}
+                lockAccessibilityLabel={t("jobs.manualMaterialType")}
+              >
+                <SelectDropdown
+                  embedded
+                  label={t("jobs.materialType")}
+                  placeholder={t("jobs.selectMaterialType")}
+                  error={errors.materialTypeId}
+                  value={materialTypeId}
+                  options={materialTypes.map((type) => ({
+                    value: type.material_type_id,
+                    label: type.description ?? type.material_type_id.toString(),
+                  }))}
+                  onChange={(value) => {
+                    void handleMaterialTypeChange(value);
+                  }}
+                  emptyHint={t("jobs.addMaterialTypeHint")}
+                />
+              </LockFieldCard>
+              <LockFieldCard
+                icon={packIcon(assets, "method")}
                 label={t("jobs.productionMethod")}
-                placeholder={t("jobs.selectProductionMethod")}
                 required
                 error={errors.methodId}
-                value={methodId}
-                options={methods.map((method) => ({
-                  value: method.production_method_id,
-                  label:
-                    method.description ??
-                    method.production_method_id.toString(),
-                }))}
-                onChange={(value) => {
-                  void handleProductionMethodChange(value);
-                }}
-                emptyHint={t("jobs.addProductionMethodHint")}
-                disabled={!canChooseColourCount}
-                rightAccessory={
-                  <View style={styles.manualControl}>
-                    <Text style={styles.manualControlLabel}>
-                      {t("jobs.set")}
-                    </Text>
-                    <Switch
-                      value={methodManual}
-                      onValueChange={setMethodManual}
-                      trackColor={{
-                        false: colors.inputBorder,
-                        true: colors.primary,
-                      }}
-                      thumbColor={colors.onPrimary}
-                      accessibilityLabel={t("jobs.manualProductionMethod")}
-                    />
-                  </View>
-                }
-              />
-              <FormField
+                locked={methodManual}
+                onLockedChange={setMethodManual}
+                lockLabel={t("jobs.set")}
+                lockAccessibilityLabel={t("jobs.manualProductionMethod")}
+              >
+                <SelectDropdown
+                  embedded
+                  label={t("jobs.productionMethod")}
+                  placeholder={t("jobs.selectProductionMethod")}
+                  error={errors.methodId}
+                  value={methodId}
+                  options={methods.map((method) => ({
+                    value: method.production_method_id,
+                    label:
+                      method.description ??
+                      method.production_method_id.toString(),
+                  }))}
+                  onChange={(value) => {
+                    void handleProductionMethodChange(value);
+                  }}
+                  emptyHint={t("jobs.addProductionMethodHint")}
+                  disabled={!canChooseColourCount}
+                />
+              </LockFieldCard>
+              <LockFieldCard
+                icon={packIcon(assets, "colour")}
                 label={t("jobs.colourCount")}
                 required
                 error={errors.colourCount}
-                value={colourCount}
-                onChangeText={(value) => {
-                  setColourCount(value);
-                  setErrors((current) => ({
-                    ...current,
-                    colourCount: undefined,
-                  }));
-                }}
-                onBlur={() => {
-                  void handleColourCountBlur();
-                }}
-                keyboardType="number-pad"
-                editable={canChooseColourCount}
-                rightAccessory={
-                  <View style={styles.manualControl}>
-                    <Text style={styles.manualControlLabel}>
-                      {t("jobs.set")}
-                    </Text>
-                    <Switch
-                      value={colourCountManual}
-                      onValueChange={setColourCountManual}
-                      trackColor={{
-                        false: colors.inputBorder,
-                        true: colors.primary,
-                      }}
-                      thumbColor={colors.onPrimary}
-                      accessibilityLabel={t("jobs.manualColourCount")}
-                    />
-                  </View>
-                }
-              />
+                locked={colourCountManual}
+                onLockedChange={setColourCountManual}
+                lockLabel={t("jobs.set")}
+                lockAccessibilityLabel={t("jobs.manualColourCount")}
+              >
+                <FormField
+                  embedded
+                  label={t("jobs.colourCount")}
+                  error={errors.colourCount}
+                  value={colourCount}
+                  onChangeText={(value) => {
+                    setColourCount(value);
+                    setErrors((current) => ({
+                      ...current,
+                      colourCount: undefined,
+                    }));
+                  }}
+                  onBlur={() => {
+                    void handleColourCountBlur();
+                  }}
+                  keyboardType="number-pad"
+                  editable={canChooseColourCount}
+                />
+              </LockFieldCard>
               {jobColourStockIds.length > 0 ? (
                 <View style={styles.generatedColours}>
                   <FieldLabel label={t("jobs.generatedColours")} />
@@ -1039,6 +1145,7 @@ export default function JobsScreen() {
             </View>
             <SelectDropdown
               label={t("jobs.numberColour")}
+              icon={icon("dice")}
               placeholder={t("jobs.selectNumberColour")}
               required
               error={errors.numberColourId}
@@ -1082,46 +1189,125 @@ export default function JobsScreen() {
           );
         }}
       />
-      {jobColourStockIds.length > 0 ? (
-        <View pointerEvents="none" style={styles.fixedDice}>
-          <DicePreview
-            colours={jobColourStockIds.map(stockColour)}
-            numberColourName={
-              numberColourId ? numberColourLabel(numberColourId) : null
-            }
-            stroke={colors.text}
-          />
-        </View>
-      ) : null}
-    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  page: { flex: 1 },
-  fixedDice: {
-    position: Platform.OS === "web" ? "fixed" : "absolute",
-    top: 100,
-    left: 0,
-    right: 0,
-    zIndex: 2,
-    elevation: 2,
+  hero: {
+    width: "100%",
+    height: 180,
+    borderRadius: 12,
   },
+  generatedColours: { marginBottom: Space[4] },
   selectField: { marginBottom: Space[3] },
-  colourCountBlock: { marginBottom: Space[3] },
-  manualControl: { flexDirection: "row", alignItems: "center", gap: Space[1] },
-  manualControlLabel: { fontSize: FontSize.md },
-  generateRow: {
-    flexDirection: "row",
-    alignItems: "stretch",
-    gap: Space[3],
-  },
-  generateButton: { flex: 1 },
-  dicePreviewScreen: {
+  colourCountBlock: { marginBottom: Space[4] },
+  dicePreviewRoot: {
     flex: 1,
+  },
+  dicePreviewScrim: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(0, 0, 0, 0.62)",
+  },
+  dicePreviewCenter: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: Space[3],
+  },
+  dicePreviewCard: {
+    width: "100%",
+    maxWidth: 560,
+    maxHeight: "92%",
+    borderRadius: 20,
+    borderWidth: 1,
+    paddingHorizontal: Space[4],
+    paddingTop: Space[2],
+    paddingBottom: Space[2],
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.45,
+    shadowRadius: 18,
+    elevation: 16,
+  },
+  dicePreviewScroll: {
+    flexGrow: 0,
+    flexShrink: 1,
+  },
+  dicePreviewScrollContent: {
+    flexGrow: 0,
+  },
+  dicePreviewCardDay: {
+    backgroundColor: "rgba(15, 18, 24, 0.97)",
+    borderColor: "rgba(190, 125, 55, 0.7)",
+  },
+  dicePreviewCardNight: {
+    backgroundColor: "#000000",
+    borderColor: "rgba(255, 255, 255, 0.35)",
+  },
+  dicePreviewHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    minHeight: 48,
+    marginBottom: Space[1],
+    gap: Space[2],
+  },
+  dicePreviewTitleRow: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Space[2],
+  },
+  dicePreviewTitleIcon: {
+    width: 22,
+    height: 22,
+  },
+  dicePreviewTitle: {
+    flexShrink: 1,
+    color: "#F6EAD3",
+    fontSize: 20,
+    fontWeight: "700",
+  },
+  dicePreviewClose: {
+    width: 40,
+    height: 40,
     alignItems: "center",
     justifyContent: "center",
-    padding: Space[6],
+  },
+  dicePreviewHint: {
+    marginTop: 4,
+    marginBottom: 8,
+    textAlign: "center",
+    color: "rgba(246, 234, 211, 0.62)",
+    fontSize: FontSize.sm,
+  },
+  dicePreviewGenerate: {
+    height: 52,
+    borderRadius: 12,
+    backgroundColor: "#2D8CFF",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Space[2],
+    marginHorizontal: Space[1],
+    marginBottom: 10,
+    shadowColor: "#2D8CFF",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.45,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  dicePreviewGenerateLabel: {
+    color: "#FFFFFF",
+    fontSize: FontSize.md,
+    fontWeight: "700",
+  },
+  dicePreviewGenerateDisabled: {
+    opacity: 0.45,
+  },
+  dicePreviewGeneratePressed: {
+    opacity: 0.88,
   },
   selectHint: { opacity: 0.5 },
   pickerContainer: {

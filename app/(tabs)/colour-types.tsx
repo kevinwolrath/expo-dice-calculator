@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Alert, Platform } from "react-native";
 
 import { showMessage } from "@/components/alert";
+import { usePackSurface } from "@/components/usePackSurface";
 import ChipSelect from "@/components/ui/ChipSelect";
 import EntityListItem from "@/components/ui/EntityListItem";
 import FormActionRow, { isFormDirty } from "@/components/ui/FormActionRow";
@@ -13,6 +14,7 @@ import { useTranslation } from "react-i18next";
 
 export default function ColourTypesScreen() {
   const { t } = useTranslation();
+  const { icon } = usePackSurface();
   const colourTypes = useInventoryStore((s) => s.colourTypes);
   const colourTypeMaterials = useInventoryStore((s) => s.colourTypeMaterials);
   const types = useInventoryStore((s) => s.types);
@@ -133,6 +135,7 @@ export default function ColourTypesScreen() {
         <>
           <FormField
             label={t("colourTypes.description")}
+            icon={icon("colour")}
             required
             error={errors.description}
             value={description}

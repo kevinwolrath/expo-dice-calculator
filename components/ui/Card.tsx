@@ -1,7 +1,7 @@
 import { StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 
-import { useThemeColors } from "@/components/Themed";
-import { Radius, Space, Stroke } from "@/constants/theme";
+import { usePanelStyle } from "@/components/ui/FieldPanel";
+import { Layout } from "@/constants/theme";
 
 export default function Card({
   children,
@@ -10,26 +10,15 @@ export default function Card({
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
 }) {
-  const colors = useThemeColors();
+  const panelStyle = usePanelStyle();
 
   return (
-    <View
-      style={[
-        styles.card,
-        { backgroundColor: colors.card, borderColor: colors.border },
-        style,
-      ]}
-    >
-      {children}
-    </View>
+    <View style={[styles.card, panelStyle, style]}>{children}</View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: Radius.lg,
-    borderWidth: Stroke.hairline,
-    padding: Space[3],
-    marginBottom: Space[3],
+    marginBottom: Layout.cardGap,
   },
 });

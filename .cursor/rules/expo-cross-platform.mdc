@@ -1,0 +1,418 @@
+---
+description: Expo web and native are separate runtime targets; do not break one platform to fix the other
+alwaysApply: true
+---
+
+# Expo Cross-Platform Development Rules
+
+## Project Context
+
+This project is an **Expo React Native application** that must support both:
+
+- Android / iOS mobile
+- Expo Web / web browsers
+
+Treat **Web** and **Mobile** as separate runtime targets that share one codebase.
+
+Do not assume that a React Native component, Expo package, or third-party library behaves identically on web and mobile.
+
+A change is **not complete just because TypeScript compiles or Expo builds**. It must be designed to work correctly on both runtime targets.
+
+---
+
+## Core Rule: Do Not Break One Platform to Fix the Other
+
+When fixing a platform-specific problem:
+
+- Preserve the implementation that already works on the other platform.
+- Do not replace working mobile behaviour just to fix web.
+- Do not replace working web behaviour just to fix mobile.
+- Prefer platform-specific implementations behind a shared interface.
+- Avoid unrelated rewrites while fixing a platform issue.
+
+For example:
+
+> If a date picker works on mobile but fails on web, preserve the mobile implementation and create a web-specific implementation.
+
+> If a colour picker works on web but fails on mobile, preserve the web implementation and create a mobile-specific implementation.
+
+---
+
+## Preferred Platform-Specific Architecture
+
+Prefer React Native's platform-specific file resolution when a component has substantially different web and mobile implementations.
+
+Example:
+
+```text
+components/
+  DatePicker/
+    DatePicker.native.tsx
+    DatePicker.web.tsx
+    index.ts
+
+  ColourPicker/
+    ColourPicker.native.tsx
+    ColourPicker.web.tsx
+    index.ts
+```
+
+The consuming screen should use a shared interface:
+
+```tsx
+<DatePicker
+  value={value}
+  onChange={setValue}
+/>
+
+<ColourPicker
+  value={colour}
+  onChange={setColour}
+/>
+```
+
+The parent screen should not need to know which platform-specific implementation is running.
+
+Use `Platform.OS` for small behavioural differences. Prefer `.web.tsx` and `.native.tsx` files when the actual component implementation differs significantly.
+
+---
+
+## Before Adding or Changing a Dependency
+
+Before using a component or third-party library, check whether it supports:
+
+1. The Expo version used by this project.
+2. React Native Android/iOS.
+3. React Native Web.
+4. Expo Go, if relevant.
+5. Expo development builds, if native configuration is required.
+
+Do not assume compatibility from the package name or TypeScript definitions.
+
+When compatibility is uncertain, inspect the package and its documentation before implementing it.
+
+Avoid adding a dependency when a simple platform-specific implementation is sufficient.
+
+---
+
+## Web-Only APIs
+
+Do not blindly use browser-only APIs inside shared React Native code.
+
+Examples requiring caution:
+
+```text
+window
+document
+HTMLElement
+localStorage
+sessionStorage
+FileReader
+HTML <input> elements
+<input type="date">
+<input type="color">
+DOM APIs
+browser-only CSS libraries
+```
+
+If browser-specific functionality is necessary, isolate it in a `.web.tsx` implementation or another explicitly web-only module.
+
+Web-only dependencies must not accidentally be imported into the native bundle.
+
+---
+
+## Native-Only APIs
+
+Do not assume React Native native modules work on Expo Web.
+
+Native components or libraries should be isolated from the web bundle when they are not web compatible.
+
+Prefer `.native.tsx` implementations for native-only components.
+
+Native-only dependencies must not accidentally be imported into the web bundle.
+
+---
+
+## Date Picker
+
+### Known Project Behaviour
+
+- The current/native date picker works on mobile.
+- The same approach does not work correctly on web.
+
+### Required Approach
+
+Preserve the working mobile implementation.
+
+Implement a web-specific date picker.
+
+Preferred structure:
+
+```text
+components/DatePicker/
+  DatePicker.native.tsx
+  DatePicker.web.tsx
+  index.ts
+```
+
+### Mobile
+
+- Preserve the existing working native date picker behaviour.
+- Continue using the existing Expo/React Native compatible implementation where practical.
+- Do not replace it simply to make web work.
+
+### Web
+
+- Use a web-compatible date input or date picker.
+- An HTML date input is acceptable inside `DatePicker.web.tsx`.
+- Convert the selected value into the same value/type expected by the rest of the application.
+
+### Shared Contract
+
+Both implementations should expose the same props and behaviour to the parent component.
+
+---
+
+## Colour Picker
+
+### Known Project Behaviour
+
+- The current colour picker works on web.
+- It does not work correctly on mobile.
+
+### Required Approach
+
+Preserve the working web implementation.
+
+Implement a React Native / Expo-compatible mobile implementation.
+
+Preferred structure:
+
+```text
+components/ColourPicker/
+  ColourPicker.native.tsx
+  ColourPicker.web.tsx
+  index.ts
+```
+
+### Web
+
+- Preserve the existing working implementation.
+- Browser-specific colour APIs are allowed only inside the web implementation.
+
+### Mobile
+
+- Use a React Native / Expo-compatible implementation.
+- Do not use HTML `<input type="color">`.
+- Do not use DOM APIs.
+- Do not depend on `window` or `document`.
+- Verify any new library against the project's Expo version before using it.
+- Avoid native configuration unless there is a strong reason for it.
+
+### Shared Contract
+
+Both implementations should expose the same interface to the rest of the application.
+
+---
+
+## Shared Business Logic
+
+Platform-specific components should contain only the platform-specific UI/interaction logic necessary for that platform.
+
+Do not duplicate business logic between `.web.tsx` and `.native.tsx` files.
+
+Keep shared logic in:
+
+- hooks
+- services
+- utilities
+- shared state
+- parent/domain components
+
+Platform-specific components should translate their platform's UI events into the same shared application values.
+
+---
+
+## Safe Change Process
+
+When asked to fix or modify a component:
+
+### 1. Inspect Before Editing
+
+Determine:
+
+- Where the component is used.
+- Whether it currently works on web.
+- Whether it currently works on mobile.
+- Which imports are platform-specific.
+- Whether the proposed dependency supports both targets.
+
+Do not immediately rewrite the component.
+
+### 2. Preserve Known Working Behaviour
+
+Explicitly identify which platform currently works.
+
+Treat that implementation as behaviour that must be preserved unless the task specifically requests otherwise.
+
+### 3. Isolate Platform Differences
+
+If web and mobile require different implementations, use platform-specific files or a clean abstraction.
+
+Do not spread unnecessary `Platform.OS` checks throughout screens.
+
+### 4. Make the Smallest Appropriate Change
+
+Do not refactor unrelated screens, styles, navigation, state management, or business logic while fixing a platform-specific issue.
+
+### 5. Validate Both Targets
+
+Do not consider the task finished after validating only the platform that was broken.
+
+---
+
+## Required Validation
+
+After meaningful changes, check for problems affecting both targets.
+
+At minimum consider:
+
+```text
+TypeScript
+Expo / Metro bundling
+Expo Web bundling
+Android/iOS compatibility
+runtime imports
+platform-specific dependencies
+```
+
+Run the relevant existing project commands where available.
+
+Do not claim a component works on a platform merely because compilation succeeds.
+
+Compilation catches syntax/type/bundling problems. It does not guarantee runtime behaviour.
+
+---
+
+## Common Failure Pattern to Avoid
+
+Do **not** do this:
+
+```tsx
+import SomeBrowserOnlyPicker from "browser-only-package";
+import SomeNativePicker from "native-only-package";
+
+if (Platform.OS === "web") {
+  return <SomeBrowserOnlyPicker />;
+}
+
+return <SomeNativePicker />;
+```
+
+This can still cause bundling problems because both modules are imported by the shared file.
+
+Prefer:
+
+```text
+Picker.web.tsx
+Picker.native.tsx
+```
+
+with each file importing only the dependencies valid for its target.
+
+---
+
+## Existing Functionality Is a Constraint
+
+When a prompt says something such as:
+
+> Mobile works but web is broken.
+
+Interpret that as:
+
+```text
+MOBILE BEHAVIOUR MUST BE PRESERVED.
+WEB MUST BE FIXED.
+```
+
+When a prompt says:
+
+> Web works but mobile is broken.
+
+Interpret that as:
+
+```text
+WEB BEHAVIOUR MUST BE PRESERVED.
+MOBILE MUST BE FIXED.
+```
+
+Do not solve the problem by replacing both implementations unless there is a compelling technical reason and the change is explicitly justified.
+
+---
+
+## UI and Styling
+
+Remember that React Native Web and native React Native can render layout and controls differently.
+
+When changing UI:
+
+- Check flexbox behaviour on both targets.
+- Avoid assuming browser CSS behaviour exists on native.
+- Avoid assuming native dimensions behave identically in a browser.
+- Preserve responsive behaviour.
+- Avoid fixed sizes when they cause clipping on smaller mobile screens.
+- Ensure touch targets remain usable on mobile.
+- Ensure controls remain usable with mouse/keyboard on web.
+
+---
+
+## Error Investigation
+
+When an error occurs after an Expo compile/build:
+
+Do not patch the first visible error without considering which platform produced it.
+
+First determine:
+
+```text
+Is this Web or Mobile?
+Is this compile-time, bundle-time, or runtime?
+Is the failing dependency cross-platform?
+Is a web-only module entering the native bundle?
+Is a native-only module entering the web bundle?
+Did the previous implementation work on the other platform?
+```
+
+Fix the root platform compatibility issue rather than adding workarounds that may break the other target.
+
+---
+
+## Completion Checklist
+
+Before declaring a cross-platform change complete, verify:
+
+- [ ] Existing working platform behaviour was preserved.
+- [ ] Web-specific code is isolated from native when necessary.
+- [ ] Native-specific code is isolated from web when necessary.
+- [ ] Shared components expose consistent props/interfaces.
+- [ ] Business logic has not been unnecessarily duplicated.
+- [ ] Browser-only APIs are not used in shared/native code.
+- [ ] Native-only modules are not imported by web code.
+- [ ] New dependencies are compatible with the project's Expo version.
+- [ ] TypeScript checks pass.
+- [ ] Relevant Expo build/bundle checks pass.
+- [ ] Web behaviour has been considered.
+- [ ] Android/iOS behaviour has been considered.
+- [ ] No unrelated functionality was rewritten or removed.
+
+---
+
+## Instruction Priority
+
+For this project, **cross-platform compatibility is a core requirement, not an optional improvement**.
+
+When implementing any feature, assume it must work on both Expo Web and Android/iOS unless the task explicitly states that the feature is platform-specific.
+
+When web and mobile require different implementations, prefer clean platform-specific components sharing the same interface over forcing one implementation to work everywhere.
+
+When uncertain about platform compatibility, investigate first rather than guessing.

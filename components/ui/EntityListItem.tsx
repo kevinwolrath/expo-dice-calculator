@@ -5,8 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Text, View, useThemeColors } from "@/components/Themed";
 import Card from "@/components/ui/Card";
 import { useScrollToForm } from "@/components/ui/ScreenList";
-import { hexToRgba } from "@/constants/pageTheme";
-import { FontSize, Space, Stroke, Type } from "@/constants/theme";
+import { FontSize, Space, Type } from "@/constants/theme";
 
 type EntityListItemProps = {
   title: string;
@@ -41,12 +40,7 @@ export default function EntityListItem({
       onPress={handleEdit}
       style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}
     >
-      <Card
-        style={{
-          borderWidth: Stroke.item,
-          borderColor: hexToRgba(colors.text, 0.35),
-        }}
-      >
+      <Card>
         <View style={styles.rowBetween}>
           <Text style={[Type.heading, styles.itemTitle]}>{title}</Text>
           {onDelete ? (
