@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ActivityIndicator, StyleSheet } from "react-native";
+import { ActivityIndicator, ScrollView, StyleSheet } from "react-native";
 
 import { confirm, showMessage } from "@/components/alert";
 import { PageThemeScope } from "@/components/pageTheme/PageThemeScope";
@@ -65,7 +65,7 @@ export default function MaintenanceScreen() {
   return (
     <PageThemeScope pageId="maintenance">
     <Screen>
-      <View style={styles.content}>
+      <ScrollView contentContainerStyle={styles.content}>
         <Text style={Type.heading}>{t("maintenance.intro")}</Text>
         <Card>
           <View style={styles.actions}>
@@ -83,7 +83,7 @@ export default function MaintenanceScreen() {
             {busy ? <ActivityIndicator /> : null}
           </View>
         </Card>
-      </View>
+      </ScrollView>
     </Screen>
     </PageThemeScope>
   );

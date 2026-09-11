@@ -33,8 +33,34 @@ export const Touch = {
 
 export const Layout = {
   screenGutter: Space[4],
-  listBottom: Space[8],
+  listBottom: 96,
   keyboardOffset: 100,
+  scrim: "rgba(5, 12, 22, 0.78)",
+  cardGap: 16,
+  cardPadding: 16,
+  cardRadius: 16,
+  panelBorderWidth: 1,
+  panelShadowOpacity: 0.28,
+  panelShadowRadius: 6,
+  panelShadowOffset: { width: 0, height: 2 },
+  panelElevation: 2,
+  labelGap: 10,
+  controlHeight: 56,
+  buttonHeight: 56,
+  notesHeight: 100,
+  listGutter: 16,
+  headerSpacer: 96,
+  rowGap: 16,
+  actionGap: 12,
+} as const;
+
+export const Control = {
+  borderWidth: 1,
+  radius: 11,
+  paddingX: 16,
+  height: Layout.controlHeight,
+  labelSize: 16,
+  labelWeight: "600",
 } as const;
 
 export const Stroke = {
@@ -57,7 +83,7 @@ export const Type = StyleSheet.create({
     fontSize: FontSize.md,
   },
   label: {
-    fontSize: FontSize.xs,
+    fontSize: FontSize.sm,
     fontWeight: "600",
   },
   meta: {

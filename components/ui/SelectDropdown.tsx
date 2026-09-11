@@ -1,24 +1,24 @@
 import { type ReactNode, useState } from "react";
 import {
-    Modal,
-    Pressable,
-    View as RNView,
-    ScrollView,
-    StyleSheet,
+  Image,
+  Modal,
+  Pressable,
+  View as RNView,
+  ScrollView,
+  StyleSheet,
+  type ImageSourcePropType,
 } from "react-native";
 
 import { Text, View, useThemeColors } from "@/components/Themed";
 import FieldError from "@/components/ui/FieldError";
 import FieldLabel from "@/components/ui/FieldLabel";
-import { hexToRgba } from "@/constants/pageTheme";
+import FieldPanel from "@/components/ui/FieldPanel";
 import {
-    FontSize,
-    Radius,
-    Space,
-    Stroke,
-    Touch,
-    Type,
-} from "@/constants/theme";
+  controlStyle,
+  inputTypeface,
+  useControlColors,
+} from "@/components/ui/fieldControl";
+import { FontSize, Radius, Space, Type } from "@/constants/theme";
 
 export type SelectOption = { value: string; label: string };
 
@@ -33,6 +33,8 @@ type SelectDropdownProps = {
   emptyHint?: string;
   disabled?: boolean;
   rightAccessory?: ReactNode;
+  icon?: ImageSourcePropType;
+  embedded?: boolean;
 };
 
 export default function SelectDropdown({
@@ -46,123 +48,174 @@ export default function SelectDropdown({
   emptyHint,
   disabled,
   rightAccessory,
+  icon,
+  embedded,
 }: SelectDropdownProps) {
   const colors = useThemeColors();
+  const control = useControlColors();
   const [open, setOpen] = useState(false);
   const selected = options.find((option) => option.value === value);
 
-  return (
-    <View style={styles.container}>
-      <FieldLabel label={label} required={required} />
-      {options.length === 0 ? (
-        <Text style={[Type.hint, styles.hint]}>{emptyHint}</Text>
-      ) : (
-        <>
-          <View style={styles.pickerRow}>
-            <Pressable
-              accessibilityRole="button"
-              disabled={disabled}
-              onPress={() => setOpen(true)}
+  const picker = options.length === 0 ? (
+    <Text style={[Type.hint, styles.hint]}>{emptyHint}</Text>
+  ) : (
+    <>
+      <View style={styles.pickerRow}>
+        <Pressable
+          accessibilityRole="button"
+          disabled={disabled}
+          onPress={() => setOpen(true)}
+          style={[
+            styles.picker,
+            controlStyle({
+              colors: control,
+              focused: open,
+              disabled: Boolean(disabled),
+              error: Boolean(error),
+              errorColor: colors.destructive,
+            }),
+          ]}
+        >
+          <Text
+            style={[
+              styles.inputText,
+              inputTypeface,
+              embedded && styles.inputTextLarge,
+              {
+                color: disabled
+                  ? control.disabledText
+                  : selected
+                    ? control.text
+                    : control.placeholder,
+              },
+            ]}
+            numberOfLines={1}
+          >
+            {selected ? selected.label : placeholder}
+          </Text>
+          <Text
+            style={[
+              styles.chevron,
+              {
+                color: disabled ? control.disabledText : control.text,
+              },
+            ]}
+          >
+            ▾
+          </Text>
+        </Pressable>
+        {!embedded ? rightAccessory : null}
+      </View>
+      <Modal
+        visible={open}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setOpen(false)}
+      >
+        <RNView
+          style={[styles.backdrop, { backgroundColor: colors.overlay }]}
+        >
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={() => setOpen(false)}
+          />
+          <RNView
+            style={[
+              styles.sheet,
+              {
+                backgroundColor: control.fill,
+                borderColor: control.border,
+              },
+            ]}
+          >
+            <Text
               style={[
-                styles.picker,
-                {
-                  borderColor: error ? colors.destructive : colors.inputBorder,
-                  backgroundColor: hexToRgba(colors.background, 0.92),
-                  opacity: disabled ? 0.5 : 1,
-                },
+                styles.title,
+                inputTypeface,
+                { color: control.text, fontWeight: "700" },
               ]}
             >
-              <Text
-                style={[
-                  styles.value,
-                  { color: colors.text },
-                  !selected && styles.placeholder,
-                ]}
-              >
-                {selected ? selected.label : placeholder}
-              </Text>
-              <Text style={[styles.chevron, { color: colors.text }]}>⌄</Text>
-            </Pressable>
-            {rightAccessory}
-          </View>
-          <Modal
-            visible={open}
-            transparent
-            animationType="fade"
-            onRequestClose={() => setOpen(false)}
-          >
-            <RNView
-              style={[styles.backdrop, { backgroundColor: colors.overlay }]}
-            >
-              <Pressable
-                style={StyleSheet.absoluteFill}
-                onPress={() => setOpen(false)}
-              />
-              <RNView
-                style={[
-                  styles.sheet,
-                  { backgroundColor: colors.card, borderColor: colors.border },
-                ]}
-              >
-                <Text style={[styles.title, { color: colors.text }]}>
-                  {placeholder}
-                </Text>
-                <ScrollView>
-                  {options.map((option) => {
-                    const isSelected = option.value === value;
-                    return (
-                      <Pressable
-                        key={option.value}
-                        onPress={() => {
-                          onChange(option.value);
-                          setOpen(false);
-                        }}
-                        style={[
-                          styles.option,
-                          isSelected && { backgroundColor: colors.primary },
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.optionLabel,
-                            { color: colors.text },
-                            isSelected && styles.selectedLabel,
-                            isSelected && { color: colors.onPrimary },
-                          ]}
-                        >
-                          {option.label}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </ScrollView>
-              </RNView>
-            </RNView>
-          </Modal>
-        </>
-      )}
+              {placeholder}
+            </Text>
+            <ScrollView>
+              {options.map((option) => {
+                const isSelected = option.value === value;
+                return (
+                  <Pressable
+                    key={option.value}
+                    onPress={() => {
+                      onChange(option.value);
+                      setOpen(false);
+                    }}
+                    style={[
+                      styles.option,
+                      isSelected && {
+                        backgroundColor: control.selectedFill,
+                        borderColor: control.focus,
+                        borderWidth: 1,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.optionLabel,
+                        inputTypeface,
+                        { color: control.text },
+                        isSelected && styles.selectedLabel,
+                      ]}
+                    >
+                      {option.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </RNView>
+        </RNView>
+      </Modal>
+    </>
+  );
+
+  if (embedded) {
+    return picker;
+  }
+
+  return (
+    <FieldPanel
+      icon={
+        icon ? (
+          <Image
+            source={icon}
+            style={styles.icon}
+            accessibilityIgnoresInvertColors
+          />
+        ) : undefined
+      }
+      error={Boolean(error)}
+    >
+      <FieldLabel label={label} required={required} />
+      {picker}
       <FieldError message={error} />
-    </View>
+    </FieldPanel>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { marginBottom: Space[3] },
   hint: { opacity: 0.5 },
   pickerRow: { flexDirection: "row", alignItems: "center", gap: Space[3] },
   picker: {
     flex: 1,
-    borderWidth: Stroke.input,
-    borderRadius: Radius.md,
-    minHeight: Touch.minHeight,
-    paddingHorizontal: Space[3],
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
-  value: { fontSize: FontSize.md, flex: 1, paddingRight: Space[2] },
-  placeholder: { opacity: 0.5 },
-  chevron: { fontSize: 22, opacity: 0.6, marginTop: -6 },
+  inputText: { fontSize: FontSize.md, flex: 1, paddingRight: Space[2] },
+  inputTextLarge: { fontSize: FontSize.lg, fontWeight: "600" },
+  chevron: {
+    fontSize: 18,
+    fontWeight: "700",
+    lineHeight: 20,
+  },
   backdrop: {
     flex: 1,
     justifyContent: "center",
@@ -172,7 +225,7 @@ const styles = StyleSheet.create({
     maxHeight: "70%",
     borderRadius: Radius.lg,
     padding: Space[2],
-    borderWidth: Stroke.hairline,
+    borderWidth: 1,
   },
   title: {
     paddingHorizontal: Space[3],
@@ -187,4 +240,5 @@ const styles = StyleSheet.create({
   },
   optionLabel: { fontSize: FontSize.md },
   selectedLabel: { fontWeight: "600" },
+  icon: { width: 32, height: 32 },
 });

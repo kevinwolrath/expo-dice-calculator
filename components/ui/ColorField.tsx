@@ -4,8 +4,14 @@ import { useTranslation } from "react-i18next";
 
 import { Text, useThemeColors } from "@/components/Themed";
 import FieldLabel from "@/components/ui/FieldLabel";
+import FieldPanel from "@/components/ui/FieldPanel";
+import {
+  controlStyle,
+  inputTypeface,
+  useControlColors,
+} from "@/components/ui/fieldControl";
 import { normalizeHexColor } from "@/constants/pageTheme";
-import { FontSize, Radius, Space, Stroke, Touch } from "@/constants/theme";
+import { Control, FontSize, Space } from "@/constants/theme";
 
 type ColorFieldProps = {
   label: string;
@@ -24,7 +30,9 @@ export default function ColorField({
 }: ColorFieldProps) {
   const { t } = useTranslation();
   const colors = useThemeColors();
+  const control = useControlColors();
   const [draft, setDraft] = useState(value ?? "");
+  const [focused, setFocused] = useState(false);
   const preview = normalizeHexColor(draft) ?? fallback;
 
   useEffect(() => {
@@ -47,7 +55,7 @@ export default function ColorField({
   };
 
   return (
-    <View style={styles.container}>
+    <FieldPanel>
       <FieldLabel label={label} />
       <View style={styles.row}>
         {Platform.OS === "web"
@@ -58,10 +66,11 @@ export default function ColorField({
                 commit(event.target.value);
               },
               style: {
-                width: 44,
-                height: 44,
+                width: Control.height,
+                height: Control.height,
                 padding: 0,
-                border: "none",
+                border: `${Control.borderWidth}px solid ${control.border}`,
+                borderRadius: Control.radius,
                 background: "transparent",
                 cursor: "pointer",
               },
@@ -70,20 +79,33 @@ export default function ColorField({
             <View
               style={[
                 styles.swatch,
-                { backgroundColor: preview, borderColor: colors.inputBorder },
+                {
+                  backgroundColor: preview,
+                  borderColor: control.border,
+                  width: Control.height,
+                  height: Control.height,
+                  borderRadius: Control.radius,
+                  borderWidth: Control.borderWidth,
+                },
               ]}
             />
           )}
         <TextInput
           value={draft}
           placeholder={fallback}
-          placeholderTextColor={colors.muted}
+          placeholderTextColor={control.placeholder}
           autoCapitalize="none"
           autoCorrect={false}
           onChangeText={commit}
+          underlineColorAndroid="transparent"
+          selectionColor={control.focus}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           style={[
             styles.input,
-            { borderColor: colors.inputBorder, color: colors.text },
+            inputTypeface,
+            controlStyle({ colors: control, focused }),
+            { color: control.text, paddingVertical: 10 },
           ]}
         />
         {allowEmpty && value ? (
@@ -92,29 +114,19 @@ export default function ColorField({
           </Pressable>
         ) : null}
       </View>
-    </View>
+    </FieldPanel>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { marginBottom: Space[3] },
   row: {
     flexDirection: "row",
     alignItems: "center",
     gap: Space[2],
   },
-  swatch: {
-    width: Touch.minHeight,
-    height: Touch.minHeight,
-    borderRadius: Radius.md,
-    borderWidth: Stroke.input,
-  },
+  swatch: {},
   input: {
     flex: 1,
-    borderWidth: Stroke.input,
-    borderRadius: Radius.md,
-    paddingHorizontal: Space[3],
-    minHeight: Touch.minHeight,
     fontSize: FontSize.md,
   },
 });

@@ -1,0 +1,44 @@
+{
+  "id": "tavern",
+  "name": "Tavern",
+  "colors": {
+    "primaryDark": "#0B1F3A",
+    "primary": "#2D8CFF",
+    "accent": "#5AB3FF",
+    "gold": "#F4C74B",
+    "wood": "#8B5E3C",
+    "panel": "#1E1E1E",
+    "parchment": "#EAD3B1",
+    "text": "#F6EAD3",
+    "textMuted": "#C9A27E",
+    "destructive": "#A94E3F",
+    "onPrimary": "#FFFFFF",
+    "card": "#171B22",
+    "overlay": "rgba(5, 12, 22, 0.78)",
+    "inputBackground": "#262930",
+    "inputBorder": "rgba(210, 218, 230, 0.55)",
+    "label": "#F0DFC2",
+    "placeholder": "#AEB4BE",
+    "header": "#0B1F3A",
+    "tabBar": "#0B1F3A"
+  },
+  "assets": {
+    "background": "tavern_background.jpg",
+    "backgroundDark": "tavern_background_dark.jpg",
+    "banner": "dice_job_manager_banner.jpg",
+    "icon": "app_icon.png",
+    "splash": "splash_screen.jpg",
+    "panel": "panel_background.png",
+    "buttonPrimary": "button_primary.png",
+    "buttonWood": "button_wood.png",
+    "buttonOutline": "button_outline.png",
+    "dice": ["dice_d20.png", "dice_d12.png", "dice_d8.png", "dice_d6.png"],
+    "icons": {
+      "notes": "icon_notes.png",
+      "material": "icon_material.png",
+      "method": "icon_method.png",
+      "colour": "icon_colour.png",
+      "dice": "icon_dice.png"
+    }
+  }
+}

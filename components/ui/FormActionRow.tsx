@@ -1,10 +1,8 @@
 import { StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
 
-import { View } from "@/components/Themed";
-import PrimaryButton from "@/components/ui/PrimaryButton";
+import PrimaryButton, { ActionButtonRow } from "@/components/ui/PrimaryButton";
 import { useScrollToForm } from "@/components/ui/ScreenList";
-import { Space } from "@/constants/theme";
 
 export const isFormDirty = (current: unknown, clean: unknown) =>
   JSON.stringify(current) !== JSON.stringify(clean);
@@ -32,9 +30,11 @@ export default function FormActionRow({
   const scrollToForm = useScrollToForm();
 
   return (
-    <View style={styles.actionRow}>
+    <ActionButtonRow>
       <PrimaryButton
         title={addTitle}
+        variant="secondary"
+        style={styles.flexButton}
         onPress={() => {
           onAdd();
           requestAnimationFrame(() => {
@@ -45,18 +45,22 @@ export default function FormActionRow({
       />
       <PrimaryButton
         title={saving ? t("common.saving") : saveTitle}
+        variant="primary"
+        style={styles.flexButton}
         onPress={onSave}
         disabled={saving}
       />
       <PrimaryButton
         title={t("common.cancel")}
+        variant="cancel"
+        style={styles.flexButton}
         onPress={onCancel}
         disabled={saving}
       />
-    </View>
+    </ActionButtonRow>
   );
 }
 
 const styles = StyleSheet.create({
-  actionRow: { flexDirection: "row", flexWrap: "wrap", gap: Space[3] },
+  flexButton: { flex: 1, minWidth: 0 },
 });

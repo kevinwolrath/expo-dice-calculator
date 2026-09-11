@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Alert, Platform } from "react-native";
 
 import { showMessage } from "@/components/alert";
+import { usePackSurface } from "@/components/usePackSurface";
 import EntityListItem from "@/components/ui/EntityListItem";
 import FormActionRow, { isFormDirty } from "@/components/ui/FormActionRow";
 import FormField from "@/components/ui/FormField";
@@ -12,6 +13,7 @@ import { useTranslation } from "react-i18next";
 
 export default function MaterialTypesScreen() {
   const { t } = useTranslation();
+  const { icon } = usePackSurface();
   const types = useInventoryStore((s) => s.types);
   const loading = useInventoryStore((s) => s.loading);
   const loadAll = useInventoryStore((s) => s.loadAll);
@@ -110,6 +112,7 @@ export default function MaterialTypesScreen() {
         <>
           <FormField
             label={t("materialTypes.description")}
+            icon={icon("material")}
             required
             error={errors.description}
             value={description}

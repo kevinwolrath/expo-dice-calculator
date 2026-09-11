@@ -10,7 +10,7 @@ export const PAGE_THEME_IDS = [
 
 export type PageThemeId = (typeof PAGE_THEME_IDS)[number];
 
-export type PageImageMode = "center" | "tile";
+export type PageImageMode = "center" | "tile" | "cover";
 
 export type PageTheme = {
   foreground: string | null;
@@ -24,18 +24,23 @@ export type PageThemeMap = Record<PageThemeId, PageTheme>;
 export const NIGHT_FOREGROUND = "#ffffff";
 export const NIGHT_BACKGROUND = "#000000";
 
-/** Light-mode colours for each page. Custom values override these. Night view ignores them. */
+/** Last-resort day colours when no pack defaults are passed. Every page uses the same pair. */
+const SHARED_PAGE_FALLBACK = {
+  foreground: "#ffffff",
+  background: "#111111",
+};
+
 export const PAGE_DEFAULT_COLORS: Record<
   PageThemeId,
   { foreground: string; background: string }
 > = {
-  dicejob: { foreground: "#0e3a5c", background: "#d7ebf8" },
-  stock: { foreground: "#6a1b14", background: "#f8d6d1" },
-  "material-types": { foreground: "#2a4714", background: "#dcebc4" },
-  "colour-types": { foreground: "#3c1760", background: "#e6d4f4" },
-  "production-methods": { foreground: "#5a3a0c", background: "#f4dfb6" },
-  "dice-number-colours": { foreground: "#11463f", background: "#cce8e1" },
-  maintenance: { foreground: "#1d1d24", background: "#e2e3ea" },
+  dicejob: SHARED_PAGE_FALLBACK,
+  stock: SHARED_PAGE_FALLBACK,
+  "material-types": SHARED_PAGE_FALLBACK,
+  "colour-types": SHARED_PAGE_FALLBACK,
+  "production-methods": SHARED_PAGE_FALLBACK,
+  "dice-number-colours": SHARED_PAGE_FALLBACK,
+  maintenance: SHARED_PAGE_FALLBACK,
 };
 
 export type ResolvedPageAppearance = {
@@ -49,6 +54,7 @@ export const resolvePageAppearance = (
   pageId: PageThemeId | null,
   theme: PageTheme | undefined,
   scheme: "light" | "dark",
+  packDefaults?: { foreground: string; background: string },
 ): ResolvedPageAppearance => {
   if (scheme === "dark") {
     return {
@@ -59,9 +65,11 @@ export const resolvePageAppearance = (
     };
   }
 
-  const defaults = pageId
-    ? PAGE_DEFAULT_COLORS[pageId]
-    : { foreground: "#000000", background: "#ffffff" };
+  const defaults =
+    packDefaults ??
+    (pageId
+      ? PAGE_DEFAULT_COLORS[pageId]
+      : { foreground: "#000000", background: "#ffffff" });
 
   return {
     foreground: theme?.foreground ?? defaults.foreground,

@@ -1,7 +1,8 @@
 import { StyleSheet } from "react-native";
 
-import { Text, useThemeColors } from "@/components/Themed";
-import { Space, Type } from "@/constants/theme";
+import { Text } from "@/components/Themed";
+import { useControlColors } from "@/components/ui/fieldControl";
+import { Control, Layout, Type } from "@/constants/theme";
 
 type FieldLabelProps = {
   label: string;
@@ -9,18 +10,30 @@ type FieldLabelProps = {
 };
 
 export default function FieldLabel({ label, required }: FieldLabelProps) {
-  const colors = useThemeColors();
+  const control = useControlColors();
 
   return (
-    <Text style={[Type.label, styles.label]}>
+    <Text
+      style={[
+        Type.label,
+        styles.label,
+        {
+          color: control.label,
+          fontSize: Control.labelSize,
+          fontWeight: Control.labelWeight,
+          marginBottom: Layout.labelGap,
+          opacity: 1,
+        },
+      ]}
+    >
       {label}
       {required ? (
-        <Text style={{ color: colors.destructive }}> *</Text>
+        <Text style={{ color: control.required }}> *</Text>
       ) : null}
     </Text>
   );
 }
 
 const styles = StyleSheet.create({
-  label: { marginBottom: Space[1], opacity: 0.7 },
+  label: { marginBottom: Layout.labelGap },
 });

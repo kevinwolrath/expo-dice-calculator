@@ -1,27 +1,65 @@
 import { Link, Tabs, useSegments } from "expo-router";
 import { SymbolView } from "expo-symbols";
-import { useEffect, useState, type ReactNode } from "react";
-import { ActivityIndicator, Pressable, StyleSheet } from "react-native";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text as RNText,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { Screen, Text, View } from "@/components/Themed";
+import { Screen, Text, useChromeColors } from "@/components/Themed";
 import { PageThemeScope } from "@/components/pageTheme/PageThemeScope";
-import PageThemeButton from "@/components/ui/PageThemeButton";
+import HeaderActions from "@/components/ui/HeaderActions";
+import { appHeaderStyleOptions } from "@/components/ui/HeaderSceneBackground";
 import PrimaryButton from "@/components/ui/PrimaryButton";
-import ThemeToggle from "@/components/ui/ThemeToggle";
 import { useClientOnlyValue } from "@/components/useClientOnlyValue";
 import { useColorScheme } from "@/components/useColorScheme";
-import Colors, { HeaderColors } from "@/constants/Colors";
 import { pageIdFromSegments } from "@/constants/pageTheme";
 import { Space, Type } from "@/constants/theme";
 import { initDatabase } from "@/db";
 import { useTranslation } from "react-i18next";
 
+const NAVY = "#0B1F3A";
+const ACTIVE = "#2D8CFF";
+const INACTIVE = "#E8C9A0";
+const GOLD_BORDER = "rgba(244, 199, 75, 0.25)";
+const TAB_BAR_BODY = 72;
+const ICON_SIZE = 22;
+
+function TabBarLabel({
+  title,
+  color,
+  focused,
+}: {
+  title: string;
+  color: string;
+  focused: boolean;
+}) {
+  return (
+    <RNText
+      numberOfLines={2}
+      ellipsizeMode="clip"
+      style={StyleSheet.flatten([
+        styles.tabLabel,
+        { color, fontWeight: focused ? "700" : "500" },
+      ])}
+    >
+      {title}
+    </RNText>
+  );
+}
+
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const isNight = colorScheme === "dark";
   const { t } = useTranslation();
   const headerShown = useClientOnlyValue(false, true);
   const segments = useSegments();
   const pageId = pageIdFromSegments(segments);
+  const chrome = useChromeColors();
+  const insets = useSafeAreaInsets();
   const [databaseReady, setDatabaseReady] = useState(false);
   const [databaseError, setDatabaseError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
@@ -83,191 +121,203 @@ export default function TabLayout() {
 
   return (
     <PageThemeScope pageId={pageId}>
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme].tint,
-        // Disable the static render of the header on web
-        // to prevent a hydration error in React Navigation v6.
-        headerShown,
-        headerStyle: { backgroundColor: HeaderColors.background },
-        headerTintColor: HeaderColors.text,
-        headerTitleStyle: { color: HeaderColors.text },
-        headerRight: () => <HeaderActions pageId={pageId} />,
-      }}
-    >
-      <Tabs.Screen
-        name="dicejob"
-        options={{
-          title: t("tabs.jobs"),
-          tabBarIcon: ({ color }) => (
-            <SymbolView
-              name={{
-                ios: "square.stack.3d.up.fill",
-                android: "layers",
-                web: "layers",
-              }}
-              tintColor={color}
-              size={24}
-            />
-          ),
-          headerRight: () => (
-            <HeaderActions
-              pageId="dicejob"
-              extra={
-                <Link href="/modal" asChild>
-                  <Pressable>
-                    {({ pressed }) => (
-                      <SymbolView
-                        name={{
-                          ios: "info.circle",
-                          android: "info",
-                          web: "info",
-                        }}
-                        size={22}
-                        tintColor={HeaderColors.icon}
-                        style={{ opacity: pressed ? 0.5 : 1 }}
-                      />
-                    )}
-                  </Pressable>
-                </Link>
-              }
-            />
-          ),
+      <Tabs
+        screenOptions={{
+          tabBarActiveTintColor: isNight ? "#ffffff" : ACTIVE,
+          tabBarInactiveTintColor: isNight ? "#aaaaaa" : INACTIVE,
+          tabBarStyle: {
+            backgroundColor: isNight ? "#000000" : NAVY,
+            borderTopColor: isNight ? "rgba(255,255,255,0.25)" : GOLD_BORDER,
+            borderTopWidth: 1,
+            height: TAB_BAR_BODY + insets.bottom,
+            paddingTop: 6,
+            paddingBottom: Math.max(insets.bottom, 6),
+            elevation: 12,
+          },
+          tabBarItemStyle: {
+            paddingHorizontal: 2,
+          },
+          tabBarLabelStyle: {
+            marginTop: 2,
+          },
+          headerShown,
+          ...appHeaderStyleOptions(chrome),
+          headerRight: () => <HeaderActions pageId={pageId} />,
         }}
-      />
-
-      <Tabs.Screen
-        name="stock"
-        options={{
-          title: t("tabs.stock"),
-          tabBarIcon: ({ color }) => (
-            <SymbolView
-              name={{ ios: "cube.box", android: "inventory", web: "inventory" }}
-              tintColor={color}
-              size={24}
-            />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
-        name="material-types"
-        options={{
-          title: t("tabs.materialTypes"),
-          tabBarIcon: ({ color }) => (
-            <SymbolView
-              name={{
-                ios: "cube.box.fill",
-                android: "category",
-                web: "category",
-              }}
-              tintColor={color}
-              size={22}
-            />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
-        name="colour-types"
-        options={{
-          title: t("tabs.colourTypes"),
-          tabBarIcon: ({ color }) => (
-            <SymbolView
-              name={{
-                ios: "drop.fill",
-                android: "format_color_fill",
-                web: "format_color_fill",
-              }}
-              tintColor={color}
-              size={22}
-            />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
-        name="production-methods"
-        options={{
-          title: t("tabs.productionMethods"),
-          tabBarIcon: ({ color }) => (
-            <SymbolView
-              name={{ ios: "wrench.fill", android: "build", web: "build" }}
-              tintColor={color}
-              size={22}
-            />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
-        name="dice-number-colours"
-        options={{
-          title: t("tabs.diceNumberColours"),
-          tabBarIcon: ({ color }) => (
-            <SymbolView
-              name={{
-                ios: "paintpalette.fill",
-                android: "palette",
-                web: "palette",
-              }}
-              tintColor={color}
-              size={22}
-            />
-          ),
-        }}
-      />
-
-    </Tabs>
+      >
+        <Tabs.Screen
+          name="dicejob"
+          options={{
+            title: t("tabs.jobs"),
+            tabBarLabel: ({ color, focused }) => (
+              <TabBarLabel
+                title={t("tabs.jobs")}
+                color={color}
+                focused={focused}
+              />
+            ),
+            tabBarIcon: ({ color }) => (
+              <SymbolView
+                name={{
+                  ios: "square.stack.3d.up.fill",
+                  android: "layers",
+                  web: "layers",
+                }}
+                tintColor={color}
+                size={ICON_SIZE}
+              />
+            ),
+            headerRight: () => (
+              <HeaderActions
+                pageId="dicejob"
+                extra={
+                  <Link href="/modal" asChild>
+                    <Pressable>
+                      {({ pressed }) => (
+                        <SymbolView
+                          name={{
+                            ios: "info.circle",
+                            android: "info",
+                            web: "info",
+                          }}
+                          size={22}
+                          tintColor={chrome.icon}
+                          style={{ opacity: pressed ? 0.5 : 1 }}
+                        />
+                      )}
+                    </Pressable>
+                  </Link>
+                }
+              />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="stock"
+          options={{
+            title: t("tabs.stock"),
+            tabBarLabel: ({ color, focused }) => (
+              <TabBarLabel
+                title={t("tabs.stock")}
+                color={color}
+                focused={focused}
+              />
+            ),
+            tabBarIcon: ({ color }) => (
+              <SymbolView
+                name={{
+                  ios: "cube.box",
+                  android: "inventory",
+                  web: "inventory",
+                }}
+                tintColor={color}
+                size={ICON_SIZE}
+              />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="material-types"
+          options={{
+            title: t("tabs.materialTypes"),
+            tabBarLabel: ({ color, focused }) => (
+              <TabBarLabel
+                title={t("tabs.materialTypes")}
+                color={color}
+                focused={focused}
+              />
+            ),
+            tabBarIcon: ({ color }) => (
+              <SymbolView
+                name={{
+                  ios: "cube.box.fill",
+                  android: "category",
+                  web: "category",
+                }}
+                tintColor={color}
+                size={ICON_SIZE}
+              />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="colour-types"
+          options={{
+            title: t("tabs.colourTypes"),
+            tabBarLabel: ({ color, focused }) => (
+              <TabBarLabel
+                title={t("tabs.colourTypes")}
+                color={color}
+                focused={focused}
+              />
+            ),
+            tabBarIcon: ({ color }) => (
+              <SymbolView
+                name={{
+                  ios: "drop.fill",
+                  android: "format_color_fill",
+                  web: "format_color_fill",
+                }}
+                tintColor={color}
+                size={ICON_SIZE}
+              />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="production-methods"
+          options={{
+            title: t("tabs.productionMethods"),
+            tabBarLabel: ({ color, focused }) => (
+              <TabBarLabel
+                title={t("tabs.productionMethods")}
+                color={color}
+                focused={focused}
+              />
+            ),
+            tabBarIcon: ({ color }) => (
+              <SymbolView
+                name={{
+                  ios: "wrench.fill",
+                  android: "build",
+                  web: "build",
+                }}
+                tintColor={color}
+                size={ICON_SIZE}
+              />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="dice-number-colours"
+          options={{
+            title: t("tabs.diceNumberColours"),
+            tabBarLabel: ({ color, focused }) => (
+              <TabBarLabel
+                title={t("tabs.diceNumberColours")}
+                color={color}
+                focused={focused}
+              />
+            ),
+            tabBarIcon: ({ color }) => (
+              <SymbolView
+                name={{
+                  ios: "paintpalette.fill",
+                  android: "palette",
+                  web: "palette",
+                }}
+                tintColor={color}
+                size={ICON_SIZE}
+              />
+            ),
+          }}
+        />
+      </Tabs>
     </PageThemeScope>
   );
 }
 
-function HeaderActions({
-  extra,
-  pageId,
-}: {
-  extra?: ReactNode;
-  pageId?: ReturnType<typeof pageIdFromSegments>;
-}) {
-  const { t } = useTranslation();
-  const activePageId = pageId;
-
-  return (
-    <View style={styles.headerActions}>
-      <ThemeToggle />
-      {activePageId ? <PageThemeButton pageId={activePageId} /> : null}
-      <Link href="/maintenance" asChild>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t("tabs.maintenance")}
-        >
-          {({ pressed }) => (
-            <SymbolView
-              name={{
-                ios: "gearshape.fill",
-                android: "settings",
-                web: "settings",
-              }}
-              size={22}
-              tintColor={HeaderColors.icon}
-              style={{ opacity: pressed ? 0.5 : 1 }}
-            />
-          )}
-        </Pressable>
-      </Link>
-      {extra}
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  headerActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Space[3],
-    marginRight: 15,
-  },
   loadingContainer: {
     alignItems: "center",
     justifyContent: "center",
@@ -281,5 +331,13 @@ const styles = StyleSheet.create({
     marginBottom: Space[5],
     textAlign: "center",
     opacity: 0.7,
+  },
+  tabLabel: {
+    fontSize: 11,
+    lineHeight: 13,
+    textAlign: "center",
+    marginTop: 2,
+    width: "100%",
+    paddingHorizontal: 2,
   },
 });

@@ -6,7 +6,6 @@ import {
   isPageThemeId,
   pageIdFromSegments,
   resolvePageAppearance,
-  PAGE_DEFAULT_COLORS,
   NIGHT_BACKGROUND,
   NIGHT_FOREGROUND,
 } from "../constants/pageTheme";
@@ -44,12 +43,21 @@ describe("page theme helpers", () => {
     expect(pageIdFromSegments(["page-theme"])).toBeNull();
   });
 
-  it("uses a unique default colour pair per page in day view", () => {
+  it("uses pack colours for every page in day view when pack defaults are provided", () => {
+    const defaults = { foreground: "#f6ead3", background: "#0b1f3a" };
+    const jobs = resolvePageAppearance("dicejob", undefined, "light", defaults);
+    const stock = resolvePageAppearance("stock", undefined, "light", defaults);
+    expect(jobs.background).toBe(defaults.background);
+    expect(stock.background).toBe(defaults.background);
+    expect(jobs.foreground).toBe(defaults.foreground);
+  });
+
+  it("uses the same fallback colours for every page", () => {
     const jobs = resolvePageAppearance("dicejob", undefined, "light");
     const stock = resolvePageAppearance("stock", undefined, "light");
-    expect(jobs.background).toBe(PAGE_DEFAULT_COLORS.dicejob.background);
-    expect(stock.background).toBe(PAGE_DEFAULT_COLORS.stock.background);
-    expect(jobs.background).not.toBe(stock.background);
+    const maintenance = resolvePageAppearance("maintenance", undefined, "light");
+    expect(stock).toEqual(jobs);
+    expect(maintenance).toEqual(jobs);
   });
 
   it("lets custom colours override the page defaults in day view", () => {

@@ -3,7 +3,7 @@
  * https://docs.expo.dev/develop/user-interface/color-themes/
  */
 import { useContext } from "react";
-import { Text as DefaultText, View as DefaultView } from "react-native";
+import { StyleSheet, Text as DefaultText, View as DefaultView } from "react-native";
 
 import { useColorScheme } from "./useColorScheme";
 
@@ -11,11 +11,13 @@ import PageBackgroundImage from "@/components/pageTheme/PageBackgroundImage";
 import { PageThemeContext } from "@/components/pageTheme/PageThemeScope";
 import Colors from "@/constants/Colors";
 import {
-  CARD_TINT_ALPHA,
-  hexToRgba,
   resolvePageAppearance,
 } from "@/constants/pageTheme";
+import { Layout } from "@/constants/theme";
+import { getThemePack, pageDefaultsForPack } from "@/constants/themePack";
+import { getThemePackAssets } from "@/constants/themePackAssets";
 import usePageThemeStore from "@/stores/usePageThemeStore";
+import useThemePackStore from "@/stores/useThemePackStore";
 
 type ThemeProps = {
   lightColor?: string;
@@ -26,6 +28,29 @@ export type TextProps = ThemeProps & DefaultText["props"];
 export type ViewProps = ThemeProps & DefaultView["props"];
 
 type ThemeColors = (typeof Colors)[keyof typeof Colors];
+
+const packToThemeColors = (
+  packId: ReturnType<typeof getThemePack>["id"],
+): ThemeColors => {
+  const colors = getThemePack(packId).colors;
+  return {
+    text: colors.text,
+    background: colors.background,
+    tint: colors.tint,
+    tabIconDefault: colors.tabIconDefault,
+    tabIconSelected: colors.tabIconSelected,
+    card: colors.card,
+    border: colors.border,
+    inputBorder: colors.inputBorder,
+    inputBackground: colors.inputBackground,
+    muted: colors.muted,
+    label: colors.label,
+    primary: colors.primary,
+    onPrimary: colors.onPrimary,
+    destructive: colors.destructive,
+    overlay: colors.overlay,
+  };
+};
 
 const applyPageTheme = (
   base: ThemeColors,
@@ -43,18 +68,44 @@ const applyPageTheme = (
     ...base,
     text: appearance.foreground,
     background: appearance.background,
-    card: hexToRgba(appearance.background, CARD_TINT_ALPHA),
   };
 };
 
 export function useThemeColors() {
   const scheme = useColorScheme();
   const pageId = useContext(PageThemeContext);
+  const packId = useThemePackStore((state) => state.packId);
   const pageTheme = usePageThemeStore((state) =>
     pageId ? state.themes[pageId] : undefined,
   );
-  const appearance = resolvePageAppearance(pageId, pageTheme, scheme);
-  return applyPageTheme(Colors[scheme], appearance, scheme);
+  const packDefaults = pageId
+    ? pageDefaultsForPack(packId, pageId)
+    : {
+        foreground: getThemePack(packId).colors.text,
+        background: getThemePack(packId).colors.background,
+      };
+  const appearance = resolvePageAppearance(
+    pageId,
+    pageTheme,
+    scheme,
+    scheme === "dark" ? undefined : packDefaults,
+  );
+  const base = scheme === "dark" ? Colors.dark : packToThemeColors(packId);
+  return applyPageTheme(base, appearance, scheme);
+}
+
+export function useChromeColors() {
+  const scheme = useColorScheme();
+  const packId = useThemePackStore((state) => state.packId);
+  if (scheme === "dark") {
+    return { background: "#000000", text: "#ffffff", icon: "#ffffff" };
+  }
+  const pack = getThemePack(packId);
+  return {
+    background: pack.colors.header,
+    text: pack.colors.text,
+    icon: pack.colors.text,
+  };
 }
 
 export function useThemeColor(
@@ -99,24 +150,67 @@ export function Screen(props: ViewProps) {
   const { style, lightColor, darkColor, ...otherProps } = props;
   const pageId = useContext(PageThemeContext);
   const scheme = useColorScheme();
+  const packId = useThemePackStore((state) => state.packId);
   const pageTheme = usePageThemeStore((state) =>
     pageId ? state.themes[pageId] : undefined,
   );
-  const appearance = resolvePageAppearance(pageId, pageTheme, scheme);
+  const packDefaults = pageId
+    ? pageDefaultsForPack(packId, pageId)
+    : {
+        foreground: getThemePack(packId).colors.text,
+        background: getThemePack(packId).colors.background,
+      };
+  const appearance = resolvePageAppearance(
+    pageId,
+    pageTheme,
+    scheme,
+    scheme === "dark" ? undefined : packDefaults,
+  );
   const backgroundColor = useThemeColor(
     { light: lightColor, dark: darkColor },
     "background",
   );
+const packBackground =
+    scheme === "light" && !appearance.imageUri && !pageTheme?.background
+      ? getThemePackAssets(packId).background
+      : undefined
+  const hasSceneArt = Boolean(appearance.imageUri || packBackground);
 
   return (
     <DefaultView style={{ flex: 1, backgroundColor }}>
       {appearance.imageUri ? (
         <PageBackgroundImage
-          uri={appearance.imageUri}
+          source={{ uri: appearance.imageUri }}
           mode={appearance.imageMode}
         />
+      ) : packBackground ? (
+        <PageBackgroundImage source={packBackground} mode="cover" />
       ) : null}
-      <DefaultView style={[{ flex: 1 }, style]} {...otherProps} />
+      {hasSceneArt && scheme === "light" ? (
+        <DefaultView
+          pointerEvents="none"
+          style={[
+            styles.backdrop,
+            {
+              backgroundColor:
+                getThemePack(packId).colors.overlay || Layout.scrim,
+            },
+          ]}
+        />
+      ) : null}
+      <DefaultView style={[styles.foreground, style]} {...otherProps} />
     </DefaultView>
   );
 }
+
+const styles = StyleSheet.create({
+  backdrop: {
+    ...StyleSheet.absoluteFill,
+    zIndex: 0,
+  },
+  foreground: {
+    flex: 1,
+    zIndex: 1,
+    position: "relative",
+  },
+});

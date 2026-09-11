@@ -2,7 +2,7 @@ import { SymbolView } from "expo-symbols";
 import { Pressable } from "react-native";
 import { useTranslation } from "react-i18next";
 
-import { HeaderColors } from "@/constants/Colors";
+import { useChromeColors } from "@/components/Themed";
 import useAppearanceStore from "@/stores/useAppearanceStore";
 
 export default function ThemeToggle() {
@@ -12,6 +12,7 @@ export default function ThemeToggle() {
     (state) => state.toggleColorScheme,
   );
   const isDark = colorScheme === "dark";
+  const chrome = useChromeColors();
 
   return (
     <Pressable
@@ -30,7 +31,7 @@ export default function ThemeToggle() {
             : { ios: "moon.fill", android: "dark_mode", web: "dark_mode" }
         }
         size={22}
-        tintColor={HeaderColors.icon}
+        tintColor={chrome.icon}
       />
     </Pressable>
   );

@@ -3,6 +3,7 @@ import { Alert, Platform } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { showMessage } from "@/components/alert";
+import { usePackSurface } from "@/components/usePackSurface";
 import ColorField from "@/components/ui/ColorField";
 import EntityListItem from "@/components/ui/EntityListItem";
 import FormActionRow, { isFormDirty } from "@/components/ui/FormActionRow";
@@ -15,6 +16,7 @@ import useInventoryStore from "@/stores/useInventoryStore";
 
 export default function StockScreen() {
   const { t } = useTranslation();
+  const { icon } = usePackSurface();
   const items = useInventoryStore((s) => s.stock);
   const types = useInventoryStore((s) => s.types);
   const colourTypes = useInventoryStore((s) => s.colourTypes);
@@ -179,6 +181,7 @@ export default function StockScreen() {
         <>
           <FormField
             label={t("stock.colourName")}
+            icon={icon("colour")}
             required
             error={errors.colourName}
             value={colourName}
@@ -201,6 +204,7 @@ export default function StockScreen() {
           />
           <SelectDropdown
             label={t("stock.colourType")}
+            icon={icon("colour")}
             placeholder={t("stock.selectColourType")}
             required
             error={errors.colourTypeId}
@@ -220,6 +224,7 @@ export default function StockScreen() {
           />
           <SelectDropdown
             label={t("stock.colourBrand")}
+            icon={icon("colour")}
             placeholder={t("stock.selectColourBrand")}
             options={colourBrands.map((brand) => ({
               value: brand.colour_brand_id,
@@ -231,6 +236,7 @@ export default function StockScreen() {
           />
           <FormField
             label={t("stock.quantity")}
+            icon={icon("material")}
             value={quantity}
             onChangeText={setQuantity}
             keyboardType="number-pad"

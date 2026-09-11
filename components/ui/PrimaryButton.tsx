@@ -1,14 +1,93 @@
-import { Pressable, StyleSheet, Text, type StyleProp, type ViewStyle } from "react-native";
+import { type ReactNode } from "react";
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  type StyleProp,
+  type ViewStyle,
+} from "react-native";
 
-import { useThemeColors } from "@/components/Themed";
-import { Radius, Space, Touch, Type } from "@/constants/theme";
+import { View } from "@/components/Themed";
+import { usePackSurface } from "@/components/usePackSurface";
+import { FontSize, Layout, Space } from "@/constants/theme";
+
+export type ButtonVariant =
+  | "primary"
+  | "secondary"
+  | "cancel"
+  | "destructive"
+  | "ghost"
+  | "outline"
+  | "wood";
 
 type PrimaryButtonProps = {
   title: string;
   onPress: () => void;
   disabled?: boolean;
-  variant?: "primary" | "destructive";
+  variant?: ButtonVariant;
   style?: StyleProp<ViewStyle>;
+  icon?: ReactNode;
+  compact?: boolean;
+};
+
+const DAY = {
+  primaryBg: "#2D8CFF",
+  primaryText: "#FFFFFF",
+  secondaryBg: "#8B5E3C",
+  secondaryText: "#F6EAD3",
+  cancelBg: "#1A2230",
+  cancelBorder: "rgba(190, 125, 55, 0.85)",
+  cancelText: "#F6EAD3",
+  destructiveBg: "#A94E3F",
+  destructiveText: "#FFFFFF",
+} as const;
+
+const NIGHT = {
+  primaryBg: "#FFFFFF",
+  primaryText: "#000000",
+  secondaryBg: "#111111",
+  secondaryText: "#FFFFFF",
+  cancelBg: "#000000",
+  cancelBorder: "#FFFFFF",
+  cancelText: "#FFFFFF",
+  destructiveBg: "#000000",
+  destructiveText: "#FFFFFF",
+} as const;
+
+const resolveTone = (variant: ButtonVariant, isNight: boolean) => {
+  const palette = isNight ? NIGHT : DAY;
+  const mapped = variant === "wood" || variant === "outline" ? "secondary" : variant;
+
+  if (mapped === "primary") {
+    return {
+      backgroundColor: palette.primaryBg,
+      color: palette.primaryText,
+      borderColor: "transparent",
+      borderWidth: 0,
+    };
+  }
+  if (mapped === "secondary") {
+    return {
+      backgroundColor: palette.secondaryBg,
+      color: palette.secondaryText,
+      borderColor: "transparent",
+      borderWidth: 0,
+    };
+  }
+  if (mapped === "cancel" || mapped === "ghost") {
+    return {
+      backgroundColor: palette.cancelBg,
+      color: palette.cancelText,
+      borderColor: palette.cancelBorder,
+      borderWidth: 1,
+    };
+  }
+  return {
+    backgroundColor: palette.destructiveBg,
+    color: palette.destructiveText,
+    borderColor: isNight ? "#FFFFFF" : "transparent",
+    borderWidth: isNight ? 1 : 0,
+  };
 };
 
 export default function PrimaryButton({
@@ -17,22 +96,37 @@ export default function PrimaryButton({
   disabled,
   variant = "primary",
   style,
+  icon,
+  compact,
 }: PrimaryButtonProps) {
-  const colors = useThemeColors();
-  const backgroundColor =
-    variant === "destructive" ? colors.destructive : colors.primary;
+  const { isNight } = usePackSurface();
+  const tone = resolveTone(variant, isNight);
 
   return (
     <Pressable
+      accessibilityRole="button"
       onPress={onPress}
       disabled={disabled}
       style={({ pressed }) => [
         styles.button,
-        { backgroundColor, opacity: disabled ? 0.5 : pressed ? 0.8 : 1 },
+        compact && styles.compact,
+        {
+          backgroundColor: tone.backgroundColor,
+          borderColor: tone.borderColor,
+          borderWidth: tone.borderWidth,
+        },
+        disabled && styles.disabled,
+        pressed && !disabled && styles.pressed,
         style,
       ]}
     >
-      <Text style={[Type.button, { color: colors.onPrimary }]}>{title}</Text>
+      {icon}
+      <Text
+        style={[styles.label, { color: tone.color }]}
+        numberOfLines={1}
+      >
+        {title}
+      </Text>
     </Pressable>
   );
 }
@@ -40,11 +134,38 @@ export default function PrimaryButton({
 const styles = StyleSheet.create({
   button: {
     minWidth: 84,
-    minHeight: Touch.minHeight,
-    paddingHorizontal: Space[4],
-    paddingVertical: Space[3],
-    borderRadius: Radius.md,
+    minHeight: 54,
+    height: 54,
+    borderRadius: 12,
+    paddingHorizontal: Space[3],
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    gap: Space[2],
+  },
+  compact: {
+    minWidth: 54,
+  },
+  label: {
+    fontSize: FontSize.md,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  pressed: {
+    opacity: 0.86,
+    transform: [{ scale: 0.98 }],
+  },
+  disabled: {
+    opacity: 0.45,
+  },
+  actionRow: {
+    flexDirection: "row",
+    alignItems: "stretch",
+    gap: Layout.actionGap,
+    marginTop: Layout.cardGap,
   },
 });
+
+export function ActionButtonRow({ children }: { children: ReactNode }) {
+  return <View style={styles.actionRow}>{children}</View>;
+}
