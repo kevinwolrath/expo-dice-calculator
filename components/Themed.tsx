@@ -170,10 +170,10 @@ export function Screen(props: ViewProps) {
     { light: lightColor, dark: darkColor },
     "background",
   );
-  const packBackground =
-    scheme === "light" && !appearance.imageUri
+const packBackground =
+    scheme === "light" && !appearance.imageUri && !pageTheme?.background
       ? getThemePackAssets(packId).background
-      : undefined;
+      : undefined
   const hasSceneArt = Boolean(appearance.imageUri || packBackground);
 
   return (
