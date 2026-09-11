@@ -833,10 +833,10 @@ export default function JobsScreen() {
                 onRequestClose={() => setShowDicePreview(false)}
               >
                 <RNView style={styles.dicePreviewRoot}>
-                  <RNView
-                    pointerEvents="none"
-                    style={styles.dicePreviewScrim}
-                  />
+<Pressable
+  style={styles.dicePreviewScrim}
+  onPress={() => setShowDicePreview(false)}
+/>
                   <RNView
                     style={[
                       styles.dicePreviewCenter,
