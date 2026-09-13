@@ -1,6 +1,5 @@
 import { type ReactNode, useState } from "react";
 import {
-  Image,
   Modal,
   Pressable,
   View as RNView,
@@ -12,6 +11,7 @@ import {
 import { Text, View, useThemeColors } from "@/components/Themed";
 import FieldError from "@/components/ui/FieldError";
 import FieldLabel from "@/components/ui/FieldLabel";
+import FieldLabelIcon from "@/components/ui/FieldLabelIcon";
 import FieldPanel from "@/components/ui/FieldPanel";
 import {
   controlStyle,
@@ -182,15 +182,7 @@ export default function SelectDropdown({
 
   return (
     <FieldPanel
-      icon={
-        icon ? (
-          <Image
-            source={icon}
-            style={styles.icon}
-            accessibilityIgnoresInvertColors
-          />
-        ) : undefined
-      }
+      icon={icon ? <FieldLabelIcon source={icon} /> : undefined}
       error={Boolean(error)}
     >
       <FieldLabel label={label} required={required} />
@@ -240,5 +232,4 @@ const styles = StyleSheet.create({
   },
   optionLabel: { fontSize: FontSize.md },
   selectedLabel: { fontWeight: "600" },
-  icon: { width: 32, height: 32 },
 });

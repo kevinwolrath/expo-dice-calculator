@@ -1,9 +1,12 @@
 import { type ReactNode } from "react";
-import { Image, StyleSheet, Switch, type ImageSourcePropType } from "react-native";
+import { StyleSheet, Switch, type ImageSourcePropType } from "react-native";
 
 import { Text, View, useThemeColors } from "@/components/Themed";
 import FieldError from "@/components/ui/FieldError";
 import FieldLabel from "@/components/ui/FieldLabel";
+import FieldLabelIcon, {
+  FIELD_LABEL_ICON_GAP,
+} from "@/components/ui/FieldLabelIcon";
 import { usePanelStyle } from "@/components/ui/FieldPanel";
 import { useControlColors } from "@/components/ui/fieldControl";
 import { FontSize, Layout, Space } from "@/constants/theme";
@@ -45,11 +48,7 @@ export default function LockFieldCard({
     >
       {icon ? (
         <View style={styles.iconWrap}>
-          <Image
-            source={icon}
-            style={styles.icon}
-            accessibilityIgnoresInvertColors
-          />
+          <FieldLabelIcon source={icon} />
         </View>
       ) : null}
       <View style={styles.middle}>
@@ -76,25 +75,15 @@ export default function LockFieldCard({
 const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     minHeight: 90,
-    gap: 12,
+    gap: FIELD_LABEL_ICON_GAP,
     marginBottom: Layout.cardGap,
   },
   iconWrap: {
-    width: 32,
-    height: 32,
+    marginTop: 2,
     flexGrow: 0,
-    flexShrink: 1,
-    minWidth: 0,
-    overflow: "hidden",
-    alignItems: "center",
-    justifyContent: "center",
-    opacity: 0.78,
-  },
-  icon: {
-    width: 32,
-    height: 32,
+    flexShrink: 0,
   },
   middle: {
     flexGrow: 1,
@@ -102,6 +91,7 @@ const styles = StyleSheet.create({
     minWidth: 120,
   },
   lock: {
+    alignSelf: "center",
     flexGrow: 0,
     flexShrink: 0,
     minWidth: 72,

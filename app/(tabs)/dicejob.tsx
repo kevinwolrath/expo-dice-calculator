@@ -899,6 +899,22 @@ export default function JobsScreen() {
                             : null
                         }
                         stroke={isNight ? "#ffffff" : "#F6EAD3"}
+                        material={
+                          materialTypeId
+                            ? (materialTypes.find(
+                                (type) =>
+                                  type.material_type_id === materialTypeId,
+                              )?.description ?? null)
+                            : null
+                        }
+                        productionMethod={
+                          methodId
+                            ? (methods.find(
+                                (method) =>
+                                  method.production_method_id === methodId,
+                              )?.description ?? null)
+                            : null
+                        }
                       />
                       <Text style={styles.dicePreviewHint}>
                         {t("jobs.generateUntilHint")}

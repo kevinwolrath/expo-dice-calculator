@@ -3,6 +3,7 @@ import { StyleSheet } from "react-native";
 
 import { View, useThemeColors } from "@/components/Themed";
 import { useColorScheme } from "@/components/useColorScheme";
+import { FIELD_LABEL_ICON_GAP } from "@/components/ui/FieldLabelIcon";
 import { Layout } from "@/constants/theme";
 
 export function usePanelStyle() {
@@ -53,13 +54,13 @@ const styles = StyleSheet.create({
   panel: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 12,
+    gap: FIELD_LABEL_ICON_GAP,
     marginBottom: Layout.cardGap,
   },
   iconWrap: {
-    width: 32,
-    height: 32,
-    marginTop: 4,
+    marginTop: 2,
+    flexGrow: 0,
+    flexShrink: 0,
     alignItems: "center",
     justifyContent: "center",
   },
