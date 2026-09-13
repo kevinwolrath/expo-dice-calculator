@@ -1,26 +1,39 @@
-name: Android Build
+name: Deploy Android to Internal Testing
 
 on:
   push:
-    branches: [ "master" ]
+    branches:
+      - develop
+
+permissions:
+  contents: read
 
 jobs:
-  build:
+  deploy:
+    name: Build and deploy Android
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
 
-      - run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-      - uses: expo/expo-github-action@v8
+      - name: Run unit tests
+        run: npm test -- --ci --runInBand
+
+      - name: Set up Expo and EAS
+        uses: expo/expo-github-action@v8
         with:
           eas-version: latest
           token: ${{ secrets.ANDROID_BUILD }}
 
-      - run: eas build --platform android --non-interactive
+      - name: Build and submit to Google Play Internal Testing
+        run: eas build --platform android --profile testing --auto-submit --non-interactive
