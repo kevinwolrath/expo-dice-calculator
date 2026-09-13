@@ -1,6 +1,5 @@
 import { type ReactNode, useState } from "react";
 import {
-  Image,
   StyleSheet,
   TextInput,
   type ImageSourcePropType,
@@ -10,6 +9,7 @@ import {
 import { View, useThemeColors } from "@/components/Themed";
 import FieldError from "@/components/ui/FieldError";
 import FieldLabel from "@/components/ui/FieldLabel";
+import FieldLabelIcon from "@/components/ui/FieldLabelIcon";
 import FieldPanel from "@/components/ui/FieldPanel";
 import {
   controlStyle,
@@ -92,15 +92,7 @@ export default function FormField({
 
   return (
     <FieldPanel
-      icon={
-        icon ? (
-          <Image
-            source={icon}
-            style={styles.icon}
-            accessibilityIgnoresInvertColors
-          />
-        ) : undefined
-      }
+      icon={icon ? <FieldLabelIcon source={icon} /> : undefined}
       error={Boolean(error)}
     >
       <FieldLabel label={label} required={required} />
@@ -121,5 +113,4 @@ const styles = StyleSheet.create({
     minHeight: Layout.notesHeight,
     textAlignVertical: "top",
   },
-  icon: { width: 32, height: 32 },
 });
