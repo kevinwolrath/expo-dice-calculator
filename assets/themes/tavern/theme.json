@@ -24,15 +24,7 @@
   },
   "assets": {
     "background": "tavern_background.jpg",
-    "backgroundDark": "tavern_background_dark.jpg",
     "banner": "dice_job_manager_banner.jpg",
-    "icon": "app_icon.png",
-    "splash": "splash_screen.jpg",
-    "panel": "panel_background.png",
-    "buttonPrimary": "button_primary.png",
-    "buttonWood": "button_wood.png",
-    "buttonOutline": "button_outline.png",
-    "dice": ["dice_d20.png", "dice_d12.png", "dice_d8.png", "dice_d6.png"],
     "icons": {
       "notes": "icon_notes.png",
       "material": "icon_material.png",
