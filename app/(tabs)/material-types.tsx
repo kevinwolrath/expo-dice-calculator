@@ -6,6 +6,7 @@ import { usePackSurface } from "@/components/usePackSurface";
 import EntityListItem from "@/components/ui/EntityListItem";
 import FormActionRow, { isFormDirty } from "@/components/ui/FormActionRow";
 import FormField from "@/components/ui/FormField";
+import { useFormFieldRefs } from "@/components/ui/fieldFocus";
 import ScreenList from "@/components/ui/ScreenList";
 import type { MaterialType } from "@/db";
 import useInventoryStore from "@/stores/useInventoryStore";
@@ -21,9 +22,13 @@ export default function MaterialTypesScreen() {
   const updateType = useInventoryStore((s) => s.updateType);
   const deleteType = useInventoryStore((s) => s.deleteType);
 
+  const { bind, focusError } = useFormFieldRefs<"description">();
   const [description, setDescription] = useState("");
   const [typeEditingId, setTypeEditingId] = useState<string | null>(null);
   const [errors, setErrors] = useState<{ description?: string }>({});
+  const emptyForm = { description: "" };
+  const [cleanForm, setCleanForm] = useState(emptyForm);
+  const formDirty = isFormDirty({ description }, cleanForm);
 
   useEffect(() => {
     loadAll();
@@ -31,7 +36,9 @@ export default function MaterialTypesScreen() {
 
   const handleSaveType = async () => {
     if (!description.trim()) {
-      setErrors({ description: t("common.required") });
+      const nextErrors = { description: t("common.required") };
+      setErrors(nextErrors);
+      focusError(nextErrors, ["description"]);
       return;
     }
     setErrors({});
@@ -44,6 +51,7 @@ export default function MaterialTypesScreen() {
         const created = await createType({ description: description.trim() });
         setTypeEditingId(created.material_type_id);
       }
+      setCleanForm({ description });
       setErrors({});
     } catch (e) {
       console.warn(e);
@@ -55,17 +63,14 @@ export default function MaterialTypesScreen() {
     setTypeEditingId(item.material_type_id);
     setDescription(item.description ?? "");
     setErrors({});
+    setCleanForm({ description: item.description ?? "" });
   };
-
-  const emptyForm = { description: "" };
-  const formDirty =
-    typeEditingId !== null ||
-    isFormDirty({ description }, emptyForm);
 
   const handleCancelType = () => {
     setDescription("");
     setTypeEditingId(null);
     setErrors({});
+    setCleanForm(emptyForm);
   };
 
   const handleDeleteType = (id: string) => {
@@ -111,6 +116,7 @@ export default function MaterialTypesScreen() {
       form={
         <>
           <FormField
+            focusRef={bind("description")}
             label={t("materialTypes.description")}
             icon={icon("material")}
             required

@@ -21,7 +21,9 @@ import EntityListItem from "@/components/ui/EntityListItem";
 import FieldLabel from "@/components/ui/FieldLabel";
 import FormActionRow, { isFormDirty } from "@/components/ui/FormActionRow";
 import FormField from "@/components/ui/FormField";
+import { useFormFieldRefs } from "@/components/ui/fieldFocus";
 import JobsGenerateBar from "@/components/ui/JobsGenerateBar";
+import JobsHeroBanner from "@/components/ui/JobsHeroBanner";
 import LockFieldCard from "@/components/ui/LockFieldCard";
 import PreviewSettingsFooter from "@/components/ui/PreviewSettingsFooter";
 import RemovableChipList from "@/components/ui/RemovableChipList";
@@ -122,6 +124,48 @@ export default function JobsScreen() {
     numberColourId?: string;
     materialTypeId?: string;
   }>({});
+  const { bind, focusError } = useFormFieldRefs<
+    | "jobName"
+    | "materialTypeId"
+    | "methodId"
+    | "colourCount"
+    | "numberColourId"
+  >();
+  const jobFieldOrder = [
+    "jobName",
+    "materialTypeId",
+    "methodId",
+    "colourCount",
+    "numberColourId",
+  ] as const;
+  const emptyForm = {
+    jobName: "",
+    description: "",
+    colourCount: "",
+    colourCountManual: false,
+    jobColourStockIds: [] as string[],
+    excludedColourTypeIds: [] as string[],
+    materialTypeId: null as string | null,
+    materialTypeManual: false,
+    methodId: null as string | null,
+    methodManual: false,
+    numberColourId: null as string | null,
+  };
+  const currentForm = {
+    jobName,
+    description,
+    colourCount,
+    colourCountManual,
+    jobColourStockIds,
+    excludedColourTypeIds,
+    materialTypeId,
+    materialTypeManual,
+    methodId,
+    methodManual,
+    numberColourId,
+  };
+  const [cleanForm, setCleanForm] = useState(emptyForm);
+  const formDirty = isFormDirty(currentForm, cleanForm);
 
   const excludedColourTypeIdsForJob = expandColourTypeExclusions(
     excludedColourTypeIds,
@@ -190,6 +234,7 @@ export default function JobsScreen() {
     setShowJobColourPicker(false);
     setEditingColourIndex(null);
     setErrors({});
+    setCleanForm(emptyForm);
   };
 
   const handleEdit = (job: DiceJob) => {
@@ -208,10 +253,25 @@ export default function JobsScreen() {
       listDiceJobColours(job.dice_job_id),
       listDiceJobColourTypeExclusions(job.dice_job_id),
     ]).then(([colours, exclusions]) => {
-      setJobColourStockIds(colours.map((colour) => colour.material_stock_id));
-      setExcludedColourTypeIds(
-        exclusions.map((exclusion) => exclusion.colour_type_id),
+      const nextColours = colours.map((colour) => colour.material_stock_id);
+      const nextExclusions = exclusions.map(
+        (exclusion) => exclusion.colour_type_id,
       );
+      setJobColourStockIds(nextColours);
+      setExcludedColourTypeIds(nextExclusions);
+      setCleanForm({
+        jobName: job.job_name,
+        description: job.description ?? "",
+        colourCount: String(job.colour_count),
+        colourCountManual: job.colour_count_manual !== 0,
+        jobColourStockIds: nextColours,
+        excludedColourTypeIds: nextExclusions,
+        materialTypeId: job.material_type_id,
+        materialTypeManual: job.material_type_manual !== 0,
+        methodId: job.production_method_id,
+        methodManual: job.production_method_manual !== 0,
+        numberColourId: job.dice_job_number_colour_id,
+      });
     });
   };
 
@@ -325,10 +385,12 @@ export default function JobsScreen() {
             (maximumRandomColourCount - minimumRandomColourCount + 1),
         ) + minimumRandomColourCount;
     if (selectedColourCount === null) {
-      setErrors((current) => ({
-        ...current,
+      const nextErrors = {
+        ...errors,
         colourCount: t("jobs.invalidCountMessage", { max: MAX_COLOUR_COUNT }),
-      }));
+      };
+      setErrors(nextErrors);
+      focusError(nextErrors, jobFieldOrder);
       return;
     }
     const selectedColours = pickRandomDistinctStock(
@@ -356,12 +418,14 @@ export default function JobsScreen() {
   }) => {
     const count = options?.count ?? parseColourCount();
     if (count === null) {
-      setErrors((current) => ({
-        ...current,
+      const nextErrors = {
+        ...errors,
         colourCount: t("jobs.invalidCountMessage", {
           max: MAX_COLOUR_COUNT,
         }),
-      }));
+      };
+      setErrors(nextErrors);
+      focusError(nextErrors, jobFieldOrder);
       return;
     }
 
@@ -387,17 +451,21 @@ export default function JobsScreen() {
         ? options.materialTypeId
         : materialTypeId;
     if (!selectedMaterialTypeId) {
-      setErrors((current) => ({
-        ...current,
+      const nextErrors = {
+        ...errors,
         materialTypeId: t("common.required"),
-      }));
+      };
+      setErrors(nextErrors);
+      focusError(nextErrors, jobFieldOrder);
       return;
     }
     if (!selectedMethodId) {
-      setErrors((current) => ({
-        ...current,
+      const nextErrors = {
+        ...errors,
         methodId: t("common.required"),
-      }));
+      };
+      setErrors(nextErrors);
+      focusError(nextErrors, jobFieldOrder);
       return;
     }
 
@@ -561,6 +629,7 @@ export default function JobsScreen() {
       !numberColourId ||
       count === null
     ) {
+      focusError(nextErrors, jobFieldOrder);
       return;
     }
 
@@ -590,6 +659,7 @@ export default function JobsScreen() {
         excludedColourTypeIdsForJob,
       );
       setEditingId(jobId);
+      setCleanForm(currentForm);
       await loadAll();
     } catch (e) {
       console.warn("Failed to save job", e);
@@ -674,37 +744,6 @@ export default function JobsScreen() {
     jobColourStockIds.length > 0 &&
     materialTypeId !== null &&
     methodId !== null;
-  const emptyForm = {
-    jobName: "",
-    description: "",
-    colourCount: "",
-    colourCountManual: false,
-    jobColourStockIds: [] as string[],
-    excludedColourTypeIds: [] as string[],
-    materialTypeId: null,
-    materialTypeManual: false,
-    methodId: null,
-    methodManual: false,
-    numberColourId: null,
-  };
-  const formDirty =
-    editingId !== null ||
-    isFormDirty(
-      {
-        jobName,
-        description,
-        colourCount,
-        colourCountManual,
-        jobColourStockIds,
-        excludedColourTypeIds,
-        materialTypeId,
-        materialTypeManual,
-        methodId,
-        methodManual,
-        numberColourId,
-      },
-      emptyForm,
-    );
 
   return (
     <ScreenList
@@ -714,17 +753,13 @@ export default function JobsScreen() {
         emptyText={t("jobs.empty")}
         hero={
           !isNight && assets.banner ? (
-            <Image
-              source={assets.banner}
-              resizeMode="cover"
-              accessibilityIgnoresInvertColors
-              style={styles.hero}
-            />
+            <JobsHeroBanner source={assets.banner} />
           ) : null
         }
         form={
           <>
             <FormField
+              focusRef={bind("jobName")}
               label={t("jobs.jobName")}
               icon={icon("dice")}
               required
@@ -984,6 +1019,7 @@ export default function JobsScreen() {
                 lockAccessibilityLabel={t("jobs.manualMaterialType")}
               >
                 <SelectDropdown
+                  focusRef={bind("materialTypeId")}
                   embedded
                   label={t("jobs.materialType")}
                   placeholder={t("jobs.selectMaterialType")}
@@ -1010,6 +1046,7 @@ export default function JobsScreen() {
                 lockAccessibilityLabel={t("jobs.manualProductionMethod")}
               >
                 <SelectDropdown
+                  focusRef={bind("methodId")}
                   embedded
                   label={t("jobs.productionMethod")}
                   placeholder={t("jobs.selectProductionMethod")}
@@ -1039,6 +1076,7 @@ export default function JobsScreen() {
                 lockAccessibilityLabel={t("jobs.manualColourCount")}
               >
                 <FormField
+                  focusRef={bind("colourCount")}
                   embedded
                   label={t("jobs.colourCount")}
                   error={errors.colourCount}
@@ -1160,6 +1198,7 @@ export default function JobsScreen() {
               ) : null}
             </View>
             <SelectDropdown
+              focusRef={bind("numberColourId")}
               label={t("jobs.numberColour")}
               icon={icon("dice")}
               placeholder={t("jobs.selectNumberColour")}
@@ -1209,11 +1248,6 @@ export default function JobsScreen() {
 }
 
 const styles = StyleSheet.create({
-  hero: {
-    width: "100%",
-    height: 180,
-    borderRadius: 12,
-  },
   generatedColours: { marginBottom: Space[4] },
   selectField: { marginBottom: Space[3] },
   colourCountBlock: { marginBottom: Space[4] },

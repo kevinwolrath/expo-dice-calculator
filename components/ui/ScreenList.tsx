@@ -10,10 +10,13 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
+  View as RNView,
+  findNodeHandle,
   type ListRenderItem,
 } from "react-native";
 
 import { Screen, Text, View } from "@/components/Themed";
+import { FormScrollContext } from "@/components/ui/fieldFocus";
 import { Layout, Space, Type } from "@/constants/theme";
 
 const ScrollToFormContext = createContext<() => void>(() => {});
@@ -40,6 +43,7 @@ export default function ScreenList<T>({
   hero,
 }: ScreenListProps<T>): ReactElement {
   const scrollRef = useRef<ScrollView>(null);
+  const contentRef = useRef<RNView>(null);
 
   const scrollToForm = () => {
     scrollRef.current?.scrollTo({ y: 0, animated: true });
@@ -50,8 +54,24 @@ export default function ScreenList<T>({
     }
   };
 
+  const scrollChildIntoView = (host: RNView | null) => {
+    const content = contentRef.current;
+    const scroll = scrollRef.current;
+    if (!host || !content || !scroll) return;
+    const node = findNodeHandle(content);
+    if (node == null) return;
+    host.measureLayout(
+      node,
+      (_x, y) => {
+        scroll.scrollTo({ y: Math.max(0, y - 16), animated: true });
+      },
+      () => {},
+    );
+  };
+
   return (
     <ScrollToFormContext.Provider value={scrollToForm}>
+      <FormScrollContext.Provider value={scrollChildIntoView}>
       <Screen>
         <KeyboardAvoidingView
           style={styles.flex}
@@ -64,6 +84,7 @@ export default function ScreenList<T>({
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={styles.content}
           >
+            <RNView ref={contentRef} collapsable={false}>
             {hero ? <View style={styles.hero}>{hero}</View> : null}
             <View nativeID="entity-form" style={styles.form}>
               {form}
@@ -86,9 +107,11 @@ export default function ScreenList<T>({
                 </View>
               ))
             )}
+            </RNView>
           </ScrollView>
         </KeyboardAvoidingView>
       </Screen>
+      </FormScrollContext.Provider>
     </ScrollToFormContext.Provider>
   );
 }

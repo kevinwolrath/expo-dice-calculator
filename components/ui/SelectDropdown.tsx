@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useCallback, useRef, useState, type Ref } from "react";
 import {
   Modal,
   Pressable,
@@ -18,6 +18,10 @@ import {
   inputTypeface,
   useControlColors,
 } from "@/components/ui/fieldControl";
+import {
+  useFieldFocus,
+  type FieldFocusable,
+} from "@/components/ui/fieldFocus";
 import { FontSize, Radius, Space, Type } from "@/constants/theme";
 
 export type SelectOption = { value: string; label: string };
@@ -35,6 +39,7 @@ type SelectDropdownProps = {
   rightAccessory?: ReactNode;
   icon?: ImageSourcePropType;
   embedded?: boolean;
+  focusRef?: Ref<FieldFocusable>;
 };
 
 export default function SelectDropdown({
@@ -50,10 +55,17 @@ export default function SelectDropdown({
   rightAccessory,
   icon,
   embedded,
+  focusRef,
 }: SelectDropdownProps) {
   const colors = useThemeColors();
   const control = useControlColors();
   const [open, setOpen] = useState(false);
+  const hostRef = useRef<RNView>(null);
+  const activate = useCallback(() => {
+    if (disabled) return;
+    setOpen(true);
+  }, [disabled]);
+  useFieldFocus(focusRef, hostRef, activate);
   const selected = options.find((option) => option.value === value);
 
   const picker = options.length === 0 ? (
@@ -177,11 +189,16 @@ export default function SelectDropdown({
   );
 
   if (embedded) {
-    return picker;
+    return (
+      <RNView ref={hostRef} collapsable={false}>
+        {picker}
+      </RNView>
+    );
   }
 
   return (
     <FieldPanel
+      ref={hostRef}
       icon={icon ? <FieldLabelIcon source={icon} /> : undefined}
       error={Boolean(error)}
     >
