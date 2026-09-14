@@ -8,6 +8,7 @@ import ChipSelect from "@/components/ui/ChipSelect";
 import EntityListItem from "@/components/ui/EntityListItem";
 import FormActionRow, { isFormDirty } from "@/components/ui/FormActionRow";
 import FormField from "@/components/ui/FormField";
+import { useFormFieldRefs } from "@/components/ui/fieldFocus";
 import ScreenList from "@/components/ui/ScreenList";
 import {
   addAllowedMaterial,
@@ -28,6 +29,9 @@ export default function ProductionMethodsScreen() {
   const { icon } = usePackSurface();
   const [methods, setMethods] = useState<ProductionMethod[]>([]);
 
+  const { bind, focusError } = useFormFieldRefs<
+    "description" | "colourCountRange"
+  >();
   const [methodDescription, setMethodDescription] = useState("");
   const [minimumColourCount, setMinimumColourCount] = useState("");
   const [maximumColourCount, setMaximumColourCount] = useState("");
@@ -40,6 +44,20 @@ export default function ProductionMethodsScreen() {
     description?: string;
     colourCountRange?: string;
   }>({});
+  const emptyForm = {
+    methodDescription: "",
+    minimumColourCount: "",
+    maximumColourCount: "",
+    allowedMaterialIds: [] as string[],
+  };
+  const currentForm = {
+    methodDescription,
+    minimumColourCount,
+    maximumColourCount,
+    allowedMaterialIds,
+  };
+  const [cleanForm, setCleanForm] = useState(emptyForm);
+  const formDirty = isFormDirty(currentForm, cleanForm);
 
   const load = useCallback(async () => {
     const mRows = await listProductionMethods();
@@ -58,7 +76,9 @@ export default function ProductionMethodsScreen() {
 
   const handleSaveMethod = async () => {
     if (!methodDescription.trim()) {
-      setErrors({ description: t("common.required") });
+      const nextErrors = { description: t("common.required") };
+      setErrors(nextErrors);
+      focusError(nextErrors, ["description", "colourCountRange"]);
       return;
     }
     const minValue = minimumColourCount.trim()
@@ -68,9 +88,11 @@ export default function ProductionMethodsScreen() {
       ? Number(maximumColourCount)
       : null;
     if (minValue !== null && maxValue !== null && minValue > maxValue) {
-      setErrors({
+      const nextErrors = {
         colourCountRange: t("productionMethods.colourCountRangeError"),
-      });
+      };
+      setErrors(nextErrors);
+      focusError(nextErrors, ["description", "colourCountRange"]);
       return;
     }
     setErrors({});
@@ -106,6 +128,7 @@ export default function ProductionMethodsScreen() {
         ]);
       }
       setMethodEditingId(productionMethodId);
+      setCleanForm(currentForm);
       setErrors({});
       await load();
     } catch (e) {
@@ -137,25 +160,19 @@ export default function ProductionMethodsScreen() {
     );
     setAllowedMaterialIds(allowed.map((item) => item.material_type_id));
     setErrors({});
+    setCleanForm({
+      methodDescription: method.description ?? "",
+      minimumColourCount:
+        method.minimum_colour_count != null
+          ? String(method.minimum_colour_count)
+          : "",
+      maximumColourCount:
+        method.maximum_colour_count != null
+          ? String(method.maximum_colour_count)
+          : "",
+      allowedMaterialIds: allowed.map((item) => item.material_type_id),
+    });
   };
-
-  const emptyForm = {
-    methodDescription: "",
-    minimumColourCount: "",
-    maximumColourCount: "",
-    allowedMaterialIds: [] as string[],
-  };
-  const formDirty =
-    methodEditingId !== null ||
-    isFormDirty(
-      {
-        methodDescription,
-        minimumColourCount,
-        maximumColourCount,
-        allowedMaterialIds,
-      },
-      emptyForm,
-    );
 
   const handleCancelMethod = () => {
     setMethodDescription("");
@@ -164,6 +181,7 @@ export default function ProductionMethodsScreen() {
     setMethodEditingId(null);
     setAllowedMaterialIds([]);
     setErrors({});
+    setCleanForm(emptyForm);
   };
 
   const handleDeleteMethod = (id: string) => {
@@ -209,6 +227,7 @@ export default function ProductionMethodsScreen() {
       form={
         <>
           <FormField
+            focusRef={bind("description")}
             label={t("productionMethods.description")}
             icon={icon("method")}
             required
@@ -220,6 +239,7 @@ export default function ProductionMethodsScreen() {
             }}
           />
           <FormField
+            focusRef={bind("colourCountRange")}
             label={t("productionMethods.minimumColourCount")}
             icon={icon("colour")}
             error={errors.colourCountRange}
@@ -233,6 +253,7 @@ export default function ProductionMethodsScreen() {
           <FormField
             label={t("productionMethods.maximumColourCount")}
             icon={icon("colour")}
+            error={errors.colourCountRange}
             value={maximumColourCount}
             onChangeText={(value) => {
               setMaximumColourCount(value);

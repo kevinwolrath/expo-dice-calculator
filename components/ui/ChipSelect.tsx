@@ -1,11 +1,16 @@
 import { useTranslation } from "react-i18next";
-import { Pressable, ScrollView, StyleSheet } from "react-native";
+import { Pressable, ScrollView, StyleSheet, View as RNView } from "react-native";
+import { useCallback, useRef, type Ref } from "react";
 
 import { Text, View } from "@/components/Themed";
 import FieldError from "@/components/ui/FieldError";
 import FieldLabel from "@/components/ui/FieldLabel";
 import FieldPanel from "@/components/ui/FieldPanel";
 import { inputTypeface, useControlColors } from "@/components/ui/fieldControl";
+import {
+  useFieldFocus,
+  type FieldFocusable,
+} from "@/components/ui/fieldFocus";
 import { Control, FontSize, Space, Type } from "@/constants/theme";
 
 type ChipOption = { value: string; label: string };
@@ -17,6 +22,7 @@ type ChipSelectProps = {
   wrap?: boolean;
   required?: boolean;
   error?: string;
+  focusRef?: Ref<FieldFocusable>;
 } & (
   | {
       multiple?: false;
@@ -31,9 +37,12 @@ type ChipSelectProps = {
 );
 
 export default function ChipSelect(props: ChipSelectProps) {
-  const { label, options, emptyHint, wrap, required, error } = props;
+  const { label, options, emptyHint, wrap, required, error, focusRef } = props;
   const { t } = useTranslation();
   const control = useControlColors();
+  const hostRef = useRef<RNView>(null);
+  const activate = useCallback(() => {}, []);
+  useFieldFocus(focusRef, hostRef, activate);
   const chips = (
     <>
       {options.map((option) => {
@@ -87,7 +96,7 @@ export default function ChipSelect(props: ChipSelectProps) {
   );
 
   return (
-    <FieldPanel error={Boolean(error)}>
+    <FieldPanel ref={hostRef} error={Boolean(error)}>
       <FieldLabel label={label} required={required} />
       {options.length === 0 ? (
         <Text style={[Type.hint, styles.hint]}>

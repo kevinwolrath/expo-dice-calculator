@@ -1,7 +1,7 @@
-import { type ReactNode } from "react";
-import { StyleSheet } from "react-native";
+import { forwardRef, type ReactNode } from "react";
+import { StyleSheet, View } from "react-native";
 
-import { View, useThemeColors } from "@/components/Themed";
+import { useThemeColors } from "@/components/Themed";
 import { useColorScheme } from "@/components/useColorScheme";
 import { FIELD_LABEL_ICON_GAP } from "@/components/ui/FieldLabelIcon";
 import { Layout } from "@/constants/theme";
@@ -24,20 +24,21 @@ export function usePanelStyle() {
   };
 }
 
-export default function FieldPanel({
-  icon,
-  error,
-  children,
-}: {
-  icon?: ReactNode;
-  error?: boolean;
-  children: ReactNode;
-}) {
+const FieldPanel = forwardRef<
+  View,
+  {
+    icon?: ReactNode;
+    error?: boolean;
+    children: ReactNode;
+  }
+>(function FieldPanel({ icon, error, children }, ref) {
   const colors = useThemeColors();
   const panelStyle = usePanelStyle();
 
   return (
     <View
+      ref={ref}
+      collapsable={false}
       style={[
         styles.panel,
         panelStyle,
@@ -48,7 +49,9 @@ export default function FieldPanel({
       <View style={styles.body}>{children}</View>
     </View>
   );
-}
+});
+
+export default FieldPanel;
 
 const styles = StyleSheet.create({
   panel: {

@@ -8,6 +8,7 @@ import ColorField from "@/components/ui/ColorField";
 import EntityListItem from "@/components/ui/EntityListItem";
 import FormActionRow, { isFormDirty } from "@/components/ui/FormActionRow";
 import FormField from "@/components/ui/FormField";
+import { useFormFieldRefs } from "@/components/ui/fieldFocus";
 import ScreenList from "@/components/ui/ScreenList";
 import SelectDropdown from "@/components/ui/SelectDropdown";
 import { colourFromName } from "@/constants/colourFromName";
@@ -27,6 +28,7 @@ export default function StockScreen() {
   const updateStock = useInventoryStore((s) => s.updateStock);
   const deleteStock = useInventoryStore((s) => s.deleteStock);
 
+  const { bind, focusError } = useFormFieldRefs<"colourName" | "colourTypeId">();
   const [colourName, setColourName] = useState("");
   const [colour, setColour] = useState(colourFromName(""));
   const [colourManual, setColourManual] = useState(false);
@@ -39,6 +41,22 @@ export default function StockScreen() {
     colourName?: string;
     colourTypeId?: string;
   }>({});
+  const emptyForm = {
+    colourName: "",
+    colour: colourFromName(""),
+    colourTypeId: null as string | null,
+    colourBrandId: null as string | null,
+    quantity: "0",
+  };
+  const currentForm = {
+    colourName,
+    colour,
+    colourTypeId,
+    colourBrandId,
+    quantity,
+  };
+  const [cleanForm, setCleanForm] = useState(emptyForm);
+  const formDirty = isFormDirty(currentForm, cleanForm);
 
   useEffect(() => {
     loadAll();
@@ -73,6 +91,7 @@ export default function StockScreen() {
     if (!colourTypeId) nextErrors.colourTypeId = t("common.required");
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0 || !colourTypeId) {
+      focusError(nextErrors, ["colourName", "colourTypeId"]);
       return;
     }
 
@@ -96,6 +115,7 @@ export default function StockScreen() {
         });
         setEditingId(created.material_stock_id);
       }
+      setCleanForm(currentForm);
       setErrors({});
     } catch (e) {
       console.warn(e);
@@ -114,21 +134,14 @@ export default function StockScreen() {
     setColourBrandId(item.colour_brand_id);
     setQuantity(String(item.quantity_in_stock));
     setErrors({});
+    setCleanForm({
+      colourName: item.colour_name,
+      colour: item.colour,
+      colourTypeId: item.colour_type_id,
+      colourBrandId: item.colour_brand_id,
+      quantity: String(item.quantity_in_stock),
+    });
   };
-
-  const emptyForm = {
-    colourName: "",
-    colour: colourFromName(""),
-    colourTypeId: null,
-    colourBrandId: null,
-    quantity: "0",
-  };
-  const formDirty =
-    editingId !== null ||
-    isFormDirty(
-      { colourName, colour, colourTypeId, colourBrandId, quantity },
-      emptyForm,
-    );
 
   const handleCancel = () => {
     setColourName("");
@@ -139,6 +152,7 @@ export default function StockScreen() {
     setQuantity("0");
     setEditingId(null);
     setErrors({});
+    setCleanForm(emptyForm);
   };
 
   const handleDelete = (id: string) => {
@@ -180,6 +194,7 @@ export default function StockScreen() {
       form={
         <>
           <FormField
+            focusRef={bind("colourName")}
             label={t("stock.colourName")}
             icon={icon("colour")}
             required
@@ -203,6 +218,7 @@ export default function StockScreen() {
             }}
           />
           <SelectDropdown
+            focusRef={bind("colourTypeId")}
             label={t("stock.colourType")}
             icon={icon("colour")}
             placeholder={t("stock.selectColourType")}

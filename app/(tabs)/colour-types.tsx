@@ -7,6 +7,7 @@ import ChipSelect from "@/components/ui/ChipSelect";
 import EntityListItem from "@/components/ui/EntityListItem";
 import FormActionRow, { isFormDirty } from "@/components/ui/FormActionRow";
 import FormField from "@/components/ui/FormField";
+import { useFormFieldRefs } from "@/components/ui/fieldFocus";
 import ScreenList from "@/components/ui/ScreenList";
 import type { ColourType } from "@/db";
 import useInventoryStore from "@/stores/useInventoryStore";
@@ -24,6 +25,9 @@ export default function ColourTypesScreen() {
   const updateColourType = useInventoryStore((s) => s.updateColourType);
   const deleteColourType = useInventoryStore((s) => s.deleteColourType);
 
+  const { bind, focusError } = useFormFieldRefs<
+    "description" | "materialTypeId"
+  >();
   const [description, setDescription] = useState("");
   const [allowedMaterialIds, setAllowedMaterialIds] = useState<string[]>([]);
   const [typeEditingId, setTypeEditingId] = useState<string | null>(null);
@@ -31,6 +35,13 @@ export default function ColourTypesScreen() {
     description?: string;
     materialTypeId?: string;
   }>({});
+  const emptyForm = {
+    description: "",
+    allowedMaterialIds: [] as string[],
+  };
+  const currentForm = { description, allowedMaterialIds };
+  const [cleanForm, setCleanForm] = useState(emptyForm);
+  const formDirty = isFormDirty(currentForm, cleanForm);
 
   useEffect(() => {
     loadAll();
@@ -52,7 +63,10 @@ export default function ColourTypesScreen() {
       nextErrors.materialTypeId = t("common.required");
     }
     setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) return;
+    if (Object.keys(nextErrors).length > 0) {
+      focusError(nextErrors, ["description", "materialTypeId"]);
+      return;
+    }
     try {
       if (typeEditingId) {
         await updateColourType(typeEditingId, {
@@ -66,6 +80,7 @@ export default function ColourTypesScreen() {
         });
         setTypeEditingId(created.colour_type_id);
       }
+      setCleanForm(currentForm);
       setErrors({});
     } catch (e) {
       console.warn(e);
@@ -78,21 +93,18 @@ export default function ColourTypesScreen() {
     setDescription(item.description ?? "");
     setAllowedMaterialIds(materialsForColourType(item.colour_type_id));
     setErrors({});
+    setCleanForm({
+      description: item.description ?? "",
+      allowedMaterialIds: materialsForColourType(item.colour_type_id),
+    });
   };
-
-  const emptyForm = {
-    description: "",
-    allowedMaterialIds: [] as string[],
-  };
-  const formDirty =
-    typeEditingId !== null ||
-    isFormDirty({ description, allowedMaterialIds }, emptyForm);
 
   const handleCancelType = () => {
     setDescription("");
     setAllowedMaterialIds([]);
     setTypeEditingId(null);
     setErrors({});
+    setCleanForm(emptyForm);
   };
 
   const handleDeleteType = (id: string) => {
@@ -134,6 +146,7 @@ export default function ColourTypesScreen() {
       form={
         <>
           <FormField
+            focusRef={bind("description")}
             label={t("colourTypes.description")}
             icon={icon("colour")}
             required
@@ -145,6 +158,7 @@ export default function ColourTypesScreen() {
             }}
           />
           <ChipSelect
+            focusRef={bind("materialTypeId")}
             multiple
             wrap
             required

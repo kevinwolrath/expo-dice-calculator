@@ -1,12 +1,14 @@
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useCallback, useRef, useState, type Ref } from "react";
 import {
+  Platform,
   StyleSheet,
   TextInput,
+  View,
   type ImageSourcePropType,
   type TextInputProps,
 } from "react-native";
 
-import { View, useThemeColors } from "@/components/Themed";
+import { useThemeColors } from "@/components/Themed";
 import FieldError from "@/components/ui/FieldError";
 import FieldLabel from "@/components/ui/FieldLabel";
 import FieldLabelIcon from "@/components/ui/FieldLabelIcon";
@@ -16,6 +18,10 @@ import {
   inputTypeface,
   useControlColors,
 } from "@/components/ui/fieldControl";
+import {
+  useFieldFocus,
+  type FieldFocusable,
+} from "@/components/ui/fieldFocus";
 import { FontSize, Layout } from "@/constants/theme";
 
 type FormFieldProps = TextInputProps & {
@@ -25,6 +31,7 @@ type FormFieldProps = TextInputProps & {
   rightAccessory?: ReactNode;
   icon?: ImageSourcePropType;
   embedded?: boolean;
+  focusRef?: Ref<FieldFocusable>;
 };
 
 export default function FormField({
@@ -39,16 +46,27 @@ export default function FormField({
   editable = true,
   onFocus,
   onBlur,
+  focusRef,
   ...props
 }: FormFieldProps) {
   const colors = useThemeColors();
   const control = useControlColors();
   const [focused, setFocused] = useState(false);
   const disabled = editable === false;
+  const hostRef = useRef<View>(null);
+  const inputRef = useRef<TextInput>(null);
+  const activate = useCallback(() => {
+    inputRef.current?.focus();
+    if (Platform.OS !== "web") return;
+    const host = hostRef.current as unknown as HTMLElement | null;
+    host?.querySelector?.("input, textarea")?.focus();
+  }, []);
+  useFieldFocus(focusRef, hostRef, activate);
 
   const input = (
     <View style={styles.inputRow}>
       <TextInput
+        ref={inputRef}
         {...props}
         placeholderTextColor={control.placeholder}
         multiline={multiline}
@@ -87,11 +105,16 @@ export default function FormField({
   );
 
   if (embedded) {
-    return input;
+    return (
+      <View ref={hostRef} collapsable={false}>
+        {input}
+      </View>
+    );
   }
 
   return (
     <FieldPanel
+      ref={hostRef}
       icon={icon ? <FieldLabelIcon source={icon} /> : undefined}
       error={Boolean(error)}
     >

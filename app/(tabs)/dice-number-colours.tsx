@@ -7,6 +7,7 @@ import { usePackSurface } from "@/components/usePackSurface";
 import EntityListItem from "@/components/ui/EntityListItem";
 import FormActionRow, { isFormDirty } from "@/components/ui/FormActionRow";
 import FormField from "@/components/ui/FormField";
+import { useFormFieldRefs } from "@/components/ui/fieldFocus";
 import ScreenList from "@/components/ui/ScreenList";
 import {
     createDiceJobNumberColour,
@@ -24,9 +25,13 @@ export default function DiceNumberColoursScreen() {
   const [colours, setColours] = useState<DiceJobNumberColour[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const { bind, focusError } = useFormFieldRefs<"name">();
   const [name, setName] = useState("");
   const [colourEditingId, setColourEditingId] = useState<string | null>(null);
   const [errors, setErrors] = useState<{ name?: string }>({});
+  const emptyForm = { name: "" };
+  const [cleanForm, setCleanForm] = useState(emptyForm);
+  const formDirty = isFormDirty({ name }, cleanForm);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -49,7 +54,9 @@ export default function DiceNumberColoursScreen() {
 
   const handleSaveColour = async () => {
     if (!name.trim()) {
-      setErrors({ name: t("common.required") });
+      const nextErrors = { name: t("common.required") };
+      setErrors(nextErrors);
+      focusError(nextErrors, ["name"]);
       return;
     }
     setErrors({});
@@ -64,6 +71,7 @@ export default function DiceNumberColoursScreen() {
         });
         setColourEditingId(created.dice_job_number_colour_id);
       }
+      setCleanForm({ name });
       setErrors({});
       await load();
     } catch (e) {
@@ -76,16 +84,14 @@ export default function DiceNumberColoursScreen() {
     setColourEditingId(colour.dice_job_number_colour_id);
     setName(colour.dice_job_number_colour_name ?? "");
     setErrors({});
+    setCleanForm({ name: colour.dice_job_number_colour_name ?? "" });
   };
-
-  const emptyForm = { name: "" };
-  const formDirty =
-    colourEditingId !== null || isFormDirty({ name }, emptyForm);
 
   const handleCancelColour = () => {
     setName("");
     setColourEditingId(null);
     setErrors({});
+    setCleanForm(emptyForm);
   };
 
   const handleDeleteColour = (id: string) => {
@@ -131,6 +137,7 @@ export default function DiceNumberColoursScreen() {
       form={
         <>
           <FormField
+            focusRef={bind("name")}
             label={t("diceNumberColours.name")}
             icon={icon("dice")}
             required
