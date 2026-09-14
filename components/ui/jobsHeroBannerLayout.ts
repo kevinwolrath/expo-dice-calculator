@@ -1,4 +1,4 @@
-/** Native pixel size of `dice_job_manager_banner.jpg`. */
+/** Native pixel size of theme `banner.jpg` (2048×558). */
 export const BANNER_IMAGE_SIZE = { width: 2048, height: 558 } as const;
 
 export const BANNER_ASPECT_RATIO =

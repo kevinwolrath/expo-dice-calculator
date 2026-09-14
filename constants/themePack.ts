@@ -22,6 +22,7 @@ export type ThemePackColors = {
   header: string;
   tabBar: string;
   accent: string;
+  wood: string;
 };
 
 export type ThemePackPageDefaults = {
@@ -33,6 +34,7 @@ export type ThemePack = {
   id: ThemePackId;
   name: string;
   colors: ThemePackColors;
+  overlayPreviewQuote: boolean;
 };
 
 const color = (raw: Record<string, string>, keys: string[], fallback: string) => {
@@ -67,6 +69,7 @@ const packColorsFromManifest = (manifest: ThemeManifest): ThemePackColors => {
     header: color(raw, ["header", "primaryDark"], background),
     tabBar: color(raw, ["tabBar", "header", "primaryDark"], background),
     accent: color(raw, ["accent", "gold", "primary"], primary),
+    wood: color(raw, ["wood"], "#8B5E3C"),
   };
 };
 
@@ -74,6 +77,7 @@ const PACKS: ThemePack[] = themeModules.map(({ manifest }) => ({
   id: manifest.id,
   name: manifest.name,
   colors: packColorsFromManifest(manifest),
+  overlayPreviewQuote: Boolean(manifest.overlayPreviewQuote),
 }));
 
 if (PACKS.length === 0) {

@@ -8,12 +8,9 @@ import {
   View,
 } from "react-native";
 
+import { usePackSurface } from "@/components/usePackSurface";
 import { FontSize, Space } from "@/constants/theme";
-
-const parchment = require("../../assets/themes/tavern/preview_footer_parchment.png");
-const quoteCard = require("../../assets/themes/tavern/preview_quote_card.png");
-const iconPalette = require("../../assets/themes/tavern/preview_icon_palette.png");
-const iconDice = require("../../assets/themes/tavern/preview_icon_dice.png");
+import { getThemePack } from "@/constants/themePack";
 
 type PreviewSettingsFooterProps = {
   colourCount: string;
@@ -32,10 +29,17 @@ export default function PreviewSettingsFooter({
   const { height } = useWindowDimensions();
   const compactArt = height < 750;
   const fallback = t("common.notSet");
+  const { packId, assets } = usePackSurface();
+  const preview = assets.preview;
+  const overlayQuote = getThemePack(packId).overlayPreviewQuote;
+
+  if (!preview) {
+    return null;
+  }
 
   return (
     <ImageBackground
-      source={parchment}
+      source={preview.footerParchment}
       resizeMode="stretch"
       style={styles.footer}
       imageStyle={styles.parchment}
@@ -45,7 +49,7 @@ export default function PreviewSettingsFooter({
         <View style={styles.settings}>
           <View style={styles.headingRow}>
             <Image
-              source={iconPalette}
+              source={preview.paletteIcon}
               resizeMode="contain"
               style={styles.paletteIcon}
               accessible={false}
@@ -73,21 +77,28 @@ export default function PreviewSettingsFooter({
         </View>
         <View style={styles.art} pointerEvents="none">
           <Image
-            source={iconDice}
+            source={preview.diceIcon}
             resizeMode="contain"
             style={styles.diceIcon}
             accessible={false}
             accessibilityElementsHidden
             importantForAccessibility="no"
           />
-          <Image
-            source={quoteCard}
-            resizeMode="contain"
-            style={[styles.quote, compactArt && styles.quoteCompact]}
-            accessible={false}
-            accessibilityElementsHidden
-            importantForAccessibility="no"
-          />
+          <View style={[styles.quote, compactArt && styles.quoteCompact]}>
+            <Image
+              source={preview.quoteCard}
+              resizeMode="contain"
+              style={StyleSheet.absoluteFill}
+              accessible={false}
+              accessibilityElementsHidden
+              importantForAccessibility="no"
+            />
+            {overlayQuote ? (
+              <View style={styles.quoteTextWrap} pointerEvents="none">
+                <Text style={styles.quoteText}>{t("jobs.previewQuote")}</Text>
+              </View>
+            ) : null}
+          </View>
         </View>
       </View>
     </ImageBackground>
@@ -166,5 +177,18 @@ const styles = StyleSheet.create({
   },
   quoteCompact: {
     height: 52,
+  },
+  quoteTextWrap: {
+    ...StyleSheet.absoluteFill,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 6,
+  },
+  quoteText: {
+    color: "#2C160C",
+    fontSize: 9,
+    fontWeight: "700",
+    lineHeight: 11,
+    textAlign: "center",
   },
 });

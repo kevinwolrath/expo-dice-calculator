@@ -2,7 +2,7 @@ import { Image, StyleSheet, type ImageSourcePropType } from "react-native";
 
 import { View } from "@/components/Themed";
 
-/** Matches the cropped tavern label icons (~25px wide). */
+/** Display size for field-label icons (source PNGs may be larger). */
 export const FIELD_LABEL_ICON_SIZE = 25;
 export const FIELD_LABEL_ICON_GAP = 16;
 

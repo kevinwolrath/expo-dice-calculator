@@ -23,8 +23,8 @@
     "tabBar": "#0B1F3A"
   },
   "assets": {
-    "background": "tavern_background.jpg",
-    "banner": "dice_job_manager_banner.jpg",
+    "background": "background.jpg",
+    "banner": "banner.jpg",
     "icons": {
       "notes": "icon_notes.png",
       "material": "icon_material.png",
