@@ -12,13 +12,11 @@ import unicornAssets from "./unicorn/assets";
 export type ThemeManifest = {
   id: string;
   name: string;
-  overlayPreviewQuote?: boolean;
   colors: Record<string, string>;
 };
 
 export type ThemePreviewAssets = {
   footerParchment: ImageSourcePropType;
-  quoteCard: ImageSourcePropType;
   diceIcon: ImageSourcePropType;
   paletteIcon: ImageSourcePropType;
 };

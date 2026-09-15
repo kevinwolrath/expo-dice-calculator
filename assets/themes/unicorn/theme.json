@@ -1,7 +1,6 @@
 {
   "id": "unicorn",
   "name": "Unicorn",
-  "overlayPreviewQuote": true,
   "colors": {
     "primaryDark": "#31164F",
     "primary": "#8E44D7",

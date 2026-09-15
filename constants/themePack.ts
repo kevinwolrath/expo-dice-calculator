@@ -34,7 +34,6 @@ export type ThemePack = {
   id: ThemePackId;
   name: string;
   colors: ThemePackColors;
-  overlayPreviewQuote: boolean;
 };
 
 const color = (raw: Record<string, string>, keys: string[], fallback: string) => {
@@ -77,7 +76,6 @@ const PACKS: ThemePack[] = themeModules.map(({ manifest }) => ({
   id: manifest.id,
   name: manifest.name,
   colors: packColorsFromManifest(manifest),
-  overlayPreviewQuote: Boolean(manifest.overlayPreviewQuote),
 }));
 
 if (PACKS.length === 0) {

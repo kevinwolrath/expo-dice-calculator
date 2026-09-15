@@ -60,8 +60,6 @@ test("registers tavern and unicorn with shared asset keys", () => {
   expect(isThemePackId("unicorn")).toBe(true);
   expect(DEFAULT_THEME_PACK_ID).toBe("tavern");
 
-  expect(getThemePack("tavern").overlayPreviewQuote).toBe(false);
-  expect(getThemePack("unicorn").overlayPreviewQuote).toBe(true);
   expect(getThemePack("unicorn").colors.primary).toBe("#8E44D7");
   expect(getThemePack("unicorn").colors.wood).toBe("#A76B91");
 
@@ -75,7 +73,6 @@ test("registers tavern and unicorn with shared asset keys", () => {
     expect(assets.icons?.colour).toBeDefined();
     expect(assets.icons?.dice).toBeDefined();
     expect(assets.preview?.footerParchment).toBeDefined();
-    expect(assets.preview?.quoteCard).toBeDefined();
     expect(assets.preview?.diceIcon).toBeDefined();
     expect(assets.preview?.paletteIcon).toBeDefined();
   }

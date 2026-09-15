@@ -10,7 +10,6 @@ const packAssets = {
   },
   preview: {
     footerParchment: require("./preview_footer_parchment.png"),
-    quoteCard: require("./preview_quote_card.png"),
     diceIcon: require("./preview_icon_dice.png"),
     paletteIcon: require("./preview_icon_palette.png"),
   },
