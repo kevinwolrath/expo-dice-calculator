@@ -1,6 +1,6 @@
 import { useFocusEffect } from "expo-router";
-import { useCallback, useState } from "react";
-import { Alert, Platform } from "react-native";
+import { useCallback, useMemo, useState } from "react";
+import { Alert, Platform, type ListRenderItem } from "react-native";
 
 import * as AlertHelper from "@/components/alert";
 import { usePackSurface } from "@/components/usePackSurface";
@@ -142,7 +142,7 @@ export default function ProductionMethodsScreen() {
     }
   };
 
-  const handleEditMethod = async (method: ProductionMethod) => {
+  const applyEditMethod = async (method: ProductionMethod) => {
     setMethodEditingId(method.production_method_id);
     setMethodDescription(method.description ?? "");
     setMinimumColourCount(
@@ -174,6 +174,16 @@ export default function ProductionMethodsScreen() {
     });
   };
 
+  const handleEditMethod = useCallback(
+    (id: string) => {
+      const method = methods.find(
+        (row) => row.production_method_id === id,
+      );
+      if (method) void applyEditMethod(method);
+    },
+    [methods],
+  );
+
   const handleCancelMethod = () => {
     setMethodDescription("");
     setMinimumColourCount("");
@@ -184,39 +194,72 @@ export default function ProductionMethodsScreen() {
     setCleanForm(emptyForm);
   };
 
-  const handleDeleteMethod = (id: string) => {
-    if (Platform.OS === "web") {
-      if (
-        window.confirm(
-          `${t("productionMethods.deleteTitle")} - ${t("productionMethods.deleteMessage")}`,
-        )
-      ) {
-        (async () => {
-          await deleteProductionMethod(id);
-          if (methodEditingId === id) handleCancelMethod();
-          await load();
-        })();
-      }
-      return;
-    }
-
-    Alert.alert(
-      t("productionMethods.deleteTitle"),
-      t("productionMethods.deleteMessage"),
-      [
-        { text: t("common.cancel"), style: "cancel" },
-        {
-          text: t("common.delete"),
-          style: "destructive",
-          onPress: async () => {
+  const handleDeleteMethod = useCallback(
+    (id: string) => {
+      if (Platform.OS === "web") {
+        if (
+          window.confirm(
+            `${t("productionMethods.deleteTitle")} - ${t("productionMethods.deleteMessage")}`,
+          )
+        ) {
+          (async () => {
             await deleteProductionMethod(id);
             if (methodEditingId === id) handleCancelMethod();
             await load();
+          })();
+        }
+        return;
+      }
+
+      Alert.alert(
+        t("productionMethods.deleteTitle"),
+        t("productionMethods.deleteMessage"),
+        [
+          { text: t("common.cancel"), style: "cancel" },
+          {
+            text: t("common.delete"),
+            style: "destructive",
+            onPress: async () => {
+              await deleteProductionMethod(id);
+              if (methodEditingId === id) handleCancelMethod();
+              await load();
+            },
           },
-        },
-      ],
-    );
-  };
+        ],
+      );
+    },
+    [t, methodEditingId, load],
+  );
+
+  const materialTypeOptions = useMemo(
+    () =>
+      materialTypes.map((materialType) => ({
+        value: materialType.material_type_id,
+        label: materialType.description ?? String(materialType.material_type_id),
+      })),
+    [materialTypes],
+  );
+
+  const renderItem: ListRenderItem<ProductionMethod> = useCallback(
+    ({ item }) => (
+      <EntityListItem
+        id={item.production_method_id}
+        title={item.description ?? String(item.production_method_id)}
+        meta={
+          item.minimum_colour_count != null ||
+          item.maximum_colour_count != null
+            ? t("productionMethods.colourCountRange", {
+                min: item.minimum_colour_count ?? "?",
+                max: item.maximum_colour_count ?? "?",
+              })
+            : undefined
+        }
+        onEdit={handleEditMethod}
+        onDelete={handleDeleteMethod}
+      />
+    ),
+    [t, handleEditMethod, handleDeleteMethod],
+  );
 
   return (
     <ScreenList
@@ -265,12 +308,7 @@ export default function ProductionMethodsScreen() {
             multiple
             wrap
             label={t("productionMethods.allowedMaterials")}
-            options={materialTypes.map((materialType) => ({
-              value: materialType.material_type_id,
-              label:
-                materialType.description ??
-                String(materialType.material_type_id),
-            }))}
+            options={materialTypeOptions}
             value={allowedMaterialIds}
             onChange={setAllowedMaterialIds}
           />
@@ -285,22 +323,7 @@ export default function ProductionMethodsScreen() {
           />
         </>
       }
-      renderItem={({ item }) => (
-        <EntityListItem
-          title={item.description ?? String(item.production_method_id)}
-          meta={
-            item.minimum_colour_count != null ||
-            item.maximum_colour_count != null
-              ? t("productionMethods.colourCountRange", {
-                  min: item.minimum_colour_count ?? "?",
-                  max: item.maximum_colour_count ?? "?",
-                })
-              : undefined
-          }
-          onEdit={() => handleEditMethod(item)}
-          onDelete={() => handleDeleteMethod(item.production_method_id)}
-        />
-      )}
+      renderItem={renderItem}
     />
   );
 }

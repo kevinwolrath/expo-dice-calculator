@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Alert, Platform } from "react-native";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Alert, Platform, type ListRenderItem } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { showMessage } from "@/components/alert";
@@ -62,28 +62,57 @@ export default function StockScreen() {
     loadAll();
   }, [loadAll]);
 
-  const materialTypeLabel = (id: string) =>
-    types.find((type) => type.material_type_id === id)?.description ??
-    String(id);
+  const materialTypeLabel = useCallback(
+    (id: string) =>
+      types.find((type) => type.material_type_id === id)?.description ??
+      String(id),
+    [types],
+  );
 
-  const colourTypeLabel = (id: string) => {
-    const colourType = colourTypes.find((type) => type.colour_type_id === id);
-    if (!colourType) return String(id);
-    const materials = colourTypeMaterials
-      .filter((row) => row.colour_type_id === id)
-      .map((row) => materialTypeLabel(row.material_type_id));
-    return materials.length > 0
-      ? `${colourType.description} (${materials.join(", ")})`
-      : colourType.description;
-  };
+  const colourTypeLabel = useCallback(
+    (id: string) => {
+      const colourType = colourTypes.find(
+        (type) => type.colour_type_id === id,
+      );
+      if (!colourType) return String(id);
+      const materials = colourTypeMaterials
+        .filter((row) => row.colour_type_id === id)
+        .map((row) => materialTypeLabel(row.material_type_id));
+      return materials.length > 0
+        ? `${colourType.description} (${materials.join(", ")})`
+        : colourType.description;
+    },
+    [colourTypes, colourTypeMaterials, materialTypeLabel],
+  );
 
-  const colourBrandLabel = (id: string | null) => {
-    if (!id) return null;
-    return (
-      colourBrands.find((brand) => brand.colour_brand_id === id)
-        ?.colour_brand_name ?? String(id)
-    );
-  };
+  const colourBrandLabel = useCallback(
+    (id: string | null) => {
+      if (!id) return null;
+      return (
+        colourBrands.find((brand) => brand.colour_brand_id === id)
+          ?.colour_brand_name ?? String(id)
+      );
+    },
+    [colourBrands],
+  );
+
+  const colourTypeOptions = useMemo(
+    () =>
+      colourTypes.map((type) => ({
+        value: type.colour_type_id,
+        label: colourTypeLabel(type.colour_type_id),
+      })),
+    [colourTypes, colourTypeLabel],
+  );
+
+  const colourBrandOptions = useMemo(
+    () =>
+      colourBrands.map((brand) => ({
+        value: brand.colour_brand_id,
+        label: brand.colour_brand_name,
+      })),
+    [colourBrands],
+  );
 
   const handleSave = async () => {
     const nextErrors: typeof errors = {};
@@ -125,7 +154,7 @@ export default function StockScreen() {
     }
   };
 
-  const handleEdit = (item: MaterialStock) => {
+  const applyEdit = (item: MaterialStock) => {
     setEditingId(item.material_stock_id);
     setColourName(item.colour_name);
     setColour(item.colour);
@@ -143,6 +172,16 @@ export default function StockScreen() {
     });
   };
 
+  // Stable identity (id in, no closure over `item`) so EntityListItem's
+  // memo isn't busted on every render of this screen — see fix #3.
+  const handleEdit = useCallback(
+    (id: string) => {
+      const item = items.find((row) => row.material_stock_id === id);
+      if (item) applyEdit(item);
+    },
+    [items],
+  );
+
   const handleCancel = () => {
     setColourName("");
     setColour(colourFromName(""));
@@ -155,35 +194,56 @@ export default function StockScreen() {
     setCleanForm(emptyForm);
   };
 
-  const handleDelete = (id: string) => {
-    if (Platform.OS === "web") {
-      if (
-        window.confirm(
-          `${t("stock.deleteTitle")} - ${t("stock.deleteMessage")}`,
-        )
-      ) {
-        (async () => {
-          await deleteStock(id);
-          if (editingId === id) handleCancel();
-          await loadAll();
-        })();
+  const handleDelete = useCallback(
+    (id: string) => {
+      if (Platform.OS === "web") {
+        if (
+          window.confirm(
+            `${t("stock.deleteTitle")} - ${t("stock.deleteMessage")}`,
+          )
+        ) {
+          (async () => {
+            await deleteStock(id);
+            if (editingId === id) handleCancel();
+            await loadAll();
+          })();
+        }
+        return;
       }
-      return;
-    }
 
-    Alert.alert(t("stock.deleteTitle"), t("stock.deleteMessage"), [
-      { text: t("common.cancel"), style: "cancel" },
-      {
-        text: t("common.delete"),
-        style: "destructive",
-        onPress: async () => {
-          await deleteStock(id);
-          if (editingId === id) handleCancel();
-          await loadAll();
+      Alert.alert(t("stock.deleteTitle"), t("stock.deleteMessage"), [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("common.delete"),
+          style: "destructive",
+          onPress: async () => {
+            await deleteStock(id);
+            if (editingId === id) handleCancel();
+            await loadAll();
+          },
         },
-      },
-    ]);
-  };
+      ]);
+    },
+    [t, editingId, deleteStock, loadAll],
+  );
+
+  const renderItem: ListRenderItem<MaterialStock> = useCallback(
+    ({ item }) => {
+      const brand = colourBrandLabel(item.colour_brand_id);
+      return (
+        <EntityListItem
+          id={item.material_stock_id}
+          title={item.colour_name}
+          meta={`${colourTypeLabel(item.colour_type_id)}${
+            brand ? ` • ${brand}` : ""
+          } • ${t("stock.inStock", { count: item.quantity_in_stock })}`}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+      );
+    },
+    [colourBrandLabel, colourTypeLabel, t, handleEdit, handleDelete],
+  );
 
   return (
     <ScreenList
@@ -224,10 +284,7 @@ export default function StockScreen() {
             placeholder={t("stock.selectColourType")}
             required
             error={errors.colourTypeId}
-            options={colourTypes.map((type) => ({
-              value: type.colour_type_id,
-              label: colourTypeLabel(type.colour_type_id),
-            }))}
+            options={colourTypeOptions}
             value={colourTypeId}
             onChange={(value) => {
               setColourTypeId(value);
@@ -242,10 +299,7 @@ export default function StockScreen() {
             label={t("stock.colourBrand")}
             icon={icon("colour")}
             placeholder={t("stock.selectColourBrand")}
-            options={colourBrands.map((brand) => ({
-              value: brand.colour_brand_id,
-              label: brand.colour_brand_name,
-            }))}
+            options={colourBrandOptions}
             value={colourBrandId}
             onChange={setColourBrandId}
             emptyHint={t("stock.addColourBrandsHint")}
@@ -268,19 +322,7 @@ export default function StockScreen() {
           />
         </>
       }
-      renderItem={({ item }) => {
-        const brand = colourBrandLabel(item.colour_brand_id);
-        return (
-          <EntityListItem
-            title={item.colour_name}
-            meta={`${colourTypeLabel(item.colour_type_id)}${
-              brand ? ` • ${brand}` : ""
-            } • ${t("stock.inStock", { count: item.quantity_in_stock })}`}
-            onEdit={() => handleEdit(item)}
-            onDelete={() => handleDelete(item.material_stock_id)}
-          />
-        );
-      }}
+      renderItem={renderItem}
     />
   );
 }

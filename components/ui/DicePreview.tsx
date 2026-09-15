@@ -1,3 +1,4 @@
+import { memo, useMemo } from "react";
 import { useWindowDimensions } from "react-native";
 
 import { View, useThemeColors } from "@/components/Themed";
@@ -11,7 +12,12 @@ import {
 import { DEFAULT_GLITTER_COLOUR } from "@/constants/resinGlitter";
 import { seedFromKey } from "@/constants/resinRng";
 
-export default function DicePreview({
+// Stable fallback reference so `fills` below doesn't create a new array
+// literal (and defeat DieShape's memoization) on every render when
+// `colours` is empty.
+const FALLBACK_FILLS: string[] = ["#d9d9d9"];
+
+function DicePreview({
   colours,
   numberColourName,
   stroke: _stroke,
@@ -35,7 +41,10 @@ export default function DicePreview({
 }) {
   const colors = useThemeColors();
   const layout = useWindowDimensions();
-  const fills = colours.length > 0 ? colours : ["#d9d9d9"];
+  const fills = useMemo(
+    () => (colours.length > 0 ? colours : FALLBACK_FILLS),
+    [colours],
+  );
   const isBackground = variant === "background";
   const scale = previewClusterScale(
     isBackground,
@@ -112,3 +121,5 @@ export default function DicePreview({
     </View>
   );
 }
+
+export default memo(DicePreview);
