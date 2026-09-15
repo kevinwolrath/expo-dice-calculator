@@ -19,7 +19,7 @@ import { useClientOnlyValue } from "@/components/useClientOnlyValue";
 import { useColorScheme } from "@/components/useColorScheme";
 import { pageIdFromSegments } from "@/constants/pageTheme";
 import { Space, Type } from "@/constants/theme";
-import { getThemePack } from "@/constants/themePack";
+import { themeColorsForPack } from "@/constants/themePack";
 import { initDatabase } from "@/db";
 import useThemePackStore from "@/stores/useThemePackStore";
 import { useTranslation } from "react-i18next";
@@ -59,7 +59,7 @@ export default function TabLayout() {
   const pageId = pageIdFromSegments(segments);
   const chrome = useChromeColors();
   const packId = useThemePackStore((state) => state.packId);
-  const pack = getThemePack(packId);
+  const packColors = themeColorsForPack(packId);
   const insets = useSafeAreaInsets();
   const [databaseReady, setDatabaseReady] = useState(false);
   const [databaseError, setDatabaseError] = useState(false);
@@ -124,15 +124,15 @@ export default function TabLayout() {
     <PageThemeScope pageId={pageId}>
       <Tabs
         screenOptions={{
-          tabBarActiveTintColor: isNight ? "#ffffff" : pack.colors.primary,
+          tabBarActiveTintColor: isNight ? "#ffffff" : packColors.primary,
           tabBarInactiveTintColor: isNight
             ? "#aaaaaa"
-            : pack.colors.tabIconDefault,
+            : packColors.tabIconDefault,
           tabBarStyle: {
-            backgroundColor: isNight ? "#000000" : pack.colors.tabBar,
+            backgroundColor: isNight ? "#000000" : packColors.tabBar,
             borderTopColor: isNight
               ? "rgba(255,255,255,0.25)"
-              : pack.colors.border,
+              : packColors.border,
             borderTopWidth: 1,
             height: TAB_BAR_BODY + insets.bottom,
             paddingTop: 6,

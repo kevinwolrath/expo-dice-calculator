@@ -2,6 +2,7 @@ module.exports = {
   preset: "ts-jest",
   testEnvironment: "node",
   moduleNameMapper: {
+    "^@/assets/themes$": "<rootDir>/tests/themeModules.jest.ts",
     "^@/db$": "<rootDir>/db",
     "^@/db/(.*)$": "<rootDir>/db/$1",
     "^@/stores/(.*)$": "<rootDir>/app/stores/$1",

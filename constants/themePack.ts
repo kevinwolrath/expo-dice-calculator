@@ -1,4 +1,5 @@
 import { themeModules, type ThemeManifest } from "@/assets/themes";
+import Colors, { HeaderColors } from "@/constants/Colors";
 import type { PageThemeId } from "@/constants/pageTheme";
 
 export type ThemePackId = string;
@@ -78,28 +79,49 @@ const PACKS: ThemePack[] = themeModules.map(({ manifest }) => ({
   colors: packColorsFromManifest(manifest),
 }));
 
-if (PACKS.length === 0) {
-  throw new Error("No theme packs registered in assets/themes");
-}
-
-const defaultPack = PACKS[0]!;
-
-export const DEFAULT_THEME_PACK_ID: ThemePackId = defaultPack.id;
-
 const packById = new Map(PACKS.map((pack) => [pack.id, pack]));
+
+/** No pack selected, or the stored pack folder is gone. */
+export const DEFAULT_THEME_PACK_ID: ThemePackId | null = null;
+
+export const UNSTYLED_PACK_COLORS: ThemePackColors = {
+  text: Colors.light.text,
+  background: Colors.light.background,
+  tint: Colors.light.tint,
+  tabIconDefault: Colors.light.tabIconDefault,
+  tabIconSelected: Colors.light.tabIconSelected,
+  card: Colors.light.card,
+  border: Colors.light.border,
+  inputBorder: Colors.light.inputBorder,
+  inputBackground: Colors.light.inputBackground,
+  muted: Colors.light.muted,
+  label: Colors.light.label,
+  primary: Colors.light.primary,
+  onPrimary: Colors.light.onPrimary,
+  destructive: Colors.light.destructive,
+  overlay: Colors.light.overlay,
+  header: HeaderColors.background,
+  tabBar: Colors.light.background,
+  accent: Colors.light.tint,
+  wood: Colors.light.card,
+};
 
 export const isThemePackId = (value: unknown): value is ThemePackId =>
   typeof value === "string" && packById.has(value);
 
-export const getThemePack = (id: ThemePackId): ThemePack =>
-  packById.get(id) ?? defaultPack;
+export const getThemePack = (id: ThemePackId | null | undefined): ThemePack | null =>
+  id && packById.has(id) ? packById.get(id)! : null;
+
+export const themeColorsForPack = (
+  id: ThemePackId | null | undefined,
+): ThemePackColors => getThemePack(id)?.colors ?? UNSTYLED_PACK_COLORS;
 
 export const listThemePacks = (): ThemePack[] => PACKS;
 
 export const pageDefaultsForPack = (
-  packId: ThemePackId,
+  packId: ThemePackId | null | undefined,
   _pageId: PageThemeId,
 ): ThemePackPageDefaults => {
-  const { colors } = getThemePack(packId);
+  const colors = themeColorsForPack(packId);
   return { foreground: colors.text, background: colors.background };
 };

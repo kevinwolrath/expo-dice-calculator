@@ -5,7 +5,7 @@ import {
   type ThemeAssetMap,
   type ThemePreviewAssets,
 } from "@/assets/themes";
-import { getThemePack, type ThemePackId } from "@/constants/themePack";
+import { type ThemePackId } from "@/constants/themePack";
 
 export type PackIconName = "notes" | "material" | "method" | "colour" | "dice";
 
@@ -33,8 +33,11 @@ const asPackAssets = (assets: ThemeAssetMap): ThemePackAssets => ({
   preview: assets.preview,
 });
 
-export const getThemePackAssets = (id: ThemePackId): ThemePackAssets => {
-  const assets = assetsById.get(getThemePack(id).id);
+export const getThemePackAssets = (
+  id: ThemePackId | null | undefined,
+): ThemePackAssets => {
+  if (!id) return {};
+  const assets = assetsById.get(id);
   return assets ? asPackAssets(assets) : {};
 };
 

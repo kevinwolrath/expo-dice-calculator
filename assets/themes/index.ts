@@ -1,43 +1,15 @@
-import type { ImageSourcePropType } from "react-native";
-
 /**
- * Metro cannot glob `require()` image assets. Add a folder under
- * `assets/themes` with `theme.json` + `assets.ts`, then register it here.
+ * Theme packs are discovered from folders under `assets/themes`.
+ * A pack is included when that folder contains both `theme.json` and `assets.ts`.
+ * Add or remove a folder; do not edit a hardcoded pack list.
  */
-import tavernManifest from "./tavern/theme.json";
-import tavernAssets from "./tavern/assets";
-import unicornManifest from "./unicorn/theme.json";
-import unicornAssets from "./unicorn/assets";
+import { loadDiscoveredThemeModules } from "./discoverThemeModules";
 
-export type ThemeManifest = {
-  id: string;
-  name: string;
-  colors: Record<string, string>;
-};
+export type {
+  ThemeAssetMap,
+  ThemeManifest,
+  ThemeModule,
+  ThemePreviewAssets,
+} from "./assembleThemeModules";
 
-export type ThemePreviewAssets = {
-  footerParchment: ImageSourcePropType;
-  diceIcon: ImageSourcePropType;
-  paletteIcon: ImageSourcePropType;
-};
-
-export type ThemeAssetMap = {
-  background?: ImageSourcePropType;
-  backgroundDark?: ImageSourcePropType;
-  banner?: ImageSourcePropType;
-  buttonPrimary?: ImageSourcePropType;
-  buttonWood?: ImageSourcePropType;
-  buttonOutline?: ImageSourcePropType;
-  icons?: Record<string, ImageSourcePropType>;
-  preview?: ThemePreviewAssets;
-};
-
-export type ThemeModule = {
-  manifest: ThemeManifest;
-  assets: ThemeAssetMap;
-};
-
-export const themeModules: ThemeModule[] = [
-  { manifest: tavernManifest, assets: tavernAssets },
-  { manifest: unicornManifest, assets: unicornAssets },
-];
+export const themeModules = loadDiscoveredThemeModules();

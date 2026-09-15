@@ -9,7 +9,7 @@ import { useColorScheme } from "./useColorScheme";
 
 import PageBackgroundImage from "@/components/pageTheme/PageBackgroundImage";
 import { PageThemeContext } from "@/components/pageTheme/PageThemeScope";
-import Colors from "@/constants/Colors";
+import Colors, { HeaderColors } from "@/constants/Colors";
 import {
   resolvePageAppearance,
 } from "@/constants/pageTheme";
@@ -30,9 +30,11 @@ export type ViewProps = ThemeProps & DefaultView["props"];
 type ThemeColors = (typeof Colors)[keyof typeof Colors];
 
 const packToThemeColors = (
-  packId: ReturnType<typeof getThemePack>["id"],
+  packId: string | null,
 ): ThemeColors => {
-  const colors = getThemePack(packId).colors;
+  const pack = getThemePack(packId);
+  if (!pack) return Colors.light;
+  const colors = pack.colors;
   return {
     text: colors.text,
     background: colors.background,
@@ -81,8 +83,8 @@ export function useThemeColors() {
   const packDefaults = pageId
     ? pageDefaultsForPack(packId, pageId)
     : {
-        foreground: getThemePack(packId).colors.text,
-        background: getThemePack(packId).colors.background,
+        foreground: packToThemeColors(packId).text,
+        background: packToThemeColors(packId).background,
       };
   const appearance = resolvePageAppearance(
     pageId,
@@ -101,6 +103,13 @@ export function useChromeColors() {
     return { background: "#000000", text: "#ffffff", icon: "#ffffff" };
   }
   const pack = getThemePack(packId);
+  if (!pack) {
+    return {
+      background: HeaderColors.background,
+      text: HeaderColors.text,
+      icon: HeaderColors.icon,
+    };
+  }
   return {
     background: pack.colors.header,
     text: pack.colors.text,
@@ -157,8 +166,8 @@ export function Screen(props: ViewProps) {
   const packDefaults = pageId
     ? pageDefaultsForPack(packId, pageId)
     : {
-        foreground: getThemePack(packId).colors.text,
-        background: getThemePack(packId).colors.background,
+        foreground: packToThemeColors(packId).text,
+        background: packToThemeColors(packId).background,
       };
   const appearance = resolvePageAppearance(
     pageId,
@@ -175,6 +184,7 @@ const packBackground =
       ? getThemePackAssets(packId).background
       : undefined
   const hasSceneArt = Boolean(appearance.imageUri || packBackground);
+  const pack = getThemePack(packId);
 
   return (
     <DefaultView style={{ flex: 1, backgroundColor }}>
@@ -193,7 +203,7 @@ const packBackground =
             styles.backdrop,
             {
               backgroundColor:
-                getThemePack(packId).colors.overlay || Layout.scrim,
+                pack?.colors.overlay || Layout.scrim,
             },
           ]}
         />

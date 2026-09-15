@@ -9,4 +9,4 @@ Standalone Unicorn theme asset pack.
 - preview_icon_dice.png: 144×160 transparent RGBA PNG
 - preview_icon_palette.png: 100×159 transparent RGBA PNG
 
-Theme-specific assets use generic filenames; no Tavern-specific asset names.
+Theme-specific assets use generic filenames. Drop this folder in to register the pack; remove the folder to unregister it.
