@@ -2,6 +2,7 @@ import { Image, StyleSheet } from "react-native";
 
 import { View } from "@/components/Themed";
 import { useColorScheme } from "@/components/useColorScheme";
+import { HeaderColors } from "@/constants/Colors";
 import { getThemePack } from "@/constants/themePack";
 import { getThemePackAssets } from "@/constants/themePackAssets";
 import useThemePackStore from "@/stores/useThemePackStore";
@@ -30,7 +31,9 @@ export default function HeaderSceneBackground() {
           styles.clip,
           {
             backgroundColor:
-              scheme === "dark" ? "#000000" : pack.colors.header,
+              scheme === "dark"
+                ? "#000000"
+                : pack?.colors.header ?? HeaderColors.background,
           },
         ]}
       />
@@ -47,7 +50,10 @@ export default function HeaderSceneBackground() {
       />
       <View
         pointerEvents="none"
-        style={[styles.overlay, { backgroundColor: pack.colors.overlay }]}
+        style={[
+          styles.overlay,
+          { backgroundColor: pack?.colors.overlay ?? "rgba(0, 0, 0, 0.35)" },
+        ]}
       />
     </View>
   );

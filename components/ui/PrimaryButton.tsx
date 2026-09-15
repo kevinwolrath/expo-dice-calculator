@@ -10,7 +10,7 @@ import {
 import { View } from "@/components/Themed";
 import { usePackSurface } from "@/components/usePackSurface";
 import { FontSize, Layout, Space } from "@/constants/theme";
-import { getThemePack, type ThemePackColors } from "@/constants/themePack";
+import { themeColorsForPack, type ThemePackColors } from "@/constants/themePack";
 
 export type ButtonVariant =
   | "primary"
@@ -105,7 +105,7 @@ export default function PrimaryButton({
   compact,
 }: PrimaryButtonProps) {
   const { isNight, packId } = usePackSurface();
-  const tone = resolveTone(variant, isNight, getThemePack(packId).colors);
+  const tone = resolveTone(variant, isNight, themeColorsForPack(packId));
 
   return (
     <Pressable

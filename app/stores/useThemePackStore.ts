@@ -19,20 +19,20 @@ const readLocalStorage = (): ThemePackId | null => {
   }
 };
 
-const writeLocalStorage = (packId: ThemePackId) => {
+const writeLocalStorage = (packId: ThemePackId | null) => {
   try {
-    if (typeof localStorage !== "undefined") {
-      localStorage.setItem(STORAGE_KEY, packId);
-    }
+    if (typeof localStorage === "undefined") return;
+    if (packId) localStorage.setItem(STORAGE_KEY, packId);
+    else localStorage.removeItem(STORAGE_KEY);
   } catch {
     // Private-mode browsers may block localStorage.
   }
 };
 
 type ThemePackState = {
-  packId: ThemePackId;
+  packId: ThemePackId | null;
   hydrated: boolean;
-  setPackId: (packId: ThemePackId) => Promise<void>;
+  setPackId: (packId: ThemePackId | null) => Promise<void>;
   hydrate: () => Promise<void>;
 };
 
@@ -42,9 +42,11 @@ export const useThemePackStore = create<ThemePackState>((set) => ({
   packId: initialPack,
   hydrated: false,
   setPackId: async (packId) => {
-    writeLocalStorage(packId);
-    set({ packId });
-    await AsyncStorage.setItem(STORAGE_KEY, packId);
+    const next = isThemePackId(packId) ? packId : null;
+    writeLocalStorage(next);
+    set({ packId: next });
+    if (next) await AsyncStorage.setItem(STORAGE_KEY, next);
+    else await AsyncStorage.removeItem(STORAGE_KEY);
   },
   hydrate: async () => {
     const fromLocal = readLocalStorage();

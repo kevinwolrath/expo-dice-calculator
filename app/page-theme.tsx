@@ -119,14 +119,17 @@ export default function PageThemeScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <ChipSelect
           label={t("pageTheme.appTheme")}
-          value={packId}
+          value={packId ?? ""}
           onChange={(value) => {
-            if (isThemePackId(value)) void setPackId(value);
+            void setPackId(isThemePackId(value) ? value : null);
           }}
-          options={listThemePacks().map((pack) => ({
-            value: pack.id,
-            label: pack.name,
-          }))}
+          options={[
+            { value: "", label: t("pageTheme.noTheme") },
+            ...listThemePacks().map((pack) => ({
+              value: pack.id,
+              label: pack.name,
+            })),
+          ]}
         />
         <Text style={Type.heading}>
           {t("pageTheme.forPage", { page: pageTitle })}
