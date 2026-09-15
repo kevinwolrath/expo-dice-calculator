@@ -42,8 +42,11 @@ type ScreenListProps<T> = {
  * (react-native-web in particular), so we feature-detect rather than
  * assume they exist.
  */
-function getScrollContentNode(list: FlatList<unknown> | null): unknown {
-  const scrollRef = list?.getNativeScrollRef?.();
+type FlatListRef = {
+  getNativeScrollRef?: () => unknown;
+};
+
+function getScrollContentNode(list: FlatListRef | null): unknown {
   if (
     scrollRef &&
     typeof (scrollRef as { getInnerViewNode?: unknown }).getInnerViewNode ===
