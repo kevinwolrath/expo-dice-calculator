@@ -1,6 +1,6 @@
 import { useFocusEffect } from "expo-router";
 import { SymbolView } from "expo-symbols";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Image,
@@ -10,6 +10,7 @@ import {
   View as RNView,
   ScrollView,
   StyleSheet,
+  type ListRenderItem,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -93,7 +94,10 @@ export default function JobsScreen() {
   const loadStock = useInventoryStore((s) => s.loadStock);
   const loadColourTypes = useInventoryStore((s) => s.loadColourTypes);
   const loadMaterialTypes = useInventoryStore((s) => s.loadTypes);
-  const colourTypeToMaterialTypes = colourTypeMaterialMap(colourTypeMaterials);
+  const colourTypeToMaterialTypes = useMemo(
+    () => colourTypeMaterialMap(colourTypeMaterials),
+    [colourTypeMaterials],
+  );
 
   const [jobName, setJobName] = useState("");
   const [description, setDescription] = useState("");
@@ -167,9 +171,9 @@ export default function JobsScreen() {
   const [cleanForm, setCleanForm] = useState(emptyForm);
   const formDirty = isFormDirty(currentForm, cleanForm);
 
-  const excludedColourTypeIdsForJob = expandColourTypeExclusions(
-    excludedColourTypeIds,
-    colourTypes,
+  const excludedColourTypeIdsForJob = useMemo(
+    () => expandColourTypeExclusions(excludedColourTypeIds, colourTypes),
+    [excludedColourTypeIds, colourTypes],
   );
 
   const loadAll = useCallback(async () => {
@@ -237,7 +241,7 @@ export default function JobsScreen() {
     setCleanForm(emptyForm);
   };
 
-  const handleEdit = (job: DiceJob) => {
+  const applyJobEdit = (job: DiceJob) => {
     setEditingId(job.dice_job_id);
     setJobName(job.job_name);
     setDescription(job.description ?? "");
@@ -274,6 +278,16 @@ export default function JobsScreen() {
       });
     });
   };
+
+  // Stable identity (id in, no closure over `job`) so EntityListItem's
+  // memo isn't busted on every render of this screen.
+  const handleEdit = useCallback(
+    (id: string) => {
+      const job = jobs.find((row) => row.dice_job_id === id);
+      if (job) applyJobEdit(job);
+    },
+    [jobs],
+  );
 
   const parseColourCount = (value = colourCount) => {
     const count = Number(value);
@@ -669,74 +683,124 @@ export default function JobsScreen() {
     }
   };
 
-  const handleDelete = (id: string) => {
-    if (Platform.OS === "web") {
-      if (
-        window.confirm(`${t("jobs.deleteTitle")} - ${t("jobs.deleteMessage")}`)
-      ) {
-        (async () => {
-          await deleteDiceJob(id);
-          if (editingId === id) resetForm();
-          await loadAll();
-        })();
+  const handleDelete = useCallback(
+    (id: string) => {
+      if (Platform.OS === "web") {
+        if (
+          window.confirm(
+            `${t("jobs.deleteTitle")} - ${t("jobs.deleteMessage")}`,
+          )
+        ) {
+          (async () => {
+            await deleteDiceJob(id);
+            if (editingId === id) resetForm();
+            await loadAll();
+          })();
+        }
+        return;
       }
-      return;
-    }
 
-    Alert.alert(t("jobs.deleteTitle"), t("jobs.deleteMessage"), [
-      { text: t("common.cancel"), style: "cancel" },
-      {
-        text: t("common.delete"),
-        style: "destructive",
-        onPress: async () => {
-          await deleteDiceJob(id);
-          if (editingId === id) resetForm();
-          await loadAll();
+      Alert.alert(t("jobs.deleteTitle"), t("jobs.deleteMessage"), [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("common.delete"),
+          style: "destructive",
+          onPress: async () => {
+            await deleteDiceJob(id);
+            if (editingId === id) resetForm();
+            await loadAll();
+          },
         },
-      },
-    ]);
-  };
-
-  const methodLabel = (id: string) =>
-    methods.find((m) => m.production_method_id === id)?.description ??
-    t("jobs.unknownMethod");
-
-  const numberColourLabel = (id: string) =>
-    numberColours.find((c) => c.dice_job_number_colour_id === id)
-      ?.dice_job_number_colour_name ?? t("jobs.unknownNumberColour");
-
-  const stockColourLabel = (id: string) =>
-    stock.find((item) => item.material_stock_id === id)?.colour_name ??
-    t("jobs.unknownNumberColour");
-
-  const stockColour = (id: string) =>
-    stock.find((item) => item.material_stock_id === id)?.colour ?? "#d9d9d9";
-
-  const coloursForJob = (jobId: string) =>
-    allJobColours
-      .filter((colour) => colour.dice_job_id === jobId)
-      .map((colour) => stockColourLabel(colour.material_stock_id));
-
-  const usedJobColourIds = new Set(
-    jobColourStockIds.filter((_, index) => index !== editingColourIndex),
+      ]);
+    },
+    [t, editingId, loadAll],
   );
-  const replacementStock = stock.filter((item) => {
-    if (item.is_active === 0 || usedJobColourIds.has(item.material_stock_id)) {
-      return false;
-    }
-    const itemMaterialTypeIds = materialTypeIdsForStock(
-      item,
+
+  const methodLabel = useCallback(
+    (id: string) =>
+      methods.find((m) => m.production_method_id === id)?.description ??
+      t("jobs.unknownMethod"),
+    [methods, t],
+  );
+
+  const numberColourLabel = useCallback(
+    (id: string) =>
+      numberColours.find((c) => c.dice_job_number_colour_id === id)
+        ?.dice_job_number_colour_name ?? t("jobs.unknownNumberColour"),
+    [numberColours, t],
+  );
+
+  const stockColourLabel = useCallback(
+    (id: string) =>
+      stock.find((item) => item.material_stock_id === id)?.colour_name ??
+      t("jobs.unknownNumberColour"),
+    [stock, t],
+  );
+
+  const stockColour = useCallback(
+    (id: string) =>
+      stock.find((item) => item.material_stock_id === id)?.colour ??
+      "#d9d9d9",
+    [stock],
+  );
+
+  const coloursForJob = useCallback(
+    (jobId: string) =>
+      allJobColours
+        .filter((colour) => colour.dice_job_id === jobId)
+        .map((colour) => stockColourLabel(colour.material_stock_id)),
+    [allJobColours, stockColourLabel],
+  );
+
+  // Memoized so DicePreview/DieShape (both React.memo'd) can actually skip
+  // re-running their procedural SVG/resin work when nothing relevant here
+  // has changed — an inline `.map()` at the call site would create a new
+  // array every render and defeat that memoization.
+  const previewColours = useMemo(
+    () => jobColourStockIds.map(stockColour),
+    [jobColourStockIds, stockColour],
+  );
+
+  const usedJobColourIds = useMemo(
+    () =>
+      new Set(
+        jobColourStockIds.filter((_, index) => index !== editingColourIndex),
+      ),
+    [jobColourStockIds, editingColourIndex],
+  );
+  const replacementStock = useMemo(
+    () =>
+      stock.filter((item) => {
+        if (
+          item.is_active === 0 ||
+          usedJobColourIds.has(item.material_stock_id)
+        ) {
+          return false;
+        }
+        const itemMaterialTypeIds = materialTypeIdsForStock(
+          item,
+          colourTypeToMaterialTypes,
+        );
+        if (materialTypeId && !itemMaterialTypeIds.includes(materialTypeId)) {
+          return false;
+        }
+        if (excludedColourTypeIdsForJob.includes(item.colour_type_id)) {
+          return false;
+        }
+        return (
+          allowedTypeIds === null ||
+          itemMaterialTypeIds.some((id) => allowedTypeIds.includes(id))
+        );
+      }),
+    [
+      stock,
+      usedJobColourIds,
       colourTypeToMaterialTypes,
-    );
-    if (materialTypeId && !itemMaterialTypeIds.includes(materialTypeId)) {
-      return false;
-    }
-    if (excludedColourTypeIdsForJob.includes(item.colour_type_id)) return false;
-    return (
-      allowedTypeIds === null ||
-      itemMaterialTypeIds.some((id) => allowedTypeIds.includes(id))
-    );
-  });
+      materialTypeId,
+      excludedColourTypeIdsForJob,
+      allowedTypeIds,
+    ],
+  );
 
   const canChooseColourCount = materialTypeId !== null;
   const canGenerate = materialTypes.length > 0 && methods.length > 0;
@@ -744,6 +808,101 @@ export default function JobsScreen() {
     jobColourStockIds.length > 0 &&
     materialTypeId !== null &&
     methodId !== null;
+
+  const excludableColourTypeOptions = useMemo(
+    () =>
+      colourTypes
+        .filter((type) => !excludedColourTypeIds.includes(type.colour_type_id))
+        .reduce<{ value: string; label: string }[]>((options, type) => {
+          const label = type.description;
+          if (
+            options.some(
+              (option) =>
+                option.label.trim().toLowerCase() === label.trim().toLowerCase(),
+            )
+          ) {
+            return options;
+          }
+          return [...options, { value: type.colour_type_id, label }];
+        }, []),
+    [colourTypes, excludedColourTypeIds],
+  );
+
+  const excludedColourTypeChips = useMemo(
+    () =>
+      excludedColourTypeIds.reduce<{ value: string; label: string }[]>(
+        (items, id) => {
+          const type = colourTypes.find((item) => item.colour_type_id === id);
+          if (!type) return items;
+          const label = type.description;
+          if (
+            items.some(
+              (item) =>
+                item.label.trim().toLowerCase() === label.trim().toLowerCase(),
+            )
+          ) {
+            return items;
+          }
+          return [...items, { value: id, label }];
+        },
+        [],
+      ),
+    [excludedColourTypeIds, colourTypes],
+  );
+
+  const materialTypeOptions = useMemo(
+    () =>
+      materialTypes.map((type) => ({
+        value: type.material_type_id,
+        label: type.description ?? type.material_type_id.toString(),
+      })),
+    [materialTypes],
+  );
+
+  const methodOptions = useMemo(
+    () =>
+      methods.map((method) => ({
+        value: method.production_method_id,
+        label: method.description ?? method.production_method_id.toString(),
+      })),
+    [methods],
+  );
+
+  const numberColourOptions = useMemo(
+    () =>
+      numberColours.map((colour) => ({
+        value: colour.dice_job_number_colour_id,
+        label: colour.dice_job_number_colour_name,
+      })),
+    [numberColours],
+  );
+
+  const renderJobItem: ListRenderItem<DiceJob> = useCallback(
+    ({ item }) => {
+      const colourNames = coloursForJob(item.dice_job_id);
+      return (
+        <EntityListItem
+          id={item.dice_job_id}
+          title={item.job_name}
+          meta={`${formatJobTimestamp(item.created_at, i18n.language)} • ${methodLabel(item.production_method_id)} • ${t("jobs.colourCountValue", { count: item.colour_count })} • ${numberColourLabel(item.dice_job_number_colour_id)}${
+            colourNames.length ? ` • ${colourNames.join(", ")}` : ""
+          }`}
+          description={item.description}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+      );
+    },
+    [
+      coloursForJob,
+      i18n.language,
+      methodLabel,
+      numberColourLabel,
+      t,
+      handleEdit,
+      handleDelete,
+    ],
+  );
 
   return (
     <ScreenList
@@ -784,30 +943,7 @@ export default function JobsScreen() {
                 label={t("jobs.excludedColourTypes")}
                 placeholder={t("jobs.selectExcludedColourType")}
                 value={null}
-                options={colourTypes
-                  .filter(
-                    (type) =>
-                      !excludedColourTypeIds.includes(type.colour_type_id),
-                  )
-                  .reduce<{ value: string; label: string }[]>(
-                    (options, type) => {
-                      const label = type.description;
-                      if (
-                        options.some(
-                          (option) =>
-                            option.label.trim().toLowerCase() ===
-                            label.trim().toLowerCase(),
-                        )
-                      ) {
-                        return options;
-                      }
-                      return [
-                        ...options,
-                        { value: type.colour_type_id, label },
-                      ];
-                    },
-                    [],
-                  )}
+                options={excludableColourTypeOptions}
                 onChange={(value) => {
                   const expanded = expandColourTypeExclusions(
                     [value],
@@ -820,25 +956,7 @@ export default function JobsScreen() {
                 emptyHint={t("jobs.noColourTypesToExclude")}
               />
               <RemovableChipList
-                items={excludedColourTypeIds.reduce<
-                  { value: string; label: string }[]
-                >((items, id) => {
-                  const type = colourTypes.find(
-                    (item) => item.colour_type_id === id,
-                  );
-                  if (!type) return items;
-                  const label = type.description;
-                  if (
-                    items.some(
-                      (item) =>
-                        item.label.trim().toLowerCase() ===
-                        label.trim().toLowerCase(),
-                    )
-                  ) {
-                    return items;
-                  }
-                  return [...items, { value: id, label }];
-                }, [])}
+                items={excludedColourTypeChips}
                 onRemove={(value) => {
                   const expanded = expandColourTypeExclusions(
                     [value],
@@ -927,7 +1045,7 @@ export default function JobsScreen() {
                       </View>
                       <DicePreview
                         variant="modal"
-                        colours={jobColourStockIds.map(stockColour)}
+                        colours={previewColours}
                         numberColourName={
                           numberColourId
                             ? numberColourLabel(numberColourId)
@@ -1025,10 +1143,7 @@ export default function JobsScreen() {
                   placeholder={t("jobs.selectMaterialType")}
                   error={errors.materialTypeId}
                   value={materialTypeId}
-                  options={materialTypes.map((type) => ({
-                    value: type.material_type_id,
-                    label: type.description ?? type.material_type_id.toString(),
-                  }))}
+                  options={materialTypeOptions}
                   onChange={(value) => {
                     void handleMaterialTypeChange(value);
                   }}
@@ -1052,12 +1167,7 @@ export default function JobsScreen() {
                   placeholder={t("jobs.selectProductionMethod")}
                   error={errors.methodId}
                   value={methodId}
-                  options={methods.map((method) => ({
-                    value: method.production_method_id,
-                    label:
-                      method.description ??
-                      method.production_method_id.toString(),
-                  }))}
+                  options={methodOptions}
                   onChange={(value) => {
                     void handleProductionMethodChange(value);
                   }}
@@ -1101,10 +1211,13 @@ export default function JobsScreen() {
                   {jobColourStockIds.map((id, index) => (
                     <EntityListItem
                       key={`${id}-${index}`}
+                      id={String(index)}
                       title={`${index + 1}. ${stockColourLabel(id)}`}
-                      onEdit={() => handleEditJobColour(index)}
-                      onDelete={() => {
-                        void handleDeleteJobColour(index);
+                      onEdit={(indexKey) =>
+                        handleEditJobColour(Number(indexKey))
+                      }
+                      onDelete={(indexKey) => {
+                        void handleDeleteJobColour(Number(indexKey));
                       }}
                     />
                   ))}
@@ -1205,10 +1318,7 @@ export default function JobsScreen() {
               required
               error={errors.numberColourId}
               value={numberColourId}
-              options={numberColours.map((colour) => ({
-                value: colour.dice_job_number_colour_id,
-                label: colour.dice_job_number_colour_name,
-              }))}
+              options={numberColourOptions}
               onChange={(value) => {
                 setNumberColourId(value);
                 setErrors((current) => ({
@@ -1229,20 +1339,7 @@ export default function JobsScreen() {
             />
           </>
         }
-        renderItem={({ item }) => {
-          const colourNames = coloursForJob(item.dice_job_id);
-          return (
-            <EntityListItem
-              title={item.job_name}
-              meta={`${formatJobTimestamp(item.created_at, i18n.language)} • ${methodLabel(item.production_method_id)} • ${t("jobs.colourCountValue", { count: item.colour_count })} • ${numberColourLabel(item.dice_job_number_colour_id)}${
-                colourNames.length ? ` • ${colourNames.join(", ")}` : ""
-              }`}
-              description={item.description}
-              onEdit={() => handleEdit(item)}
-              onDelete={() => handleDelete(item.dice_job_id)}
-            />
-          );
-        }}
+        renderItem={renderJobItem}
       />
   );
 }

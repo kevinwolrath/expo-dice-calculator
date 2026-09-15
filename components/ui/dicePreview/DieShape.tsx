@@ -1,3 +1,4 @@
+import { memo, useMemo } from "react";
 import Svg, {
   Circle,
   ClipPath,
@@ -55,7 +56,7 @@ type DieShapeProps = {
   material?: string | null;
 };
 
-export default function DieShape({
+function DieShape({
   dieId,
   faces,
   colours,
@@ -72,11 +73,12 @@ export default function DieShape({
   const litStroke = litEdgeStrokeWidth(size);
   const layers = resinLayerOpacities(opacity);
   const polish = polishStrength(material);
-  const { marble, pour, field, dirty, glitter } = buildDieResin(
-    colours,
-    seed,
-    glitterColour,
-    productionMethod,
+  // buildDieResin does non-trivial procedural work (gradients, blobs, veins,
+  // glitter placement) from `colours`/`seed` alone, so it's cached across
+  // renders where those (and glitterColour/productionMethod) haven't changed.
+  const { marble, pour, field, dirty, glitter } = useMemo(
+    () => buildDieResin(colours, seed, glitterColour, productionMethod),
+    [colours, seed, glitterColour, productionMethod],
   );
   const edge = resinFaceEdgeColour(field.dominant);
   const linearId = `${dieId}-resin-linear`;
@@ -85,14 +87,18 @@ export default function DieShape({
   const depthId = `${dieId}-face-depth`;
   const polishId = `${dieId}-polish`;
   const clipId = `${dieId}-body`;
-  const numbers = layoutDieFaceNumbers(
-    dieId,
-    faces,
-    numeral,
-    () => marble.base,
-    numberColourName,
+  const numbers = useMemo(
+    () =>
+      layoutDieFaceNumbers(
+        dieId,
+        faces,
+        numeral,
+        () => marble.base,
+        numberColourName,
+      ),
+    [dieId, faces, numeral, marble, numberColourName],
   );
-  const depthOrder = facesByDepth(faces);
+  const depthOrder = useMemo(() => facesByDepth(faces), [faces]);
 
   return (
     <Svg width={size} height={size} viewBox="0 0 100 100">
@@ -330,3 +336,5 @@ export default function DieShape({
     </Svg>
   );
 }
+
+export default memo(DieShape);

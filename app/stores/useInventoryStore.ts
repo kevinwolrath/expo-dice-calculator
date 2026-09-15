@@ -74,12 +74,22 @@ type InventoryState = {
   deleteStock: (id: string) => Promise<void>;
 };
 
+// Perf note (fix #4): every mutation below applies its change to local state
+// directly (optimistic add/merge/remove) instead of re-fetching the whole
+// table from SQLite afterwards. The previous version did an optimistic
+// update *and then* immediately re-listed the full table (sometimes twice,
+// once just to snapshot a rollback value that was already sitting in
+// state) — up to 3 DB round-trips and 2 full-list re-renders per edit. Since
+// `create*` already returns the created row and we know exactly which
+// fields an update/delete touched, no re-fetch is needed; the `prev`
+// snapshot for rollback comes from the `set` updater's own state, not a
+// fresh read.
+
 export const useInventoryStore = create<InventoryState>((set) => ({
   types: [],
   colourTypes: [],
   colourTypeMaterials: [],
   colourBrands: [],
-  materialTypes: [],
   stock: [],
   loading: false,
 
@@ -143,7 +153,8 @@ export const useInventoryStore = create<InventoryState>((set) => ({
   },
 
   createType: async (input) => {
-    // optimistic: add a temporary type immediately
+    // optimistic: add a temporary type immediately, then swap it for the
+    // real row `createMaterialType` returns — no extra list re-fetch.
     const tempId = `temp-${Date.now()}`;
     set((s) => ({
       types: [
@@ -158,13 +169,17 @@ export const useInventoryStore = create<InventoryState>((set) => ({
     }));
     try {
       const created = await createMaterialType(input);
-      const types = await listMaterialTypes();
-      set({ types });
+      set((s) => ({
+        types: s.types.map((t) =>
+          t.material_type_id === tempId ? created : t,
+        ),
+      }));
       return created;
     } catch (e) {
-      // rollback by reloading
-      const types = await listMaterialTypes();
-      set({ types });
+      // rollback: drop the temporary row
+      set((s) => ({
+        types: s.types.filter((t) => t.material_type_id !== tempId),
+      }));
       throw e;
     } finally {
       set({ loading: false });
@@ -172,29 +187,28 @@ export const useInventoryStore = create<InventoryState>((set) => ({
   },
 
   updateType: async (id, input) => {
-    // optimistic update
-    const prev = await listMaterialTypes();
-    set((s) => ({
-      types: s.types.map((t) =>
-        t.material_type_id === id
-          ? {
-              ...t,
-              description:
-                input.description !== undefined && input.description !== null
-                  ? input.description
-                  : t.description,
-            }
-          : t,
-      ),
-      loading: true,
-    }));
+    let prev: MaterialType[] | undefined;
+    set((s) => {
+      prev = s.types;
+      return {
+        types: s.types.map((t) =>
+          t.material_type_id === id
+            ? {
+                ...t,
+                description:
+                  input.description !== undefined && input.description !== null
+                    ? input.description
+                    : t.description,
+              }
+            : t,
+        ),
+        loading: true,
+      };
+    });
     try {
       await updateMaterialType(id, input);
-      const types = await listMaterialTypes();
-      set({ types });
     } catch (e) {
-      // rollback
-      set({ types: prev });
+      if (prev) set({ types: prev });
       throw e;
     } finally {
       set({ loading: false });
@@ -202,19 +216,18 @@ export const useInventoryStore = create<InventoryState>((set) => ({
   },
 
   deleteType: async (id: string) => {
-    // optimistic delete
-    const prev = await listMaterialTypes();
-    set((s) => ({
-      types: s.types.filter((t) => t.material_type_id !== id),
-      loading: true,
-    }));
+    let prev: MaterialType[] | undefined;
+    set((s) => {
+      prev = s.types;
+      return {
+        types: s.types.filter((t) => t.material_type_id !== id),
+        loading: true,
+      };
+    });
     try {
       await deleteMaterialType(id);
-      const types = await listMaterialTypes();
-      set({ types });
     } catch (e) {
-      // rollback
-      set({ types: prev });
+      if (prev) set({ types: prev });
       throw e;
     } finally {
       set({ loading: false });
@@ -223,27 +236,49 @@ export const useInventoryStore = create<InventoryState>((set) => ({
 
   createColourType: async (input) => {
     const tempId = `temp-${Date.now()}`;
+    const nowIso = new Date().toISOString();
     set((s) => ({
       colourTypes: [
         ...s.colourTypes,
         {
           colour_type_id: tempId,
           description: input.description,
-          created_at: new Date().toISOString(),
+          created_at: nowIso,
         },
+      ],
+      colourTypeMaterials: [
+        ...s.colourTypeMaterials,
+        ...input.material_type_ids.map((materialTypeId) => ({
+          colour_type_id: tempId,
+          material_type_id: materialTypeId,
+          created_at: nowIso,
+        })),
       ],
       loading: true,
     }));
     try {
       const created = await insertColourType(input);
-      const colourTypes = await listColourTypes();
-      const colourTypeMaterials = await listAllColourTypeMaterials();
-      set({ colourTypes, colourTypeMaterials });
+      set((s) => ({
+        colourTypes: s.colourTypes.map((item) =>
+          item.colour_type_id === tempId ? created : item,
+        ),
+        colourTypeMaterials: s.colourTypeMaterials.map((row) =>
+          row.colour_type_id === tempId
+            ? { ...row, colour_type_id: created.colour_type_id }
+            : row,
+        ),
+      }));
       return created;
     } catch (e) {
-      const colourTypes = await listColourTypes();
-      const colourTypeMaterials = await listAllColourTypeMaterials();
-      set({ colourTypes, colourTypeMaterials });
+      // rollback: drop the temporary colour type and its material links
+      set((s) => ({
+        colourTypes: s.colourTypes.filter(
+          (item) => item.colour_type_id !== tempId,
+        ),
+        colourTypeMaterials: s.colourTypeMaterials.filter(
+          (row) => row.colour_type_id !== tempId,
+        ),
+      }));
       throw e;
     } finally {
       set({ loading: false });
@@ -251,9 +286,12 @@ export const useInventoryStore = create<InventoryState>((set) => ({
   },
 
   updateColourType: async (id, input) => {
-    const prev = await listColourTypes();
-    set((s) => ({
-      colourTypes: s.colourTypes.map((item) =>
+    let prevColourTypes: ColourType[] | undefined;
+    let prevColourTypeMaterials: ColourTypeMaterialType[] | undefined;
+    set((s) => {
+      prevColourTypes = s.colourTypes;
+      prevColourTypeMaterials = s.colourTypeMaterials;
+      const colourTypes = s.colourTypes.map((item) =>
         item.colour_type_id === id
           ? {
               ...item,
@@ -263,16 +301,31 @@ export const useInventoryStore = create<InventoryState>((set) => ({
                   : item.description,
             }
           : item,
-      ),
-      loading: true,
-    }));
+      );
+      // Mirrors what `replaceColourTypeMaterials` does server-side: swap
+      // this colour type's material links for the new set, in one pass.
+      const colourTypeMaterials =
+        input.material_type_ids === undefined
+          ? s.colourTypeMaterials
+          : [
+              ...s.colourTypeMaterials.filter(
+                (row) => row.colour_type_id !== id,
+              ),
+              ...input.material_type_ids.map((materialTypeId) => ({
+                colour_type_id: id,
+                material_type_id: materialTypeId,
+                created_at: new Date().toISOString(),
+              })),
+            ];
+      return { colourTypes, colourTypeMaterials, loading: true };
+    });
     try {
       await patchColourType(id, input);
-      const colourTypes = await listColourTypes();
-      const colourTypeMaterials = await listAllColourTypeMaterials();
-      set({ colourTypes, colourTypeMaterials });
     } catch (e) {
-      set({ colourTypes: prev });
+      if (prevColourTypes) set({ colourTypes: prevColourTypes });
+      if (prevColourTypeMaterials) {
+        set({ colourTypeMaterials: prevColourTypeMaterials });
+      }
       throw e;
     } finally {
       set({ loading: false });
@@ -280,18 +333,28 @@ export const useInventoryStore = create<InventoryState>((set) => ({
   },
 
   deleteColourType: async (id: string) => {
-    const prev = await listColourTypes();
-    set((s) => ({
-      colourTypes: s.colourTypes.filter((item) => item.colour_type_id !== id),
-      loading: true,
-    }));
+    let prevColourTypes: ColourType[] | undefined;
+    let prevColourTypeMaterials: ColourTypeMaterialType[] | undefined;
+    set((s) => {
+      prevColourTypes = s.colourTypes;
+      prevColourTypeMaterials = s.colourTypeMaterials;
+      return {
+        colourTypes: s.colourTypes.filter(
+          (item) => item.colour_type_id !== id,
+        ),
+        colourTypeMaterials: s.colourTypeMaterials.filter(
+          (row) => row.colour_type_id !== id,
+        ),
+        loading: true,
+      };
+    });
     try {
       await removeColourType(id);
-      const colourTypes = await listColourTypes();
-      const colourTypeMaterials = await listAllColourTypeMaterials();
-      set({ colourTypes, colourTypeMaterials });
     } catch (e) {
-      set({ colourTypes: prev });
+      if (prevColourTypes) set({ colourTypes: prevColourTypes });
+      if (prevColourTypeMaterials) {
+        set({ colourTypeMaterials: prevColourTypeMaterials });
+      }
       throw e;
     } finally {
       set({ loading: false });
@@ -321,12 +384,16 @@ export const useInventoryStore = create<InventoryState>((set) => ({
     }));
     try {
       const created = await createMaterialStock(input);
-      const stock = await listMaterialStock();
-      set({ stock });
+      set((s) => ({
+        stock: s.stock.map((st) =>
+          st.material_stock_id === tempId ? created : st,
+        ),
+      }));
       return created;
     } catch (e) {
-      const stock = await listMaterialStock();
-      set({ stock });
+      set((s) => ({
+        stock: s.stock.filter((st) => st.material_stock_id !== tempId),
+      }));
       throw e;
     } finally {
       set({ loading: false });
@@ -335,30 +402,31 @@ export const useInventoryStore = create<InventoryState>((set) => ({
 
   updateStock: async (id, input) => {
     // optimistic update
-    const prev = await listMaterialStock();
-    set((s) => ({
-      stock: s.stock.map((st) =>
-        st.material_stock_id === id
-          ? {
-              ...st,
-              ...input,
-              is_active:
-                input.is_active === undefined
-                  ? st.is_active
-                  : input.is_active
-                    ? 1
-                    : 0,
-            }
-          : st,
-      ),
-      loading: true,
-    }));
+    let prev: MaterialStock[] | undefined;
+    set((s) => {
+      prev = s.stock;
+      return {
+        stock: s.stock.map((st) =>
+          st.material_stock_id === id
+            ? {
+                ...st,
+                ...input,
+                is_active:
+                  input.is_active === undefined
+                    ? st.is_active
+                    : input.is_active
+                      ? 1
+                      : 0,
+              }
+            : st,
+        ),
+        loading: true,
+      };
+    });
     try {
       await updateMaterialStock(id, input);
-      const stock = await listMaterialStock();
-      set({ stock });
     } catch (e) {
-      set({ stock: prev });
+      if (prev) set({ stock: prev });
       throw e;
     } finally {
       set({ loading: false });
@@ -367,17 +435,18 @@ export const useInventoryStore = create<InventoryState>((set) => ({
 
   deleteStock: async (id: string) => {
     // optimistic delete
-    const prev = await listMaterialStock();
-    set((s) => ({
-      stock: s.stock.filter((st) => st.material_stock_id !== id),
-      loading: true,
-    }));
+    let prev: MaterialStock[] | undefined;
+    set((s) => {
+      prev = s.stock;
+      return {
+        stock: s.stock.filter((st) => st.material_stock_id !== id),
+        loading: true,
+      };
+    });
     try {
       await deleteMaterialStock(id);
-      const stock = await listMaterialStock();
-      set({ stock });
     } catch (e) {
-      set({ stock: prev });
+      if (prev) set({ stock: prev });
       throw e;
     } finally {
       set({ loading: false });

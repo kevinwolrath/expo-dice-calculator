@@ -124,6 +124,11 @@ export default function TabLayout() {
     <PageThemeScope pageId={pageId}>
       <Tabs
         screenOptions={{
+          // Each tab holds its own list + form state and reloads via
+          // useFocusEffect whenever it regains focus, so nothing is lost by
+          // unmounting it while another tab is active — only the memory of
+          // its (already virtualized) list and dice-preview SVGs is freed.
+          unmountOnBlur: true,
           tabBarActiveTintColor: isNight ? "#ffffff" : packColors.primary,
           tabBarInactiveTintColor: isNight
             ? "#aaaaaa"

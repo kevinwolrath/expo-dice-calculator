@@ -1,6 +1,6 @@
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { Alert, Platform } from "react-native";
+import { Alert, Platform, type ListRenderItem } from "react-native";
 
 import { showMessage } from "@/components/alert";
 import { usePackSurface } from "@/components/usePackSurface";
@@ -80,12 +80,22 @@ export default function DiceNumberColoursScreen() {
     }
   };
 
-  const handleEditColour = (colour: DiceJobNumberColour) => {
+  const applyEditColour = (colour: DiceJobNumberColour) => {
     setColourEditingId(colour.dice_job_number_colour_id);
     setName(colour.dice_job_number_colour_name ?? "");
     setErrors({});
     setCleanForm({ name: colour.dice_job_number_colour_name ?? "" });
   };
+
+  const handleEditColour = useCallback(
+    (id: string) => {
+      const colour = colours.find(
+        (row) => row.dice_job_number_colour_id === id,
+      );
+      if (colour) applyEditColour(colour);
+    },
+    [colours],
+  );
 
   const handleCancelColour = () => {
     setName("");
@@ -94,39 +104,54 @@ export default function DiceNumberColoursScreen() {
     setCleanForm(emptyForm);
   };
 
-  const handleDeleteColour = (id: string) => {
-    if (Platform.OS === "web") {
-      if (
-        window.confirm(
-          `${t("diceNumberColours.deleteTitle")} - ${t("diceNumberColours.deleteMessage")}`,
-        )
-      ) {
-        (async () => {
-          await deleteDiceJobNumberColour(id);
-          if (colourEditingId === id) handleCancelColour();
-          await load();
-        })();
-      }
-      return;
-    }
-
-    Alert.alert(
-      t("diceNumberColours.deleteTitle"),
-      t("diceNumberColours.deleteMessage"),
-      [
-        { text: t("common.cancel"), style: "cancel" },
-        {
-          text: t("common.delete"),
-          style: "destructive",
-          onPress: async () => {
+  const handleDeleteColour = useCallback(
+    (id: string) => {
+      if (Platform.OS === "web") {
+        if (
+          window.confirm(
+            `${t("diceNumberColours.deleteTitle")} - ${t("diceNumberColours.deleteMessage")}`,
+          )
+        ) {
+          (async () => {
             await deleteDiceJobNumberColour(id);
             if (colourEditingId === id) handleCancelColour();
             await load();
+          })();
+        }
+        return;
+      }
+
+      Alert.alert(
+        t("diceNumberColours.deleteTitle"),
+        t("diceNumberColours.deleteMessage"),
+        [
+          { text: t("common.cancel"), style: "cancel" },
+          {
+            text: t("common.delete"),
+            style: "destructive",
+            onPress: async () => {
+              await deleteDiceJobNumberColour(id);
+              if (colourEditingId === id) handleCancelColour();
+              await load();
+            },
           },
-        },
-      ],
-    );
-  };
+        ],
+      );
+    },
+    [t, colourEditingId, load],
+  );
+
+  const renderItem: ListRenderItem<DiceJobNumberColour> = useCallback(
+    ({ item }) => (
+      <EntityListItem
+        id={item.dice_job_number_colour_id}
+        title={item.dice_job_number_colour_name}
+        onEdit={handleEditColour}
+        onDelete={handleDeleteColour}
+      />
+    ),
+    [handleEditColour, handleDeleteColour],
+  );
 
   return (
     <ScreenList
@@ -159,13 +184,7 @@ export default function DiceNumberColoursScreen() {
           />
         </>
       }
-      renderItem={({ item }) => (
-        <EntityListItem
-          title={item.dice_job_number_colour_name}
-          onEdit={() => handleEditColour(item)}
-          onDelete={() => handleDeleteColour(item.dice_job_number_colour_id)}
-        />
-      )}
+      renderItem={renderItem}
     />
   );
 }

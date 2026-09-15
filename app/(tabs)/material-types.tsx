@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Alert, Platform } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { Alert, Platform, type ListRenderItem } from "react-native";
 
 import { showMessage } from "@/components/alert";
 import { usePackSurface } from "@/components/usePackSurface";
@@ -59,12 +59,20 @@ export default function MaterialTypesScreen() {
     }
   };
 
-  const handleEditType = (item: MaterialType) => {
+  const applyEditType = (item: MaterialType) => {
     setTypeEditingId(item.material_type_id);
     setDescription(item.description ?? "");
     setErrors({});
     setCleanForm({ description: item.description ?? "" });
   };
+
+  const handleEditType = useCallback(
+    (id: string) => {
+      const item = types.find((row) => row.material_type_id === id);
+      if (item) applyEditType(item);
+    },
+    [types],
+  );
 
   const handleCancelType = () => {
     setDescription("");
@@ -73,39 +81,54 @@ export default function MaterialTypesScreen() {
     setCleanForm(emptyForm);
   };
 
-  const handleDeleteType = (id: string) => {
-    if (Platform.OS === "web") {
-      if (
-        window.confirm(
-          `${t("materialTypes.deleteTitle")} - ${t("materialTypes.deleteMessage")}`,
-        )
-      ) {
-        (async () => {
-          await deleteType(id);
-          if (typeEditingId === id) handleCancelType();
-          await loadAll();
-        })();
-      }
-      return;
-    }
-
-    Alert.alert(
-      t("materialTypes.deleteTitle"),
-      t("materialTypes.deleteMessage"),
-      [
-        { text: t("common.cancel"), style: "cancel" },
-        {
-          text: t("common.delete"),
-          style: "destructive",
-          onPress: async () => {
+  const handleDeleteType = useCallback(
+    (id: string) => {
+      if (Platform.OS === "web") {
+        if (
+          window.confirm(
+            `${t("materialTypes.deleteTitle")} - ${t("materialTypes.deleteMessage")}`,
+          )
+        ) {
+          (async () => {
             await deleteType(id);
             if (typeEditingId === id) handleCancelType();
             await loadAll();
+          })();
+        }
+        return;
+      }
+
+      Alert.alert(
+        t("materialTypes.deleteTitle"),
+        t("materialTypes.deleteMessage"),
+        [
+          { text: t("common.cancel"), style: "cancel" },
+          {
+            text: t("common.delete"),
+            style: "destructive",
+            onPress: async () => {
+              await deleteType(id);
+              if (typeEditingId === id) handleCancelType();
+              await loadAll();
+            },
           },
-        },
-      ],
-    );
-  };
+        ],
+      );
+    },
+    [t, typeEditingId, deleteType, loadAll],
+  );
+
+  const renderItem: ListRenderItem<MaterialType> = useCallback(
+    ({ item }) => (
+      <EntityListItem
+        id={item.material_type_id}
+        title={item.description ?? String(item.material_type_id)}
+        onEdit={handleEditType}
+        onDelete={handleDeleteType}
+      />
+    ),
+    [handleEditType, handleDeleteType],
+  );
 
   return (
     <ScreenList
@@ -138,13 +161,7 @@ export default function MaterialTypesScreen() {
           />
         </>
       }
-      renderItem={({ item }) => (
-        <EntityListItem
-          title={item.description ?? String(item.material_type_id)}
-          onEdit={() => handleEditType(item)}
-          onDelete={() => handleDeleteType(item.material_type_id)}
-        />
-      )}
+      renderItem={renderItem}
     />
   );
 }

@@ -6,12 +6,11 @@ import {
   type ReactNode,
 } from "react";
 import {
+  FlatList,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
   StyleSheet,
   View as RNView,
-  findNodeHandle,
   type ListRenderItem,
 } from "react-native";
 
@@ -33,6 +32,31 @@ type ScreenListProps<T> = {
   hero?: ReactNode;
 };
 
+/**
+ * Returns the native node handle for a FlatList's scrollable *content* view
+ * (not the outer clipping view — measuring against that would give a
+ * position that shifts with the current scroll offset), so a field can
+ * measureLayout against it (see fieldFocus.useFieldFocus) to compute a
+ * scrollToOffset target. Defensive: these are instance methods on the
+ * underlying ScrollView that aren't guaranteed on every platform/renderer
+ * (react-native-web in particular), so we feature-detect rather than
+ * assume they exist.
+ */
+type FlatListRef = {
+  getNativeScrollRef?: () => unknown;
+};
+
+function getScrollContentNode(list: FlatListRef | null): unknown {
+  if (
+    scrollRef &&
+    typeof (scrollRef as { getInnerViewNode?: unknown }).getInnerViewNode ===
+      "function"
+  ) {
+    return (scrollRef as { getInnerViewNode: () => unknown }).getInnerViewNode();
+  }
+  return null;
+}
+
 export default function ScreenList<T>({
   data,
   keyExtractor,
@@ -42,11 +66,10 @@ export default function ScreenList<T>({
   emptyText,
   hero,
 }: ScreenListProps<T>): ReactElement {
-  const scrollRef = useRef<ScrollView>(null);
-  const contentRef = useRef<RNView>(null);
+  const listRef = useRef<FlatList<T>>(null);
 
   const scrollToForm = () => {
-    scrollRef.current?.scrollTo({ y: 0, animated: true });
+    listRef.current?.scrollToOffset({ offset: 0, animated: true });
     if (Platform.OS === "web" && typeof document !== "undefined") {
       document
         .getElementById("entity-form")
@@ -55,15 +78,16 @@ export default function ScreenList<T>({
   };
 
   const scrollChildIntoView = (host: RNView | null) => {
-    const content = contentRef.current;
-    const scroll = scrollRef.current;
-    if (!host || !content || !scroll) return;
-    const node = findNodeHandle(content);
-    if (node == null) return;
+    if (!host) return;
+    const contentNode = getScrollContentNode(listRef.current);
+    if (contentNode == null) return;
     host.measureLayout(
-      node,
+      contentNode as Parameters<RNView["measureLayout"]>[0],
       (_x, y) => {
-        scroll.scrollTo({ y: Math.max(0, y - 16), animated: true });
+        listRef.current?.scrollToOffset({
+          offset: Math.max(0, y - 16),
+          animated: true,
+        });
       },
       () => {},
     );
@@ -72,45 +96,41 @@ export default function ScreenList<T>({
   return (
     <ScrollToFormContext.Provider value={scrollToForm}>
       <FormScrollContext.Provider value={scrollChildIntoView}>
-      <Screen>
-        <KeyboardAvoidingView
-          style={styles.flex}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-          keyboardVerticalOffset={Layout.keyboardOffset}
-        >
-          <ScrollView
-            ref={scrollRef}
+        <Screen>
+          <KeyboardAvoidingView
             style={styles.flex}
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={styles.content}
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            keyboardVerticalOffset={Layout.keyboardOffset}
           >
-            <RNView ref={contentRef} collapsable={false}>
-            {hero ? <View style={styles.hero}>{hero}</View> : null}
-            <View nativeID="entity-form" style={styles.form}>
-              {form}
-              <Text style={[Type.meta, styles.sectionLabel]}>{countLabel}</Text>
-            </View>
-            {data.length === 0 ? (
-              <Text style={[Type.meta, styles.emptyText]}>{emptyText}</Text>
-            ) : (
-              data.map((item, index) => (
-                <View key={keyExtractor(item)}>
-                  {renderItem({
-                    item,
-                    index,
-                    separators: {
-                      highlight: () => {},
-                      unhighlight: () => {},
-                      updateProps: () => {},
-                    },
-                  })}
-                </View>
-              ))
-            )}
-            </RNView>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </Screen>
+            <FlatList
+              ref={listRef}
+              style={styles.flex}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.content}
+              data={data}
+              keyExtractor={keyExtractor}
+              renderItem={renderItem}
+              initialNumToRender={12}
+              maxToRenderPerBatch={12}
+              windowSize={7}
+              removeClippedSubviews={Platform.OS !== "web"}
+              ListHeaderComponent={
+                <>
+                  {hero ? <View style={styles.hero}>{hero}</View> : null}
+                  <View nativeID="entity-form" style={styles.form}>
+                    {form}
+                    <Text style={[Type.meta, styles.sectionLabel]}>
+                      {countLabel}
+                    </Text>
+                  </View>
+                </>
+              }
+              ListEmptyComponent={
+                <Text style={[Type.meta, styles.emptyText]}>{emptyText}</Text>
+              }
+            />
+          </KeyboardAvoidingView>
+        </Screen>
       </FormScrollContext.Provider>
     </ScrollToFormContext.Provider>
   );

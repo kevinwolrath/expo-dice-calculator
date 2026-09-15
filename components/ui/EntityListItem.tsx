@@ -1,4 +1,5 @@
 import { SymbolView } from "expo-symbols";
+import { memo } from "react";
 import { Platform, Pressable, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
 
@@ -8,14 +9,22 @@ import { useScrollToForm } from "@/components/ui/ScreenList";
 import { FontSize, Space, Type } from "@/constants/theme";
 
 type EntityListItemProps = {
+  /**
+   * Identifies the row for the onEdit/onDelete callbacks below. Passing the
+   * id (rather than a pre-bound `() => handleEdit(item)` closure) lets the
+   * parent screen keep those callbacks referentially stable across renders,
+   * which is what allows `memo` on this component to actually skip work.
+   */
+  id: string;
   title: string;
   meta?: string;
   description?: string | null;
-  onEdit: () => void;
-  onDelete?: () => void;
+  onEdit: (id: string) => void;
+  onDelete?: (id: string) => void;
 };
 
-export default function EntityListItem({
+function EntityListItem({
+  id,
   title,
   meta,
   description,
@@ -27,7 +36,7 @@ export default function EntityListItem({
   const scrollToForm = useScrollToForm();
 
   const handleEdit = () => {
-    onEdit();
+    onEdit(id);
     requestAnimationFrame(() => {
       scrollToForm();
     });
@@ -49,7 +58,7 @@ export default function EntityListItem({
               accessibilityLabel={t("common.delete")}
               onPress={(event) => {
                 event.stopPropagation();
-                onDelete();
+                onDelete(id);
               }}
               hitSlop={8}
             >
@@ -69,6 +78,8 @@ export default function EntityListItem({
     </Pressable>
   );
 }
+
+export default memo(EntityListItem);
 
 const styles = StyleSheet.create({
   rowBetween: {

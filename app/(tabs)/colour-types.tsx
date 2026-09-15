@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Alert, Platform } from "react-native";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Alert, Platform, type ListRenderItem } from "react-native";
 
 import { showMessage } from "@/components/alert";
 import { usePackSurface } from "@/components/usePackSurface";
@@ -47,14 +47,29 @@ export default function ColourTypesScreen() {
     loadAll();
   }, [loadAll]);
 
-  const materialTypeLabel = (id: string) =>
-    types.find((type) => type.material_type_id === id)?.description ??
-    String(id);
+  const materialTypeLabel = useCallback(
+    (id: string) =>
+      types.find((type) => type.material_type_id === id)?.description ??
+      String(id),
+    [types],
+  );
 
-  const materialsForColourType = (colourTypeId: string) =>
-    colourTypeMaterials
-      .filter((row) => row.colour_type_id === colourTypeId)
-      .map((row) => row.material_type_id);
+  const materialsForColourType = useCallback(
+    (colourTypeId: string) =>
+      colourTypeMaterials
+        .filter((row) => row.colour_type_id === colourTypeId)
+        .map((row) => row.material_type_id),
+    [colourTypeMaterials],
+  );
+
+  const materialTypeOptions = useMemo(
+    () =>
+      types.map((type) => ({
+        value: type.material_type_id,
+        label: type.description,
+      })),
+    [types],
+  );
 
   const handleSaveType = async () => {
     const nextErrors: typeof errors = {};
@@ -88,7 +103,7 @@ export default function ColourTypesScreen() {
     }
   };
 
-  const handleEditType = (item: ColourType) => {
+  const applyEditType = (item: ColourType) => {
     setTypeEditingId(item.colour_type_id);
     setDescription(item.description ?? "");
     setAllowedMaterialIds(materialsForColourType(item.colour_type_id));
@@ -99,6 +114,14 @@ export default function ColourTypesScreen() {
     });
   };
 
+  const handleEditType = useCallback(
+    (id: string) => {
+      const item = colourTypes.find((row) => row.colour_type_id === id);
+      if (item) applyEditType(item);
+    },
+    [colourTypes, materialsForColourType],
+  );
+
   const handleCancelType = () => {
     setDescription("");
     setAllowedMaterialIds([]);
@@ -107,35 +130,57 @@ export default function ColourTypesScreen() {
     setCleanForm(emptyForm);
   };
 
-  const handleDeleteType = (id: string) => {
-    if (Platform.OS === "web") {
-      if (
-        window.confirm(
-          `${t("colourTypes.deleteTitle")} - ${t("colourTypes.deleteMessage")}`,
-        )
-      ) {
-        (async () => {
-          await deleteColourType(id);
-          if (typeEditingId === id) handleCancelType();
-          await loadAll();
-        })();
+  const handleDeleteType = useCallback(
+    (id: string) => {
+      if (Platform.OS === "web") {
+        if (
+          window.confirm(
+            `${t("colourTypes.deleteTitle")} - ${t("colourTypes.deleteMessage")}`,
+          )
+        ) {
+          (async () => {
+            await deleteColourType(id);
+            if (typeEditingId === id) handleCancelType();
+            await loadAll();
+          })();
+        }
+        return;
       }
-      return;
-    }
 
-    Alert.alert(t("colourTypes.deleteTitle"), t("colourTypes.deleteMessage"), [
-      { text: t("common.cancel"), style: "cancel" },
-      {
-        text: t("common.delete"),
-        style: "destructive",
-        onPress: async () => {
-          await deleteColourType(id);
-          if (typeEditingId === id) handleCancelType();
-          await loadAll();
-        },
-      },
-    ]);
-  };
+      Alert.alert(
+        t("colourTypes.deleteTitle"),
+        t("colourTypes.deleteMessage"),
+        [
+          { text: t("common.cancel"), style: "cancel" },
+          {
+            text: t("common.delete"),
+            style: "destructive",
+            onPress: async () => {
+              await deleteColourType(id);
+              if (typeEditingId === id) handleCancelType();
+              await loadAll();
+            },
+          },
+        ],
+      );
+    },
+    [t, typeEditingId, deleteColourType, loadAll],
+  );
+
+  const renderItem: ListRenderItem<ColourType> = useCallback(
+    ({ item }) => (
+      <EntityListItem
+        id={item.colour_type_id}
+        title={item.description ?? String(item.colour_type_id)}
+        meta={materialsForColourType(item.colour_type_id)
+          .map(materialTypeLabel)
+          .join(", ")}
+        onEdit={handleEditType}
+        onDelete={handleDeleteType}
+      />
+    ),
+    [materialsForColourType, materialTypeLabel, handleEditType, handleDeleteType],
+  );
 
   return (
     <ScreenList
@@ -164,10 +209,7 @@ export default function ColourTypesScreen() {
             required
             label={t("colourTypes.allowedMaterials")}
             error={errors.materialTypeId}
-            options={types.map((type) => ({
-              value: type.material_type_id,
-              label: type.description,
-            }))}
+            options={materialTypeOptions}
             value={allowedMaterialIds}
             onChange={(value) => {
               setAllowedMaterialIds(value);
@@ -189,16 +231,7 @@ export default function ColourTypesScreen() {
           />
         </>
       }
-      renderItem={({ item }) => (
-        <EntityListItem
-          title={item.description ?? String(item.colour_type_id)}
-          meta={materialsForColourType(item.colour_type_id)
-            .map(materialTypeLabel)
-            .join(", ")}
-          onEdit={() => handleEditType(item)}
-          onDelete={() => handleDeleteType(item.colour_type_id)}
-        />
-      )}
+      renderItem={renderItem}
     />
   );
 }
