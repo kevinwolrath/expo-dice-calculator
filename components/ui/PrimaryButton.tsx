@@ -10,6 +10,7 @@ import {
 import { View } from "@/components/Themed";
 import { usePackSurface } from "@/components/usePackSurface";
 import { FontSize, Layout, Space } from "@/constants/theme";
+import { getThemePack, type ThemePackColors } from "@/constants/themePack";
 
 export type ButtonVariant =
   | "primary"
@@ -30,17 +31,17 @@ type PrimaryButtonProps = {
   compact?: boolean;
 };
 
-const DAY = {
-  primaryBg: "#2D8CFF",
-  primaryText: "#FFFFFF",
-  secondaryBg: "#8B5E3C",
-  secondaryText: "#F6EAD3",
-  cancelBg: "#1A2230",
-  cancelBorder: "rgba(190, 125, 55, 0.85)",
-  cancelText: "#F6EAD3",
-  destructiveBg: "#A94E3F",
-  destructiveText: "#FFFFFF",
-} as const;
+const dayPalette = (colors: ThemePackColors) => ({
+  primaryBg: colors.primary,
+  primaryText: colors.onPrimary,
+  secondaryBg: colors.wood,
+  secondaryText: colors.text,
+  cancelBg: colors.card,
+  cancelBorder: colors.border,
+  cancelText: colors.text,
+  destructiveBg: colors.destructive,
+  destructiveText: colors.onPrimary,
+});
 
 const NIGHT = {
   primaryBg: "#FFFFFF",
@@ -54,8 +55,12 @@ const NIGHT = {
   destructiveText: "#FFFFFF",
 } as const;
 
-const resolveTone = (variant: ButtonVariant, isNight: boolean) => {
-  const palette = isNight ? NIGHT : DAY;
+const resolveTone = (
+  variant: ButtonVariant,
+  isNight: boolean,
+  colors: ThemePackColors,
+) => {
+  const palette = isNight ? NIGHT : dayPalette(colors);
   const mapped = variant === "wood" || variant === "outline" ? "secondary" : variant;
 
   if (mapped === "primary") {
@@ -99,8 +104,8 @@ export default function PrimaryButton({
   icon,
   compact,
 }: PrimaryButtonProps) {
-  const { isNight } = usePackSurface();
-  const tone = resolveTone(variant, isNight);
+  const { isNight, packId } = usePackSurface();
+  const tone = resolveTone(variant, isNight, getThemePack(packId).colors);
 
   return (
     <Pressable

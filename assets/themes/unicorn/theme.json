@@ -1,0 +1,36 @@
+{
+  "id": "unicorn",
+  "name": "Unicorn",
+  "colors": {
+    "primaryDark": "#31164F",
+    "primary": "#8E44D7",
+    "accent": "#E88BEF",
+    "gold": "#F4C86A",
+    "wood": "#A76B91",
+    "panel": "#17152A",
+    "parchment": "#F5E2D2",
+    "text": "#FFF6FF",
+    "textMuted": "#D7B8E4",
+    "destructive": "#B94C78",
+    "onPrimary": "#FFFFFF",
+    "card": "#1E1A32",
+    "overlay": "rgba(25, 12, 45, 0.78)",
+    "inputBackground": "#29233F",
+    "inputBorder": "rgba(231, 190, 255, 0.55)",
+    "label": "#F8E8FF",
+    "placeholder": "#C9AFD8",
+    "header": "#31164F",
+    "tabBar": "#211631"
+  },
+  "assets": {
+    "background": "background.jpg",
+    "banner": "banner.jpg",
+    "icons": {
+      "notes": "icon_notes.png",
+      "material": "icon_material.png",
+      "method": "icon_method.png",
+      "colour": "icon_colour.png",
+      "dice": "icon_dice.png"
+    }
+  }
+}

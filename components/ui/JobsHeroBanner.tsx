@@ -14,7 +14,7 @@ import {
 import {
   BANNER_ASPECT_RATIO,
   SIGN_INSET,
-} from "@/components/ui/jobsHeroBanner";
+} from "@/components/ui/jobsHeroBannerLayout";
 
 const TITLE_COLOR = "#F6EAD3";
 const TITLE_OUTLINE = "#1A0C04";

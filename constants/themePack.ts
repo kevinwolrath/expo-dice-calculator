@@ -22,6 +22,7 @@ export type ThemePackColors = {
   header: string;
   tabBar: string;
   accent: string;
+  wood: string;
 };
 
 export type ThemePackPageDefaults = {
@@ -67,6 +68,7 @@ const packColorsFromManifest = (manifest: ThemeManifest): ThemePackColors => {
     header: color(raw, ["header", "primaryDark"], background),
     tabBar: color(raw, ["tabBar", "header", "primaryDark"], background),
     accent: color(raw, ["accent", "gold", "primary"], primary),
+    wood: color(raw, ["wood"], "#8B5E3C"),
   };
 };
 

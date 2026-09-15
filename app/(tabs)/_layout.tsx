@@ -6,6 +6,7 @@ import {
   Pressable,
   StyleSheet,
   Text as RNText,
+  type ColorValue,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -18,13 +19,11 @@ import { useClientOnlyValue } from "@/components/useClientOnlyValue";
 import { useColorScheme } from "@/components/useColorScheme";
 import { pageIdFromSegments } from "@/constants/pageTheme";
 import { Space, Type } from "@/constants/theme";
+import { getThemePack } from "@/constants/themePack";
 import { initDatabase } from "@/db";
+import useThemePackStore from "@/stores/useThemePackStore";
 import { useTranslation } from "react-i18next";
 
-const NAVY = "#0B1F3A";
-const ACTIVE = "#2D8CFF";
-const INACTIVE = "#E8C9A0";
-const GOLD_BORDER = "rgba(244, 199, 75, 0.25)";
 const TAB_BAR_BODY = 72;
 const ICON_SIZE = 22;
 
@@ -34,7 +33,7 @@ function TabBarLabel({
   focused,
 }: {
   title: string;
-  color: string;
+  color: ColorValue;
   focused: boolean;
 }) {
   return (
@@ -59,6 +58,8 @@ export default function TabLayout() {
   const segments = useSegments();
   const pageId = pageIdFromSegments(segments);
   const chrome = useChromeColors();
+  const packId = useThemePackStore((state) => state.packId);
+  const pack = getThemePack(packId);
   const insets = useSafeAreaInsets();
   const [databaseReady, setDatabaseReady] = useState(false);
   const [databaseError, setDatabaseError] = useState(false);
@@ -123,11 +124,15 @@ export default function TabLayout() {
     <PageThemeScope pageId={pageId}>
       <Tabs
         screenOptions={{
-          tabBarActiveTintColor: isNight ? "#ffffff" : ACTIVE,
-          tabBarInactiveTintColor: isNight ? "#aaaaaa" : INACTIVE,
+          tabBarActiveTintColor: isNight ? "#ffffff" : pack.colors.primary,
+          tabBarInactiveTintColor: isNight
+            ? "#aaaaaa"
+            : pack.colors.tabIconDefault,
           tabBarStyle: {
-            backgroundColor: isNight ? "#000000" : NAVY,
-            borderTopColor: isNight ? "rgba(255,255,255,0.25)" : GOLD_BORDER,
+            backgroundColor: isNight ? "#000000" : pack.colors.tabBar,
+            borderTopColor: isNight
+              ? "rgba(255,255,255,0.25)"
+              : pack.colors.border,
             borderTopWidth: 1,
             height: TAB_BAR_BODY + insets.bottom,
             paddingTop: 6,

@@ -1,6 +1,10 @@
 import type { ImageSourcePropType } from "react-native";
 
-import { themeModules, type ThemeAssetMap } from "@/assets/themes";
+import {
+  themeModules,
+  type ThemeAssetMap,
+  type ThemePreviewAssets,
+} from "@/assets/themes";
 import { getThemePack, type ThemePackId } from "@/constants/themePack";
 
 export type PackIconName = "notes" | "material" | "method" | "colour" | "dice";
@@ -12,6 +16,7 @@ export type ThemePackAssets = {
   buttonOutline?: ImageSourcePropType;
   banner?: ImageSourcePropType;
   icons?: Partial<Record<PackIconName, ImageSourcePropType>>;
+  preview?: ThemePreviewAssets;
 };
 
 const assetsById = new Map(
@@ -25,6 +30,7 @@ const asPackAssets = (assets: ThemeAssetMap): ThemePackAssets => ({
   buttonOutline: assets.buttonOutline,
   banner: assets.banner,
   icons: assets.icons,
+  preview: assets.preview,
 });
 
 export const getThemePackAssets = (id: ThemePackId): ThemePackAssets => {

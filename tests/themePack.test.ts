@@ -5,6 +5,7 @@ import {
   listThemePacks,
   pageDefaultsForPack,
 } from "../constants/themePack";
+import { getThemePackAssets } from "../constants/themePackAssets";
 import {
   NIGHT_BACKGROUND,
   NIGHT_FOREGROUND,
@@ -49,6 +50,30 @@ test("night view ignores pack defaults and page customisation", () => {
   expect(resolved.imageUri).toBeNull();
 });
 
-test("rejects unknown pack ids", () => {
+test("rejects unknown pack ids and falls back to the default pack", () => {
   expect(isThemePackId("neon")).toBe(false);
+  expect(getThemePack("neon").id).toBe(DEFAULT_THEME_PACK_ID);
+});
+
+test("registers tavern and unicorn with shared asset keys", () => {
+  expect(listThemePacks().map((pack) => pack.id)).toEqual(["tavern", "unicorn"]);
+  expect(isThemePackId("unicorn")).toBe(true);
+  expect(DEFAULT_THEME_PACK_ID).toBe("tavern");
+
+  expect(getThemePack("unicorn").colors.primary).toBe("#8E44D7");
+  expect(getThemePack("unicorn").colors.wood).toBe("#A76B91");
+
+  for (const id of ["tavern", "unicorn"] as const) {
+    const assets = getThemePackAssets(id);
+    expect(assets.background).toBeDefined();
+    expect(assets.banner).toBeDefined();
+    expect(assets.icons?.notes).toBeDefined();
+    expect(assets.icons?.material).toBeDefined();
+    expect(assets.icons?.method).toBeDefined();
+    expect(assets.icons?.colour).toBeDefined();
+    expect(assets.icons?.dice).toBeDefined();
+    expect(assets.preview?.footerParchment).toBeDefined();
+    expect(assets.preview?.diceIcon).toBeDefined();
+    expect(assets.preview?.paletteIcon).toBeDefined();
+  }
 });

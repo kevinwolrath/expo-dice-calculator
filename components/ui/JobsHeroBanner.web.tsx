@@ -13,7 +13,7 @@ import {
 import {
   BANNER_ASPECT_RATIO,
   SIGN_INSET,
-} from "@/components/ui/jobsHeroBanner";
+} from "@/components/ui/jobsHeroBannerLayout";
 
 const TITLE_FONT =
   'Georgia, "Palatino Linotype", Palatino, "Times New Roman", serif';
