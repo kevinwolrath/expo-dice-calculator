@@ -1,0 +1,36 @@
+{
+  "id": "dragon",
+  "name": "Dragon",
+  "colors": {
+    "primaryDark": "#24100D",
+    "primary": "#8F1D14",
+    "accent": "#E64A19",
+    "gold": "#E7B23C",
+    "wood": "#6B3A22",
+    "panel": "#17110F",
+    "parchment": "#E8C88F",
+    "text": "#FFF1D0",
+    "textMuted": "#CFA66C",
+    "destructive": "#C62828",
+    "onPrimary": "#FFFFFF",
+    "card": "#201714",
+    "overlay": "rgba(20, 8, 5, 0.80)",
+    "inputBackground": "#2A201C",
+    "inputBorder": "rgba(231, 178, 60, 0.55)",
+    "label": "#F3D49A",
+    "placeholder": "#B89A78",
+    "header": "#24100D",
+    "tabBar": "#1B0D0A"
+  },
+  "assets": {
+    "background": "background.jpg",
+    "banner": "banner.jpg",
+    "icons": {
+      "notes": "icon_notes.png",
+      "material": "icon_material.png",
+      "method": "icon_method.png",
+      "colour": "icon_colour.png",
+      "dice": "icon_dice.png"
+    }
+  }
+}
