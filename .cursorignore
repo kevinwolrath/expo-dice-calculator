@@ -1,0 +1,25 @@
+# Third-party dependencies are untrusted AI context
+node_modules/
+**/node_modules/
+
+# Generated/build output
+.expo/
+dist/
+web-build/
+coverage/
+
+# Secrets and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p8
+*.p12
+*.jks
+*.mobileprovision
+
+# Local/editor/cache content
+.git/
+.idea/
+.vscode/
