@@ -1,9 +1,8 @@
-import { Link, Tabs, useSegments } from "expo-router";
+import { Tabs, useSegments } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Pressable,
   StyleSheet,
   Text as RNText,
   type ColorValue,
@@ -175,29 +174,6 @@ export default function TabLayout() {
                 }}
                 tintColor={color}
                 size={ICON_SIZE}
-              />
-            ),
-            headerRight: () => (
-              <HeaderActions
-                pageId="dicejob"
-                extra={
-                  <Link href="/modal" asChild>
-                    <Pressable>
-                      {({ pressed }) => (
-                        <SymbolView
-                          name={{
-                            ios: "info.circle",
-                            android: "info",
-                            web: "info",
-                          }}
-                          size={22}
-                          tintColor={chrome.icon}
-                          style={{ opacity: pressed ? 0.5 : 1 }}
-                        />
-                      )}
-                    </Pressable>
-                  </Link>
-                }
               />
             ),
           }}

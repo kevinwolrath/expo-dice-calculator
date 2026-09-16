@@ -220,14 +220,30 @@
     "nightLocked": "Die Nachtansicht verwendet immer einen schwarzen Hintergrund und weißen Text und kann nicht angepasst werden.",
     "missingPage": "Diese Seite kann nicht angepasst werden.",
     "permissionDenied": "Für ein Hintergrundbild wird der Zugriff auf die Fotos benötigt.",
-    "imageError": "Das Hintergrundbild konnte nicht gespeichert werden."
+    "imageError": "Das Hintergrundbild konnte nicht gespeichert werden.",
+    "addThemeZip": "Thema aus Zip hinzufügen",
+    "deleteTheme": "Thema löschen",
+    "themeName": "Themenname",
+    "themeNamePlaceholder": "Ordnername",
+    "saveTheme": "Thema speichern",
+    "themeMissingFiles": "Dieser Zip fehlt erforderliche Dateien: {{files}}",
+    "themeInvalidManifest": "theme.json fehlt oder ist ungültig.",
+    "themeInvalidName": "Geben Sie einen Themennamen ein, der als Ordner verwendet werden kann.",
+    "themeIdTaken": "Ein mitgeliefertes Thema verwendet bereits diesen Ordnernamen.",
+    "themeExists": "Ein Thema mit diesem Namen ist bereits installiert.",
+    "themeCannotDeleteBundled": "Mitgelieferte Themen können in der App nicht gelöscht werden.",
+    "themeImportError": "Das Themen-Zip konnte nicht importiert werden.",
+    "themeOverwriteTitle": "Thema ersetzen?",
+    "themeOverwriteMessage": "Ein Thema mit diesem Ordnernamen ist bereits installiert. Ersetzen?",
+    "overwriteTheme": "Überschreiben",
+    "themeDeleteTitle": "Thema löschen?",
+    "themeDeleteMessage": "Dadurch wird der installierte Themenordner von diesem Gerät entfernt."
+  },
+  "colorPicker": {
+    "title": "Farbe wählen"
   },
   "misc": {
     "noOptions": "Noch keine Optionen vorhanden",
-    "modalTitle": "Modal",
-    "modalOpenCode": "Öffnen Sie den Code für diesen Bildschirm:",
-    "modalChangeText": "Ändern Sie den Text, speichern Sie die Datei, und die App wird automatisch aktualisiert.",
-    "modalUpdateHelp": "Tippen Sie hier, wenn Ihre App nach Änderungen nicht automatisch aktualisiert wird",
     "notFoundTitle": "Hoppla!",
     "notFoundMessage": "Dieser Bildschirm existiert nicht.",
     "home": "Zum Startbildschirm"

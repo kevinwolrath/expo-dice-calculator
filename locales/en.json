@@ -220,14 +220,30 @@
     "nightLocked": "Night view always uses a black background and white text and cannot be customised.",
     "missingPage": "This page cannot be customised.",
     "permissionDenied": "Photo library access is needed to choose a background image.",
-    "imageError": "Could not save the background image."
+    "imageError": "Could not save the background image.",
+    "addThemeZip": "Add theme from zip",
+    "deleteTheme": "Delete theme",
+    "themeName": "Theme name",
+    "themeNamePlaceholder": "Folder name",
+    "saveTheme": "Save theme",
+    "themeMissingFiles": "This zip is missing required files: {{files}}",
+    "themeInvalidManifest": "theme.json is missing or invalid.",
+    "themeInvalidName": "Enter a theme name that can be used as a folder.",
+    "themeIdTaken": "A built-in theme already uses that folder name.",
+    "themeExists": "A theme with that name is already installed.",
+    "themeCannotDeleteBundled": "Built-in themes cannot be deleted in the app.",
+    "themeImportError": "Could not import the theme zip.",
+    "themeOverwriteTitle": "Replace theme?",
+    "themeOverwriteMessage": "A theme with this folder name is already installed. Replace it?",
+    "overwriteTheme": "Overwrite",
+    "themeDeleteTitle": "Delete theme?",
+    "themeDeleteMessage": "This removes the installed theme folder from this device."
+  },
+  "colorPicker": {
+    "title": "Choose a colour"
   },
   "misc": {
     "noOptions": "No options yet",
-    "modalTitle": "Modal",
-    "modalOpenCode": "Open up the code for this screen:",
-    "modalChangeText": "Change any of the text, save the file, and your app will automatically update.",
-    "modalUpdateHelp": "Tap here if your app doesn't automatically update after making changes",
     "notFoundTitle": "Oops!",
     "notFoundMessage": "This screen doesn't exist.",
     "home": "Go to home screen!"

@@ -15,7 +15,7 @@ import PrimaryButton from "@/components/ui/PrimaryButton";
 import {
   isPageThemeId,
 } from "@/constants/pageTheme";
-import { isThemePackId, listThemePacks, pageDefaultsForPack } from "@/constants/themePack";
+import { pageDefaultsForPack } from "@/constants/themePack";
 import { Layout, Space, Type } from "@/constants/theme";
 import { useColorScheme } from "@/components/useColorScheme";
 import usePageThemeStore from "@/stores/usePageThemeStore";
@@ -35,7 +35,6 @@ export default function PageThemeScreen() {
   const setPageTheme = usePageThemeStore((state) => state.setPageTheme);
   const resetPageTheme = usePageThemeStore((state) => state.resetPageTheme);
   const packId = useThemePackStore((state) => state.packId);
-  const setPackId = useThemePackStore((state) => state.setPackId);
   const [picking, setPicking] = useState(false);
 
   const pageTitle = useMemo(() => {
@@ -117,20 +116,6 @@ export default function PageThemeScreen() {
     <PageThemeScope pageId={pageId}>
     <Screen>
       <ScrollView contentContainerStyle={styles.content}>
-        <ChipSelect
-          label={t("pageTheme.appTheme")}
-          value={packId ?? ""}
-          onChange={(value) => {
-            void setPackId(isThemePackId(value) ? value : null);
-          }}
-          options={[
-            { value: "", label: t("pageTheme.noTheme") },
-            ...listThemePacks().map((pack) => ({
-              value: pack.id,
-              label: pack.name,
-            })),
-          ]}
-        />
         <Text style={Type.heading}>
           {t("pageTheme.forPage", { page: pageTitle })}
         </Text>

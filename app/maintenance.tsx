@@ -5,7 +5,10 @@ import { confirm, showMessage } from "@/components/alert";
 import { PageThemeScope } from "@/components/pageTheme/PageThemeScope";
 import { Screen, Text, View } from "@/components/Themed";
 import Card from "@/components/ui/Card";
+import ChipSelect from "@/components/ui/ChipSelect";
 import PrimaryButton from "@/components/ui/PrimaryButton";
+import ThemePackManager from "@/components/ui/ThemePackManager";
+import { isThemePackId, listThemePacks } from "@/constants/themePack";
 import { Layout, Space, Type } from "@/constants/theme";
 import {
   BackupParseError,
@@ -14,11 +17,16 @@ import {
 } from "@/db";
 import { pickBackupJsonText, saveBackupJson } from "@/db/backupFile";
 import useInventoryStore from "@/stores/useInventoryStore";
+import useThemePackStore from "@/stores/useThemePackStore";
+import { useUserThemeCatalogStore } from "@/stores/useUserThemeCatalogStore";
 import { useTranslation } from "react-i18next";
 
 export default function MaintenanceScreen() {
   const { t } = useTranslation();
   const loadAll = useInventoryStore((s) => s.loadAll);
+  const packId = useThemePackStore((state) => state.packId);
+  const setPackId = useThemePackStore((state) => state.setPackId);
+  useUserThemeCatalogStore((state) => state.revision);
   const [busy, setBusy] = useState(false);
 
   const handleExport = async () => {
@@ -66,6 +74,22 @@ export default function MaintenanceScreen() {
     <PageThemeScope pageId="maintenance">
     <Screen>
       <ScrollView contentContainerStyle={styles.content}>
+        <ChipSelect
+          label={t("pageTheme.appTheme")}
+          value={packId ?? ""}
+          onChange={(value) => {
+            void setPackId(isThemePackId(value) ? value : null);
+          }}
+          options={[
+            { value: "", label: t("pageTheme.noTheme") },
+            ...listThemePacks().map((pack) => ({
+              value: pack.id,
+              label: pack.name,
+            })),
+          ]}
+          wrap
+        />
+        <ThemePackManager />
         <Text style={Type.heading}>{t("maintenance.intro")}</Text>
         <Card>
           <View style={styles.actions}>
@@ -93,6 +117,7 @@ const styles = StyleSheet.create({
   content: {
     padding: Layout.screenGutter,
     gap: Space[4],
+    paddingBottom: Layout.listBottom,
   },
   actions: {
     gap: Space[3],

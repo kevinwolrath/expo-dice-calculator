@@ -1,6 +1,5 @@
 import { Link } from "expo-router";
 import { SymbolView } from "expo-symbols";
-import { type ReactNode } from "react";
 import { Pressable, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
 
@@ -11,11 +10,9 @@ import type { PageThemeId } from "@/constants/pageTheme";
 import { Space } from "@/constants/theme";
 
 export default function HeaderActions({
-  extra,
   pageId,
   compact,
 }: {
-  extra?: ReactNode;
   pageId?: PageThemeId | null;
   compact?: boolean;
 }) {
@@ -45,7 +42,6 @@ export default function HeaderActions({
           )}
         </Pressable>
       </Link>
-      {extra}
     </View>
   );
 }
