@@ -12,6 +12,7 @@ import i18n from "@/constants/i18n";
 import useAppearanceStore from "@/stores/useAppearanceStore";
 import usePageThemeStore from "@/stores/usePageThemeStore";
 import useThemePackStore from "@/stores/useThemePackStore";
+import { useUserThemeCatalogStore } from "@/stores/useUserThemeCatalogStore";
 import { I18nextProvider, useTranslation } from "react-i18next";
 
 export {
@@ -38,9 +39,12 @@ export default function RootLayout() {
   }, [error]);
 
   useEffect(() => {
+    void (async () => {
+      await useUserThemeCatalogStore.getState().hydrate();
+      await useThemePackStore.getState().hydrate();
+    })();
     void useAppearanceStore.getState().hydrate();
     void usePageThemeStore.getState().hydrate();
-    void useThemePackStore.getState().hydrate();
   }, []);
 
   useEffect(() => {
@@ -86,7 +90,6 @@ function RootLayoutNav() {
           name="page-theme"
           options={{ title: t("pageTheme.title") }}
         />
-        <Stack.Screen name="modal" options={{ presentation: "modal" }} />
       </Stack>
     </ThemeProvider>
   );

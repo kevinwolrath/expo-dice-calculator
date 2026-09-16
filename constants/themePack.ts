@@ -1,6 +1,10 @@
 import { themeModules, type ThemeManifest } from "@/assets/themes";
 import Colors, { HeaderColors } from "@/constants/Colors";
 import type { PageThemeId } from "@/constants/pageTheme";
+import {
+  getUserThemeEntry,
+  listUserThemeEntries,
+} from "@/constants/userThemeRegistry";
 
 export type ThemePackId = string;
 
@@ -73,13 +77,19 @@ const packColorsFromManifest = (manifest: ThemeManifest): ThemePackColors => {
   };
 };
 
-const PACKS: ThemePack[] = themeModules.map(({ manifest }) => ({
+export const themePackFromManifest = (
+  manifest: ThemeManifest,
+): ThemePack => ({
   id: manifest.id,
   name: manifest.name,
   colors: packColorsFromManifest(manifest),
-}));
+});
 
-const packById = new Map(PACKS.map((pack) => [pack.id, pack]));
+const BUNDLED_PACKS: ThemePack[] = themeModules.map(({ manifest }) =>
+  themePackFromManifest(manifest),
+);
+
+const bundledById = new Map(BUNDLED_PACKS.map((pack) => [pack.id, pack]));
 
 /** No pack selected, or the stored pack folder is gone. */
 export const DEFAULT_THEME_PACK_ID: ThemePackId | null = null;
@@ -106,17 +116,28 @@ export const UNSTYLED_PACK_COLORS: ThemePackColors = {
   wood: Colors.light.card,
 };
 
-export const isThemePackId = (value: unknown): value is ThemePackId =>
-  typeof value === "string" && packById.has(value);
+export const isBundledThemePackId = (value: unknown): value is ThemePackId =>
+  typeof value === "string" && bundledById.has(value);
 
-export const getThemePack = (id: ThemePackId | null | undefined): ThemePack | null =>
-  id && packById.has(id) ? packById.get(id)! : null;
+export const isUserThemePackId = (value: unknown): value is ThemePackId =>
+  typeof value === "string" && Boolean(getUserThemeEntry(value));
+
+export const isThemePackId = (value: unknown): value is ThemePackId =>
+  isBundledThemePackId(value) || isUserThemePackId(value);
+
+export const getThemePack = (id: ThemePackId | null | undefined): ThemePack | null => {
+  if (!id) return null;
+  return bundledById.get(id) ?? getUserThemeEntry(id)?.pack ?? null;
+};
 
 export const themeColorsForPack = (
   id: ThemePackId | null | undefined,
 ): ThemePackColors => getThemePack(id)?.colors ?? UNSTYLED_PACK_COLORS;
 
-export const listThemePacks = (): ThemePack[] => PACKS;
+export const listThemePacks = (): ThemePack[] => {
+  const userPacks = listUserThemeEntries().map((entry) => entry.pack);
+  return [...BUNDLED_PACKS, ...userPacks];
+};
 
 export const pageDefaultsForPack = (
   packId: ThemePackId | null | undefined,

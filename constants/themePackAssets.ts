@@ -6,6 +6,7 @@ import {
   type ThemePreviewAssets,
 } from "@/assets/themes";
 import { type ThemePackId } from "@/constants/themePack";
+import { getUserThemeEntry } from "@/constants/userThemeRegistry";
 
 export type PackIconName = "notes" | "material" | "method" | "colour" | "dice";
 
@@ -37,6 +38,8 @@ export const getThemePackAssets = (
   id: ThemePackId | null | undefined,
 ): ThemePackAssets => {
   if (!id) return {};
+  const user = getUserThemeEntry(id);
+  if (user) return user.assets;
   const assets = assetsById.get(id);
   return assets ? asPackAssets(assets) : {};
 };

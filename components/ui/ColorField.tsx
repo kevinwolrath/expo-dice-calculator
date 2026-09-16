@@ -3,6 +3,7 @@ import { Platform, Pressable, StyleSheet, TextInput, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { Text, useThemeColors } from "@/components/Themed";
+import ColorPickerSheet from "@/components/ui/ColorPickerSheet";
 import FieldLabel from "@/components/ui/FieldLabel";
 import FieldPanel from "@/components/ui/FieldPanel";
 import {
@@ -33,6 +34,7 @@ export default function ColorField({
   const control = useControlColors();
   const [draft, setDraft] = useState(value ?? "");
   const [focused, setFocused] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const preview = normalizeHexColor(draft) ?? fallback;
 
   useEffect(() => {
@@ -76,19 +78,29 @@ export default function ColorField({
               },
             })
           : (
-            <View
-              style={[
-                styles.swatch,
-                {
-                  backgroundColor: preview,
-                  borderColor: control.border,
-                  width: Control.height,
-                  height: Control.height,
-                  borderRadius: Control.radius,
-                  borderWidth: Control.borderWidth,
-                },
-              ]}
-            />
+            // Native has no built-in colour-picker UI (unlike the web
+            // `<input type="color">` above), so the swatch itself opens a
+            // touch-driven picker sheet instead of being a static square.
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t("colorPicker.title")}
+              onPress={() => setPickerOpen(true)}
+              hitSlop={4}
+            >
+              <View
+                style={[
+                  styles.swatch,
+                  {
+                    backgroundColor: preview,
+                    borderColor: control.border,
+                    width: Control.height,
+                    height: Control.height,
+                    borderRadius: Control.radius,
+                    borderWidth: Control.borderWidth,
+                  },
+                ]}
+              />
+            </Pressable>
           )}
         <TextInput
           value={draft}
@@ -114,6 +126,15 @@ export default function ColorField({
           </Pressable>
         ) : null}
       </View>
+      {Platform.OS !== "web" ? (
+        <ColorPickerSheet
+          visible={pickerOpen}
+          value={preview}
+          label={label}
+          onChange={commit}
+          onClose={() => setPickerOpen(false)}
+        />
+      ) : null}
     </FieldPanel>
   );
 }

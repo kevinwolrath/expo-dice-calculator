@@ -1,5 +1,5 @@
 ---
-description: Expo web and native are separate runtime targets; do not break one platform to fix the other
+description: Mobile-first Expo app; web is test-only, not a shipping target
 alwaysApply: true
 ---
 
@@ -7,16 +7,13 @@ alwaysApply: true
 
 ## Project Context
 
-This project is an **Expo React Native application** that must support both:
+This project is an **Expo React Native application for Android and iOS**.
 
-- Android / iOS mobile
-- Expo Web / web browsers
+**Web is not a product target.** Expo Web is allowed only as a convenience for testing. Do not design features for browsers. Do not delay or weaken mobile behaviour to make web complete.
 
-Treat **Web** and **Mobile** as separate runtime targets that share one codebase.
+Treat **Web** and **Mobile** as separate runtimes that share one codebase. A React Native component, Expo package, or third-party library may still behave differently on web; that matters only insofar as `expo start --web` should not be needlessly broken.
 
-Do not assume that a React Native component, Expo package, or third-party library behaves identically on web and mobile.
-
-A change is **not complete just because TypeScript compiles or Expo builds**. It must be designed to work correctly on both runtime targets.
+A change is complete when it works on mobile. TypeScript compiling or a web export succeeding is not sufficient on its own, and a web gap is not a reason to withhold a native implementation.
 
 ---
 
@@ -24,11 +21,10 @@ A change is **not complete just because TypeScript compiles or Expo builds**. It
 
 When fixing a platform-specific problem:
 
-- Preserve the implementation that already works on the other platform.
+- Preserve working mobile behaviour.
 - Do not replace working mobile behaviour just to fix web.
-- Do not replace working web behaviour just to fix mobile.
-- Prefer platform-specific implementations behind a shared interface.
-- Avoid unrelated rewrites while fixing a platform issue.
+- A web-only workaround is acceptable for test browsers; do not let it dictate the native design.
+- Prefer platform-specific implementations behind a shared interface when web would otherwise crash the test app.
 
 For example:
 
@@ -401,18 +397,18 @@ Before declaring a cross-platform change complete, verify:
 - [ ] New dependencies are compatible with the project's Expo version.
 - [ ] TypeScript checks pass.
 - [ ] Relevant Expo build/bundle checks pass.
-- [ ] Web behaviour has been considered.
 - [ ] Android/iOS behaviour has been considered.
+- [ ] Web was not treated as a shipping target; test-only web may remain incomplete.
 - [ ] No unrelated functionality was rewritten or removed.
 
 ---
 
 ## Instruction Priority
 
-For this project, **cross-platform compatibility is a core requirement, not an optional improvement**.
+For this project, **mobile is the product**. Web is a test harness.
 
-When implementing any feature, assume it must work on both Expo Web and Android/iOS unless the task explicitly states that the feature is platform-specific.
+When implementing any feature, assume Android/iOS must work. Do not assume Expo Web must be feature-complete.
 
-When web and mobile require different implementations, prefer clean platform-specific components sharing the same interface over forcing one implementation to work everywhere.
+When web and mobile would need different implementations, implement the native path. Keep or add a `.web.tsx` stub only if that is the cheapest way to keep the test browser from crashing.
 
-When uncertain about platform compatibility, investigate first rather than guessing.
+When uncertain about a native API, check Expo SDK 57 docs rather than substituting a browser API.
