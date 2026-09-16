@@ -47,9 +47,10 @@ export const collapseZipRoot = (paths: string[]): Map<string, string> => {
     const slash = path.indexOf("/");
     return slash === -1 ? "" : path.slice(0, slash + 1);
   };
-  const prefixes = new Set(normalized.map(prefixOf));
-  const sharedRoot =
-    prefixes.size === 1 ? [...prefixes][0]! : "";
+  const nestedPrefixes = new Set(
+    normalized.filter((path) => path.includes("/")).map(prefixOf),
+  );
+  const sharedRoot = nestedPrefixes.size === 1 ? [...nestedPrefixes][0]! : "";
   const map = new Map<string, string>();
   for (const path of normalized) {
     const relative =
