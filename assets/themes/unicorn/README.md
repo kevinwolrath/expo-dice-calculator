@@ -1,4 +1,4 @@
-# Dice Job Manager — Unicorn Theme
+# DiceForge — Unicorn Theme
 
 Standalone Unicorn theme asset pack.
 

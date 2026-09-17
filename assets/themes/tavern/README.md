@@ -1,4 +1,4 @@
-# Dice Job Manager Tavern Theme Asset Pack
+# DiceForge Tavern Theme Asset Pack
 
 Day-only theme pack. Night view is not customised by this pack.
 
