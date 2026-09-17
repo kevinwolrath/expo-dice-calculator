@@ -184,8 +184,11 @@ const deleteWeb = async (id: string): Promise<void> => {
   const tx = db.transaction([META_STORE, FILE_STORE], "readwrite");
   await idbRequest(tx.objectStore(META_STORE).delete(id));
   const store = tx.objectStore(FILE_STORE);
-  for (const name of REQUIRED_THEME_FILES) {
-    await idbRequest(store.delete(fileKey(id, name)));
+  const keys = await idbRequest(
+    store.getAllKeys(IDBKeyRange.bound(`${id}/`, `${id}/\uffff`)),
+  );
+  for (const key of keys) {
+    await idbRequest(store.delete(key));
   }
   db.close();
 };
