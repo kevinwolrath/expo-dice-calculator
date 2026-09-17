@@ -28,7 +28,7 @@
     "useLight": "Day view"
   },
   "startup": {
-    "loadingTitle": "Preparing to Roll your Dice",
+    "loadingTitle": "Preparing DiceForge",
     "loadingMessage": "Loading the database...",
     "errorTitle": "Database unavailable",
     "errorMessage": "The database could not be loaded.",
@@ -36,7 +36,7 @@
   },
   "jobs": {
     "title": "Dice Jobs",
-    "heroTitle": "Dice Job Manager",
+    "heroTitle": "DiceForge",
     "heroTagline": "PLAN  ◆  CREATE  ◆  ROLL",
     "jobName": "Name",
     "description": "Notes",

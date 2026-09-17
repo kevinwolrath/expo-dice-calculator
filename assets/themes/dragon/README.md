@@ -1,4 +1,4 @@
-# Dice Job Manager — Dragon Theme
+# DiceForge — Dragon Theme
 
 Standalone Dragon theme asset pack.
 

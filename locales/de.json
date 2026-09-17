@@ -28,7 +28,7 @@
     "useLight": "Tagesansicht"
   },
   "startup": {
-    "loadingTitle": "Würfelrechner wird vorbereitet",
+    "loadingTitle": "DiceForge wird vorbereitet",
     "loadingMessage": "Datenbank wird geladen...",
     "errorTitle": "Datenbank nicht verfügbar",
     "errorMessage": "Die Datenbank konnte nicht geladen werden.",
@@ -36,7 +36,7 @@
   },
   "jobs": {
     "title": "Würfelaufträge",
-    "heroTitle": "Dice Job Manager",
+    "heroTitle": "DiceForge",
     "heroTagline": "PLANEN  ◆  ERSTELLEN  ◆  WÜRFELN",
     "jobName": "Auftragsname",
     "description": "Beschreibung",
