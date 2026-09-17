@@ -23,5 +23,6 @@ export const pickThemeZipBytes = async (): Promise<ArrayBuffer | null> => {
   }
 
   const file = new File(asset.uri);
-  return file.arrayBuffer();
+  const bytes = await file.bytes();
+  return bytes.slice().buffer;
 };

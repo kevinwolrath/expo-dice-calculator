@@ -226,7 +226,7 @@
     "themeName": "Themenname",
     "themeNamePlaceholder": "Ordnername",
     "saveTheme": "Thema speichern",
-    "themeMissingFiles": "Dieser Zip fehlt erforderliche Dateien: {{files}}",
+    "themeMissingFiles": "In diesem Zip fehlen erforderliche Dateien: {{files}}",
     "themeInvalidManifest": "theme.json fehlt oder ist ungültig.",
     "themeInvalidName": "Geben Sie einen Themennamen ein, der als Ordner verwendet werden kann.",
     "themeIdTaken": "Ein mitgeliefertes Thema verwendet bereits diesen Ordnernamen.",
