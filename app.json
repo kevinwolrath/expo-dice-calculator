@@ -23,7 +23,7 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.snackbearer.expodicecalculator",
-      "versionCode": 2
+      "versionCode": 25
     },
     "web": {
       "bundler": "metro",
