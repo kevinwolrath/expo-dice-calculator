@@ -35,8 +35,14 @@ jobs:
       - name: Run unit tests
         run: npm test -- --ci --runInBand
 
+      - name: Print DiceForge version
+        run: node scripts/print-app-version.js
+
       - name: Generate Android project
         run: npx expo prebuild --platform android --non-interactive
+
+      - name: Verify generated Android version
+        run: node scripts/verify-android-prebuild-version.js
 
       - name: Restore Android keystore
         shell: bash
