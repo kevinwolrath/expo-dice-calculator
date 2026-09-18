@@ -1,5 +1,10 @@
+const fs = require("fs");
+const os = require("os");
+const path = require("path");
+
 const {
   applyIncrement,
+  incrementAppJson,
   incrementPatchVersion,
   incrementVersionCode,
 } = require("../scripts/increment-version.js");
@@ -42,4 +47,40 @@ test("fails clearly when version cannot be read", () => {
     /Cannot read android.versionCode/,
   );
   expect(() => applyIncrement({})).toThrow(/Cannot read version/);
+});
+
+test("writes the incremented version to a temporary app.json", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "diceforge-version-"));
+  const file = path.join(dir, "app.json");
+  try {
+    fs.writeFileSync(
+      file,
+      `${JSON.stringify(
+        {
+          expo: {
+            name: "DiceForge",
+            version: "089.0.4",
+            android: {
+              package: "com.snackbearer.expodicecalculator",
+              versionCode: 2,
+            },
+          },
+        },
+        null,
+        2,
+      )}\n`,
+    );
+
+    incrementAppJson(file);
+
+    const updated = JSON.parse(fs.readFileSync(file, "utf8"));
+    expect(updated.expo.version).toBe("089.0.5");
+    expect(updated.expo.android.versionCode).toBe(3);
+    expect(updated.expo.android.package).toBe(
+      "com.snackbearer.expodicecalculator",
+    );
+    expect(updated.expo.name).toBe("DiceForge");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });

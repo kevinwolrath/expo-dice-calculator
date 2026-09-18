@@ -1,6 +1,8 @@
 const fs = require("fs");
 const path = require("path");
 
+const { assertAndroidVersionCode } = require("./android-version");
+
 const VERSION_PATTERN = /^(089)\.(\d+)\.(\d+)$/;
 
 const incrementPatchVersion = (version) => {
@@ -20,12 +22,7 @@ const incrementPatchVersion = (version) => {
 };
 
 const incrementVersionCode = (versionCode) => {
-  if (!Number.isInteger(versionCode) || versionCode < 1) {
-    throw new Error(
-      `Cannot read android.versionCode: expected a positive integer, got ${JSON.stringify(versionCode)}.`,
-    );
-  }
-  return versionCode + 1;
+  return assertAndroidVersionCode(versionCode) + 1;
 };
 
 const applyIncrement = (app) => {
