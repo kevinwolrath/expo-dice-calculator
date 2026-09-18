@@ -6,7 +6,11 @@ on:
       - develop
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: android-deploy-develop
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -34,6 +38,9 @@ jobs:
 
       - name: Run unit tests
         run: npm test -- --ci --runInBand
+
+      - name: Increment DiceForge release version
+        run: npm run version:increment
 
       - name: Print DiceForge version
         run: node scripts/print-app-version.js
@@ -118,3 +125,17 @@ jobs:
           releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
           track: internal
           status: completed
+
+      - name: Persist deployed version
+        if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app.json
+          if git diff --cached --quiet; then
+            echo "No version change to persist."
+            exit 0
+          fi
+          git commit -m "chore: advance Android release version [skip ci]"
+          git push origin HEAD:develop
