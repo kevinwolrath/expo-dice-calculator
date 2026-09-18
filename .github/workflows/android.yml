@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: android-deploy-develop
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Build Android AAB
@@ -34,6 +38,21 @@ jobs:
 
       - name: Run unit tests
         run: npm test -- --ci --runInBand
+
+      - name: Refresh to latest develop
+        shell: bash
+        run: |
+          git fetch origin develop
+          git checkout --detach origin/develop
+
+      - name: Increment DiceForge release version
+        run: npm run version:increment
+
+      - name: Save allocated release version
+        uses: actions/upload-artifact@v4
+        with:
+          name: allocated-release-version
+          path: app.json
 
       - name: Print DiceForge version
         run: node scripts/print-app-version.js
@@ -118,3 +137,37 @@ jobs:
           releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
           track: internal
           status: completed
+
+  persist-version:
+    name: Persist deployed Android version
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout latest develop
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+
+      - name: Download allocated release version
+        uses: actions/download-artifact@v4
+        with:
+          name: allocated-release-version
+          path: allocated-release-version
+
+      - name: Persist deployed version
+        shell: bash
+        run: |
+          cp allocated-release-version/app.json app.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app.json
+          if git diff --cached --quiet; then
+            echo "No version change to persist."
+            exit 0
+          fi
+          git commit -m "chore: advance Android release version [skip ci]"
+          git push origin HEAD:develop
