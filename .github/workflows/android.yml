@@ -42,6 +42,10 @@ jobs:
         shell: bash
         run: |
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/keystore.jks
+          test -s android/app/keystore.jks
+
+      - name: Configure Android release signing
+        run: node scripts/configure-android-release-signing.js
 
       - name: Build signed Android App Bundle
         working-directory: android
@@ -50,11 +54,48 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          ./gradlew bundleRelease \
-            -PMYAPP_UPLOAD_STORE_FILE=keystore.jks \
-            -PMYAPP_UPLOAD_STORE_PASSWORD="$ANDROID_KEYSTORE_PASSWORD" \
-            -PMYAPP_UPLOAD_KEY_ALIAS="$ANDROID_KEY_ALIAS" \
-            -PMYAPP_UPLOAD_KEY_PASSWORD="$ANDROID_KEY_PASSWORD"
+          if [ -z "$ANDROID_KEYSTORE_PASSWORD" ] || [ -z "$ANDROID_KEY_ALIAS" ] || [ -z "$ANDROID_KEY_PASSWORD" ]; then
+            echo "Missing Android signing secrets."
+            exit 1
+          fi
+          ./gradlew bundleRelease
+
+      - name: Verify release AAB signing certificate
+        shell: bash
+        env:
+          EXPECTED_SHA1: "A4:12:9E:A3:B7:70:1B:14:93:55:63:65:4C:31:36:39:93:C4:3E:59"
+        run: |
+          AAB="android/app/build/outputs/bundle/release/app-release.aab"
+          if [ ! -f "$AAB" ]; then
+            echo "Missing release AAB at $AAB"
+            exit 1
+          fi
+          CERT_OUT=$(keytool -printcert -jarfile "$AAB")
+          echo "$CERT_OUT"
+          ACTUAL=$(
+            printf '%s\n' "$CERT_OUT" \
+              | grep -iE 'SHA-?1:' \
+              | head -n 1 \
+              | sed -E 's/.*SHA-?1:[[:space:]]*//I' \
+              | tr -d '[:space:]' \
+              | tr '[:lower:]' '[:upper:]'
+          )
+          EXPECTED_NORM=$(
+            printf '%s' "$EXPECTED_SHA1" \
+              | tr -d '[:space:]' \
+              | tr '[:lower:]' '[:upper:]'
+          )
+          if [ -z "$ACTUAL" ]; then
+            echo "Could not read SHA1 from the release AAB certificate."
+            exit 1
+          fi
+          if [ "$ACTUAL" != "$EXPECTED_NORM" ]; then
+            echo "Release AAB SHA1 mismatch."
+            echo "expected=$EXPECTED_SHA1"
+            echo "actual=$ACTUAL"
+            exit 1
+          fi
+          echo "Release AAB SHA1 matches the Play upload certificate."
 
       - name: Upload Android App Bundle
         uses: actions/upload-artifact@v4
