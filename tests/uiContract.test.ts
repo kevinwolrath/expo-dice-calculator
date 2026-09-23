@@ -16,7 +16,7 @@ const walk = (dir: string, files: string[] = []) => {
 };
 
 const PROHIBITED =
-  /["'`](Add job|Save job|Add colour|Save changes|Save colour|Add type|Save type|Add method|Save method)["'`]/;
+  /["'`](Add job|Save job|Add Job|Save Job|Create Job|Save Changes|Add colour|Save changes|Save colour|Add type|Save type|Add method|Save method)["'`]/;
 
 test("UI source does not use contextual CRUD action labels", () => {
   const files = [

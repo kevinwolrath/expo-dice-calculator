@@ -1,5 +1,5 @@
 import { SymbolView } from "expo-symbols";
-import { Pressable } from "react-native";
+import { Platform, Pressable } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { useChromeColors } from "@/components/Themed";
@@ -14,12 +14,13 @@ export default function ThemeToggle() {
   const isDark = colorScheme === "dark";
   const chrome = useChromeColors();
 
+  const label = isDark ? t("appearance.useLight") : t("appearance.useDark");
+
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={
-        isDark ? t("appearance.useLight") : t("appearance.useDark")
-      }
+      accessibilityLabel={label}
+      {...(Platform.OS === "web" ? { title: label } : null)}
       onPress={toggleColorScheme}
       hitSlop={8}
       style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}

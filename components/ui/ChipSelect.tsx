@@ -37,7 +37,7 @@ type ChipSelectProps = {
 );
 
 export default function ChipSelect(props: ChipSelectProps) {
-  const { label, options, emptyHint, wrap, required, error, focusRef } = props;
+  const { label, options, emptyHint, wrap = true, required, error, focusRef } = props;
   const { t } = useTranslation();
   const control = useControlColors();
   const hostRef = useRef<RNView>(null);
@@ -53,6 +53,7 @@ export default function ChipSelect(props: ChipSelectProps) {
           <Pressable
             key={option.value}
             accessibilityRole="button"
+            accessibilityLabel={option.label}
             onPress={() => {
               if (props.multiple) {
                 props.onChange(

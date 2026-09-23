@@ -67,5 +67,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  body: { flex: 1, minWidth: 0 },
+  body: { flexGrow: 1, flexShrink: 1, flexBasis: 180, minWidth: 160 },
 });

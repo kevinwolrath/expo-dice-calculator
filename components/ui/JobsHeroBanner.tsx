@@ -15,6 +15,7 @@ import {
   BANNER_ASPECT_RATIO,
   SIGN_INSET,
 } from "@/components/ui/jobsHeroBannerLayout";
+import { FontSize } from "@/constants/theme";
 
 const TITLE_COLOR = "#F6EAD3";
 const TITLE_OUTLINE = "#1A0C04";
@@ -36,7 +37,7 @@ export default function JobsHeroBanner({ source }: JobsHeroBannerProps) {
   const titleSize = signWidth
     ? Math.round(Math.min(44, Math.max(22, signWidth * 0.081)))
     : 29;
-  const subtitleSize = Math.round(Math.min(16, Math.max(9, titleSize * 0.36)));
+  const subtitleSize = Math.round(Math.min(16, Math.max(FontSize.xs, titleSize * 0.36)));
 
   const onSignLayout = (event: LayoutChangeEvent) => {
     const nextWidth = event.nativeEvent.layout.width;

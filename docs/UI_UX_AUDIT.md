@@ -30,7 +30,7 @@ Visible breakage, clipping, or unusable controls.
 | **Fixed in Phase 1** | Lock column (`minWidth: 72`) stole width from select placeholders | `LockFieldCard`, `SelectDropdown` |
 | **Fixed in Phase 1** | Generate/Preview preview label `numberOfLines={1}` + `minWidth:0` | `JobsGenerateBar` |
 | **Fixed in Phase 1** | Tab labels `ellipsizeMode="clip"` (mid-glyph clip) | `app/(tabs)/_layout.tsx` |
-| **Still open** | `ScreenList.getScrollContentNode` references undefined `scrollRef` (should be the list instance). Typecheck fails; field-focus scroll on native is unreliable. | `components/ui/ScreenList.tsx` |
+| **Fixed** | `ScreenList.getScrollContentNode` now uses the list instance (and native scroll ref fallback) instead of undefined `scrollRef`. | `components/ui/ScreenList.tsx` |
 
 ---
 
@@ -43,7 +43,7 @@ Major consistency, responsive, or usability issues.
 | **Seven bottom tabs** on a phone. Labels wrap; German is worse (`Produktionsmethoden`, `Zahlenfarben`). Maintenance is correctly *not* a tab, but reference data still is. | `app/(tabs)/_layout.tsx` |
 | **Tablet = stretched phone.** `Screen` is full viewport; no use of `Layout.contentMaxWidth`. Jobs form + list stay one column; banner grows with width; lots of empty vertical field. | `components/Themed.tsx`, all `ScreenList` screens |
 | Desktop web stretches the same column across >1100px. | Same |
-| Theme install modal still uses `ActionButtonRow` + `flex: 1` on Overwrite/Save/Cancel — can squeeze on a narrow modal. Domain verbs; not migrated to `FormActions`. | `ThemePackManager.tsx` |
+| **Fixed** | Theme install modal actions use min-width + grow instead of `flex: 1` squeeze. Domain verbs (Overwrite / Save theme) kept. | `ThemePackManager.tsx` |
 | Jobs form is very tall (hero + generate + many lock cards + preview). On a phone the list of jobs is easy to miss below the fold. | `app/(tabs)/dicejob.tsx` |
 | 387+ colours: list is virtualised, but Jobs generate/preview and colour pickers will get heavy. No pagination UX. | `stock.tsx`, `dicejob.tsx`, `DicePreview` |
 
@@ -55,17 +55,17 @@ Polish and structure.
 
 | Finding | Source |
 | --- | --- |
-| Chip selects had no `accessibilityRole` (Phase 1 added `button` on chips). Horizontal chip rows without `wrap` can overflow. | `ChipSelect.tsx` |
+| Chip selects wrap by default and expose `accessibilityLabel` plus `accessibilityRole="button"`. | `ChipSelect.tsx` |
 | Page appearance stacks four full-width buttons (Choose image / Remove / Reset / Done) with mixed semantics. Fine on phone; noisy. | `app/page-theme.tsx` |
 | Import is `variant="destructive"` (correct: replaces DB) next to Export; both are full width. | `app/maintenance.tsx` |
-| Not-found uses a text `Link` instead of `PrimaryButton`. | `app/+not-found.tsx` |
+| **Fixed** | Not-found uses `PrimaryButton` to go home. | `app/+not-found.tsx` |
 | Web confirms use `window.alert` / `window.confirm` (different copy/buttons than native `Alert`). | `components/alert.ts` |
-| Hero subtitle can scale down to **9pt** (`JobsHeroBanner`). Conflicts with “do not shrink text to fit”. | `JobsHeroBanner.tsx` |
+| **Fixed** | Hero subtitle floors at `FontSize.xs` (13). | `JobsHeroBanner.tsx` |
 | Night view locks page-theme customisation (intentional) but the empty message + Done is sparse. | `page-theme.tsx` |
-| Entity row titles `flexShrink: 1` — very long names can compress beside delete. | `EntityListItem.tsx` |
+| **Fixed** | Entity row titles wrap; delete stays icon-only with label/tooltip. | `EntityListItem.tsx` |
 | Duplicate locale keys still exist (`jobs.addJob`, `stock.add`, …) now equal to Add/Save. Harmless but noisy. | `locales/*.json` |
 | `ColorField` web uses a native `<input type="color">`; Android uses `ColorPickerSheet`. Correct split; visual chrome differs. | `ColorField.tsx` |
-| Startup loading uses a hardcoded `fontSize: 24` instead of `Type.screenTitle` alone. | `app/index.tsx` |
+| **Fixed** | Startup title uses `Type.screenTitle` without an extra 24pt override. | `app/index.tsx` |
 
 ---
 
@@ -75,7 +75,7 @@ Polish and structure.
 | --- | --- |
 | `common.saving` still reads “Saving…” — status, allowed. | `locales/en.json` |
 | Preview footer assets / long resin labels in `PreviewSettingsFooter` use `flexShrink: 1`. | `PreviewSettingsFooter.tsx` |
-| Colour picker sheet title `numberOfLines={1}` (sheet header, not a CRUD action). | `ColorPickerSheet.tsx` |
+| **Fixed** | Colour picker sheet title wraps instead of ellipsizing. | `ColorPickerSheet.tsx` |
 | Tab bar height is fixed (`TAB_BAR_BODY = 72`) plus safe area; two-line labels are tight. | `_layout.tsx` |
 | Empty states exist on all CRUD lists; they are one sentence, not illustrated. Adequate. | `ScreenList` `emptyText` |
 | Portfolio: no placeholder “lorem” or Expo template modal (removed earlier). Remaining “dev” feel is seven-tab IA and phone-stretched-on-tablet. | — |
@@ -152,7 +152,7 @@ Scales with window. Footer text can shrink. Heavy with many colours.
 
 ## TABLET FINDINGS (~600–1100)
 
-- **Enlarged phone.** No two-pane form+list. No max-width column.
+- **Enlarged phone.** No two-pane form+list. `ScreenList` / maintenance / page-theme now use `Layout.contentMaxWidth`.
 - Hero banner uses aspect ratio and grows — good visually, pushes the form further down.
 - Tab bar has more room; seven tabs become acceptable before they become *right*.
 - Full tablet layout is **out of Phase 1**.
@@ -235,9 +235,10 @@ Do not strip Maintenance zip/import — that is product, not a debug panel.
 1. Visual review of Phase 1 on a real phone (Jobs + Colours + one reference screen, day + night, tavern + none).
 2. **Tablet layout:** content max-width; optional two-pane form \| list on `ScreenList` when width ≥ 600.
 3. **Navigation IA:** collapse four reference tabs into Library/Setup.
-4. Fix `ScreenList` `scrollRef` / `getScrollContentNode` (unblocks tsc and error-field scroll).
-5. Theme-pack modal actions: wrap like `FormActions` without renaming Overwrite/Save theme.
-6. Cap hero subtitle at ≥ `FontSize.xs`.
+4. ~~Fix `ScreenList` `scrollRef` / `getScrollContentNode`.~~ Done in the consistency pass.
+5. ~~Theme-pack modal actions: wrap like `FormActions` without renaming Overwrite/Save theme.~~ Done.
+6. ~~Cap hero subtitle at ≥ `FontSize.xs`.~~ Done.
+7. Visual review of remaining IA (seven tabs) and optional two-pane `ScreenList` when width ≥ 600.
 
 ---
 
