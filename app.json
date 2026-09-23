@@ -2,7 +2,7 @@
   "expo": {
     "name": "DiceForge",
     "slug": "dice-job-manager",
-    "version": "089.0.5",
+    "version": "089.0.6",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "expodicecalculator",
@@ -23,7 +23,7 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.snackbearer.expodicecalculator",
-      "versionCode": 26
+      "versionCode": 27
     },
     "web": {
       "bundler": "metro",
