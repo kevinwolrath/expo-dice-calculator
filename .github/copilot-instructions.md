@@ -182,6 +182,14 @@ not need translation.
 Before finishing a UI change, search the touched files for hardcoded visible
 strings and confirm that all locale files contain the new keys.
 
+## UI/UX contract
+
+Before creating or changing user-facing UI, read and follow:
+
+`docs/UI_UX_CONTRACT.md`
+
+Do not duplicate that contract here.
+
 ## Shared UI change checklist
 
 Before completing a UI change, verify:

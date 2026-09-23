@@ -1,99 +1,201 @@
-# DiceForge UI/UX interaction contract
+# DiceForge UI/UX contract
 
-This is an interaction contract, not a visual redesign.
+This is a **rule document**. Follow it when creating or changing user-facing UI.
 
-Preserve existing themes, visual identity, business behaviour, and routes unless a later change is explicitly approved.
+It is **not** a visual redesign. Keep existing themes, DiceForge identity, business behaviour, routes, and data formats unless a later change is explicitly approved.
 
-## 1. CRUD action vocabulary
+All user-facing strings come from i18n (`locales/en.json`, `locales/de.json`). Do not hard-code English (or German) in screens.
 
-Normal create/update forms use these canonical labels (via i18n `common.add`, `common.save`, `common.cancel`):
+Read Expo SDK 57 docs before adding APIs. Mobile is the product; web is a test harness (`AGENTS.md`).
 
-- Add
-- Save
-- Cancel
+---
 
-Do **not** use contextual variants such as “Add job”, “Add colour”, “Save job”, “Save changes”, or “Save colour”. The screen already identifies the entity.
+## 1. CRUD terminology
 
-**Exceptions** — keep a meaningful verb for destructive or domain-specific operations:
+Ordinary create/update forms use **only** these labels, from `common.add`, `common.save`, `common.cancel`:
 
-- Delete, Archive, Generate, Import, Export, Preview, Choose image, Overwrite, and similar.
+- **Add**
+- **Save**
+- **Cancel**
 
-Loading copy such as “Saving…” is a status, not a CRUD label variant.
+Do **not** use “Add job”, “Add colour”, “Save job”, “Save changes”, “Save colour”, “Add type”, “Save method”, or similar. The screen already names the entity.
 
-## 2. Action icons
+**Domain / destructive verbs stay descriptive:** Delete, Generate, Preview, Import, Export, Overwrite, Choose image, Remove image, Reset, Done, Retry, Archive.
 
-Use `expo-symbols` already in the app. Do not add an icon library for actions.
+“Saving…” (`common.saving`) is a **status**, not a CRUD label.
 
-| Action | Role of the icon |
-| --- | --- |
-| Add | plus |
-| Save | save / check from the existing symbol set |
-| Cancel | close / x |
+Use `FormActions` for ordinary CRUD rows. Do not hand-roll Add/Save/Cancel rows.
 
-Icons **supplement** text. They do not replace it except in a deliberately compact control that still has an accessibility label (and a web `title` where appropriate).
+---
 
-## 3. Never truncate action labels
+## 2. Action hierarchy and icons
 
-Button and action text must **never** be ellipsized, clipped, or truncated.
+| Role | Variant | Icon (existing `expo-symbols` only) |
+| --- | --- | --- |
+| Add | secondary | plus / add |
+| Save | primary | checkmark / save |
+| Cancel | cancel | xmark / close |
+| Destructive | destructive | only if the control already uses an icon (e.g. list delete) |
 
-“Save…” and “Save chan…” are defects.
+Preferred presentation: `[+ Add] [save/check + Save] [x Cancel]`.
+
+Icons **supplement** labels. Do not replace action text with icons except in a defined compact control (list-row delete) that has `accessibilityLabel` and a web `title` where appropriate.
+
+Do not add an icon library for this.
+
+---
+
+## 3. Buttons — no truncation
+
+**HARD RULE: action/button text must never be ellipsized, clipped, or truncated.**
+
+“Save chan…” and “Save…” on a button are bugs.
 
 If actions do not fit, in this order:
 
-1. Reduce non-essential gap/padding without going below touch-target minimums.
-2. Reflow the action row (wrap).
-3. Stack the buttons.
-4. Use icon-only only in a defined compact UI where the action stays unambiguous.
+1. Reduce non-essential gap/padding; keep touch targets (`Touch.minHeight`, ~44–56pt).
+2. Allow the row to wrap (`flexWrap`).
+3. Stack vertically below `FORM_ACTION_STACK_MAX_WIDTH`.
+4. Icon-only only in a deliberate compact UI.
 
-Do not shrink type to make a row fit. Do not set `numberOfLines={1}` or `ellipsizeMode` on action labels. Do not give action buttons `minWidth: 0` in a squeezed row.
+Do **not**:
+
+- shrink type to make a row fit
+- set `numberOfLines={1}` or `ellipsizeMode` on action labels
+- give action buttons `minWidth: 0` in a squeezed row
+- stretch a single phone row across an arbitrary desktop width
+
+Shared implementation: `components/ui/FormActions.tsx`, `PrimaryButton` (no ellipsis), `formActionLayout.ts`.
+
+---
 
 ## 4. Touch targets
 
-Interactive controls keep a sensible mobile hit area (`Touch.minHeight` / existing 44–56pt button heights).
+Interactive controls stay at least `Touch.minHeight` (44) high. Primary buttons use `Layout.buttonHeight` (56) as `minHeight`.
 
 Do not fix overflow by making controls tiny.
 
-## 5. Form fields and selects
+---
 
-Meaningful selected values and placeholders get available width **before** secondary accessories (for example a Lock switch).
+## 5. Forms, fields, accessories
 
-At narrow widths:
+- Labels, required markers, errors, and helper text use existing `FieldLabel` / `FieldError` / `Type.hint`.
+- Errors sit **under** the field they belong to.
+- Required fields keep the existing required indicator.
+- Primary field content (placeholder or selected value) gets width **before** secondary accessories (Lock switch, chevrons).
+- At narrow widths, reflow the accessory (stack under the field). Do not special-case placeholder strings.
+- Ellipsis is allowed only on **long dynamic values** when wrapping is not enough — never on action labels, never on short placeholders because a Lock stole space.
+- Shared implementation: `LockFieldCard`, `SelectDropdown`, `lockFieldLayout.ts`.
 
-- The primary field uses the remaining width, then wraps to its own row if needed.
-- Secondary controls reflow instead of compressing the field.
-- Keep placeholder/value text readable.
-- Ellipsis is allowed only for genuinely long **dynamic** values when wrapping is not enough.
+---
 
-Do not special-case individual placeholder strings.
+## 6. Validation and destructive actions
 
-## 6. Responsive behaviour
+- Block save and surface field errors; scroll to the first error when the existing focus helpers support it.
+- Destructive actions use `variant="destructive"` and `confirm()` before delete/import-replace.
+- Confirm labels stay localised (`common.ok` / `common.cancel` or explicit confirm copy).
 
-| Surface | Rule |
+---
+
+## 7. Responsive behaviour
+
+| Surface | Width (approx.) | Rule |
+| --- | --- | --- |
+| Phone | 320–600 | Single-column forms. Phone-first. Actions and accessories reflow. |
+| Tablet | 600–1100 | Use extra width (grouped / two-column where it helps). Do **not** merely stretch a phone form. Full tablet layout is **Phase 2**. Primitives must not assume an infinite phone column. |
+| Desktop web | >1100 | Test harness. Cap content with `Layout.contentMaxWidth` (720) when applying layout. Do not stretch forms across the viewport. |
+
+`Screen` is still full-bleed for themed backgrounds; max-width applies to **content**, not the scene art.
+
+---
+
+## 8. Navigation
+
+Bottom-navigation labels must not clip mid-glyph (`ellipsizeMode="clip"` is forbidden).
+
+Seven primary tabs is a **structural** problem. Do not add an eighth. Do not redesign IA in a small UI fix.
+
+**Direction (Phase 2+):** keep Jobs and Colours as primary work; group Material Types, Types, Methods, Number Colours behind Library/Setup. Maintenance stays a stack screen (gear), not a tab.
+
+---
+
+## 9. Typography
+
+- Use `FontSize` / `Type` tokens. Body and buttons stay at `FontSize.md` (16) unless a token already defines otherwise.
+- Do not drop below `FontSize.xs` (13) for interactive or essential text. Hero banner subtitle scaling that goes to 9pt is a known exception to fix later — do not copy it.
+- Hierarchy: screen title → heading → body/label → hint/meta.
+- Long dynamic names wrap in lists; ellipsis only when a single-line row is unavoidable.
+
+---
+
+## 10. Spacing / density
+
+Use `Space`, `Layout.screenGutter`, `Layout.cardGap`, `Layout.cardPadding`. Do not invent one-off paddings on a new screen when those tokens exist.
+
+Phone stays touch-friendly (not cramped). Tablet should eventually reduce unused vertical stretch (Phase 2).
+
+---
+
+## 11. Accessibility
+
+- Buttons: `accessibilityRole="button"`, `accessibilityState.disabled` when disabled.
+- Icon-only: `accessibilityLabel` required; web `title` when using `Pressable` on web.
+- Switches: accessible name (existing `accessibilityLabel` on Lock).
+- Chip / select options: `accessibilityRole="button"`.
+- Keep disabled visible (opacity tokens already on `PrimaryButton`).
+- Keyboard: rely on `Pressable` / `TextInput`; do not trap focus in web-only hacks.
+
+---
+
+## 12. Localisation
+
+- Every visible string: `t(...)`.
+- Canonical actions: `common.*` only.
+- EN and DE keys must match.
+- Do not leave unused contextual CRUD strings as the live button titles.
+
+---
+
+## 13. Theming
+
+Layout and interaction rules are **theme-independent**. Do not hard-code theme pack colours in a new screen; use `useThemeColors` / `useControlColors` / `usePackSurface`.
+
+Night view is black/white by product rule. Do not invent a third palette.
+
+Verify contrast of new controls on tavern / dragon / unicorn / none / night.
+
+---
+
+## 14. Application states
+
+Every entity list/form must have:
+
+- empty copy
+- saving/disabled on the save action
+- validation errors
+- delete confirmation
+- save/load failure via `showMessage`
+
+Large lists stay virtualised (`ScreenList` / `FlatList`). Preview and generate stay usable when colour count is high.
+
+---
+
+## 15. Platform
+
+- Do not break Android to polish web.
+- Isolate web-only colour input vs native `ColorPickerSheet`.
+- `window.alert` / `window.confirm` on web are accepted for now; native uses `Alert`. Do not mix them on Android.
+
+---
+
+## Shared primitives to reuse
+
+| Primitive | Use for |
 | --- | --- |
-| Phone | Single-column forms. Phone-first layout stays. Actions and field accessories reflow instead of truncating. |
-| Tablet | Use extra width deliberately (grouped / multi-column where it helps). Do not stretch a phone form across the whole canvas. **Full tablet layout is follow-up**, not this change. Shared primitives should not assume an infinite phone column. |
-| Desktop web | DiceForge is a mobile/tablet product. Content may use `Layout.contentMaxWidth`. Do not stretch forms across an arbitrary desktop viewport. |
-
-## 7. Navigation
-
-Bottom-navigation labels must not be clipped mid-glyph.
-
-The app currently has **seven** tab destinations. That density is a structural problem: labels wrap or fight for width on a phone. Do not invent a new navigation pattern in an interaction-fix change.
-
-**Recommendation (follow-up):** keep Jobs and Colours (and similar primary work) in the tab bar; move reference data (material types, colour types, methods, number colours) behind a single “Library” or “Setup” destination.
-
-## 8. Accessibility
-
-Shared controls keep:
-
-- `accessibilityRole` (buttons are `"button"`)
-- `accessibilityLabel` when the visible text is insufficient or for icon-only
-- `accessibilityState.disabled` when disabled
-- keyboard / web press behaviour already provided by `Pressable`
-- existing test hooks and disabled/loading behaviour
-
-## Shared primitives
-
-- `FormActions` — canonical Add / Save / Cancel row; wraps then stacks; never truncates.
-- `LockFieldCard` / `SelectDropdown` — primary field width first; lock reflows on narrow cards.
-- `Layout.contentMaxWidth` — reserved for tablet/web content width; not a full layout rewrite.
+| `FormActions` | Add / Save / Cancel |
+| `PrimaryButton` | All other buttons |
+| `LockFieldCard` + `SelectDropdown` | Locked selects |
+| `FormField` / `ChipSelect` / `ColorField` | Inputs |
+| `EntityListItem` | List rows + icon delete |
+| `ScreenList` | Form + virtualised list |
+| `Layout.contentMaxWidth` | Future content width cap |

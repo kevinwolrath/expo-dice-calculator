@@ -52,6 +52,7 @@ export default function ChipSelect(props: ChipSelectProps) {
         return (
           <Pressable
             key={option.value}
+            accessibilityRole="button"
             onPress={() => {
               if (props.multiple) {
                 props.onChange(

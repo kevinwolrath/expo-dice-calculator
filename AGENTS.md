@@ -12,3 +12,8 @@ Expo Web may be used for quick UI checks in a browser. Do not treat web as a shi
 - Prefer native-compatible APIs (for example `expo-file-system` document directories for user content).
 - Do not block a mobile feature on full web parity.
 - Do not add web-only architecture unless it is needed so `expo start --web` still runs for testing.
+
+# UI/UX
+
+Before creating or changing user-facing UI, read and follow `docs/UI_UX_CONTRACT.md`.
+

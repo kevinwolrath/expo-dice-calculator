@@ -1,0 +1,10 @@
+---
+description: Follow DiceForge UI/UX contract for all user-facing UI
+alwaysApply: true
+---
+
+# UI/UX contract
+
+Before creating or changing user-facing UI, read and follow `docs/UI_UX_CONTRACT.md`.
+
+Do not duplicate that contract here. Do not invent a parallel design system.
