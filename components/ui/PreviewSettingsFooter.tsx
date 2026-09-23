@@ -82,10 +82,7 @@ export default function PreviewSettingsFooter({
 const styles = StyleSheet.create({
   footer: {
     width: "100%",
-    height: 132,
     minHeight: 120,
-    maxHeight: 145,
-    overflow: "hidden",
   },
   parchment: {
     borderRadius: 12,
@@ -93,6 +90,7 @@ const styles = StyleSheet.create({
   row: {
     flex: 1,
     flexDirection: "row",
+    flexWrap: "wrap",
     alignItems: "center",
     paddingLeft: 80,
     paddingRight: 16,
@@ -117,6 +115,7 @@ const styles = StyleSheet.create({
   },
   heading: {
     flexShrink: 1,
+    flexGrow: 1,
     color: "#3B2414",
     fontSize: FontSize.md,
     fontWeight: "600",

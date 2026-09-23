@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { confirm, showMessage } from "@/components/alert";
 import { Screen, Text, View } from "@/components/Themed";
+import { FORM_ACTION_MIN_WIDTH } from "@/components/ui/formActionLayout";
 import PrimaryButton, { ActionButtonRow } from "@/components/ui/PrimaryButton";
 import { useControlColors, inputTypeface } from "@/components/ui/fieldControl";
 import { Control, FontSize, Layout, Space, Type } from "@/constants/theme";
@@ -255,6 +256,9 @@ const styles = StyleSheet.create({
     fontSize: FontSize.md,
   },
   modalButton: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 0,
+    flexBasis: FORM_ACTION_MIN_WIDTH,
+    minWidth: FORM_ACTION_MIN_WIDTH,
   },
 });

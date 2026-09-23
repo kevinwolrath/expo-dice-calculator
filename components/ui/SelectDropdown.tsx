@@ -101,7 +101,7 @@ export default function SelectDropdown({
                     : control.placeholder,
               },
             ]}
-            numberOfLines={selected ? 1 : 2}
+            numberOfLines={2}
           >
             {selected ? selected.label : placeholder}
           </Text>

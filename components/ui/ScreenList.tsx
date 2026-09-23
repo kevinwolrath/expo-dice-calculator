@@ -16,7 +16,10 @@ import {
 
 import { Screen, Text, View } from "@/components/Themed";
 import { FormScrollContext } from "@/components/ui/fieldFocus";
+import { getScrollContentNode } from "@/components/ui/screenListScroll";
 import { Layout, Space, Type } from "@/constants/theme";
+
+export { getScrollContentNode } from "@/components/ui/screenListScroll";
 
 const ScrollToFormContext = createContext<() => void>(() => {});
 
@@ -31,31 +34,6 @@ type ScreenListProps<T> = {
   emptyText: string;
   hero?: ReactNode;
 };
-
-/**
- * Returns the native node handle for a FlatList's scrollable *content* view
- * (not the outer clipping view — measuring against that would give a
- * position that shifts with the current scroll offset), so a field can
- * measureLayout against it (see fieldFocus.useFieldFocus) to compute a
- * scrollToOffset target. Defensive: these are instance methods on the
- * underlying ScrollView that aren't guaranteed on every platform/renderer
- * (react-native-web in particular), so we feature-detect rather than
- * assume they exist.
- */
-type FlatListRef = {
-  getNativeScrollRef?: () => unknown;
-};
-
-function getScrollContentNode(list: FlatListRef | null): unknown {
-  if (
-    scrollRef &&
-    typeof (scrollRef as { getInnerViewNode?: unknown }).getInnerViewNode ===
-      "function"
-  ) {
-    return (scrollRef as { getInnerViewNode: () => unknown }).getInnerViewNode();
-  }
-  return null;
-}
 
 export default function ScreenList<T>({
   data,
@@ -142,6 +120,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Layout.listGutter,
     paddingBottom: Layout.listBottom,
     flexGrow: 1,
+    width: "100%",
+    maxWidth: Layout.contentMaxWidth,
+    alignSelf: "center",
   },
   hero: {
     marginBottom: Space[4],

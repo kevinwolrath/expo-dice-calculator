@@ -1,6 +1,6 @@
 import { Link } from "expo-router";
 import { SymbolView } from "expo-symbols";
-import { Pressable } from "react-native";
+import { Platform, Pressable } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { useChromeColors } from "@/components/Themed";
@@ -24,6 +24,7 @@ export default function PageThemeButton({ pageId }: { pageId: PageThemeId }) {
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={t("pageTheme.title")}
+        {...(Platform.OS === "web" ? { title: t("pageTheme.title") } : null)}
         hitSlop={8}
       >
         {({ pressed }) => (

@@ -143,7 +143,6 @@ const styles = StyleSheet.create({
   },
   generateWrapFull: {
     flex: 1,
-    minWidth: 0,
     width: "100%",
     borderRadius: 12,
     shadowOffset: { width: 0, height: 4 },

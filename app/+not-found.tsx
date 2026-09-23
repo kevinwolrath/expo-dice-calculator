@@ -1,25 +1,24 @@
-import { Link, Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { StyleSheet } from "react-native";
-
-import { Screen, Text, useThemeColors } from "@/components/Themed";
-import { FontSize, Space } from "@/constants/theme";
 import { useTranslation } from "react-i18next";
+
+import { Screen, Text } from "@/components/Themed";
+import PrimaryButton from "@/components/ui/PrimaryButton";
+import { FontSize, Layout, Space } from "@/constants/theme";
 
 export default function NotFoundScreen() {
   const { t } = useTranslation();
-  const colors = useThemeColors();
+  const router = useRouter();
 
   return (
     <>
       <Stack.Screen options={{ title: t("misc.notFoundTitle") }} />
       <Screen style={styles.container}>
         <Text style={styles.title}>{t("misc.notFoundMessage")}</Text>
-
-        <Link href="/" style={styles.link}>
-          <Text style={[styles.linkText, { color: colors.primary }]}>
-            {t("misc.home")}
-          </Text>
-        </Link>
+        <PrimaryButton
+          title={t("misc.home")}
+          onPress={() => router.replace("/")}
+        />
       </Screen>
     </>
   );
@@ -30,16 +29,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: Space[5],
+    width: "100%",
+    maxWidth: Layout.contentMaxWidth,
+    alignSelf: "center",
   },
   title: {
     fontSize: FontSize.lg,
     fontWeight: "bold",
-  },
-  link: {
-    marginTop: 15,
-    paddingVertical: 15,
-  },
-  linkText: {
-    fontSize: FontSize.sm,
+    marginBottom: Space[5],
+    textAlign: "center",
   },
 });

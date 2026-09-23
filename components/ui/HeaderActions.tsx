@@ -1,6 +1,6 @@
 import { Link } from "expo-router";
 import { SymbolView } from "expo-symbols";
-import { Pressable, StyleSheet } from "react-native";
+import { Platform, Pressable, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { View, useChromeColors } from "@/components/Themed";
@@ -27,6 +27,9 @@ export default function HeaderActions({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={t("tabs.maintenance")}
+          {...(Platform.OS === "web"
+            ? { title: t("tabs.maintenance") }
+            : null)}
         >
           {({ pressed }) => (
             <SymbolView

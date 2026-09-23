@@ -56,6 +56,8 @@ function EntityListItem({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={t("common.delete")}
+              {...(Platform.OS === "web" ? { title: t("common.delete") } : null)}
+              style={styles.deleteButton}
               onPress={(event) => {
                 event.stopPropagation();
                 onDelete(id);
@@ -84,12 +86,19 @@ export default memo(EntityListItem);
 const styles = StyleSheet.create({
   rowBetween: {
     flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
+    gap: Space[2],
   },
   itemTitle: {
+    flexGrow: 1,
     flexShrink: 1,
+    flexBasis: 160,
     paddingRight: Space[3],
+  },
+  deleteButton: {
+    flexShrink: 0,
   },
   itemMeta: { opacity: 0.6, marginTop: Space[1] },
   itemDescription: { fontSize: FontSize.sm, marginTop: 6 },

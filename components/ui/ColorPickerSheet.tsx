@@ -159,7 +159,6 @@ export default function ColorPickerSheet({
         >
           <Text
             style={[Type.heading, styles.title, { color: control.text }]}
-            numberOfLines={1}
           >
             {label ?? t("colorPicker.title")}
           </Text>

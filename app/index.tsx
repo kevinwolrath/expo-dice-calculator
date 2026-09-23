@@ -68,7 +68,6 @@ const styles = StyleSheet.create({
     padding: Space[6],
   },
   title: {
-    fontSize: 24,
     marginBottom: Space[4],
   },
   message: {

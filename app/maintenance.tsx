@@ -118,6 +118,9 @@ const styles = StyleSheet.create({
     padding: Layout.screenGutter,
     gap: Space[4],
     paddingBottom: Layout.listBottom,
+    width: "100%",
+    maxWidth: Layout.contentMaxWidth,
+    alignSelf: "center",
   },
   actions: {
     gap: Space[3],
