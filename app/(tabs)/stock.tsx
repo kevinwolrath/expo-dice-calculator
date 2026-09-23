@@ -6,7 +6,8 @@ import { showMessage } from "@/components/alert";
 import { usePackSurface } from "@/components/usePackSurface";
 import ColorField from "@/components/ui/ColorField";
 import EntityListItem from "@/components/ui/EntityListItem";
-import FormActionRow, { isFormDirty } from "@/components/ui/FormActionRow";
+import FormActions from "@/components/ui/FormActions";
+import { isFormDirty } from "@/components/ui/formDirty";
 import FormField from "@/components/ui/FormField";
 import { useFormFieldRefs } from "@/components/ui/fieldFocus";
 import ScreenList from "@/components/ui/ScreenList";
@@ -311,10 +312,8 @@ export default function StockScreen() {
             onChangeText={setQuantity}
             keyboardType="number-pad"
           />
-          <FormActionRow
-            addTitle={t("stock.add")}
+          <FormActions
             onAdd={handleCancel}
-            saveTitle={t("stock.save")}
             onSave={handleSave}
             onCancel={handleCancel}
             saving={saving}

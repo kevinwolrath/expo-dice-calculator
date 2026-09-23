@@ -5,7 +5,8 @@ import { showMessage } from "@/components/alert";
 import { usePackSurface } from "@/components/usePackSurface";
 import ChipSelect from "@/components/ui/ChipSelect";
 import EntityListItem from "@/components/ui/EntityListItem";
-import FormActionRow, { isFormDirty } from "@/components/ui/FormActionRow";
+import FormActions from "@/components/ui/FormActions";
+import { isFormDirty } from "@/components/ui/formDirty";
 import FormField from "@/components/ui/FormField";
 import { useFormFieldRefs } from "@/components/ui/fieldFocus";
 import ScreenList from "@/components/ui/ScreenList";
@@ -220,10 +221,8 @@ export default function ColourTypesScreen() {
             }}
             emptyHint={t("colourTypes.addMaterialTypesHint")}
           />
-          <FormActionRow
-            addTitle={t("colourTypes.add")}
+          <FormActions
             onAdd={handleCancelType}
-            saveTitle={t("colourTypes.save")}
             onSave={handleSaveType}
             onCancel={handleCancelType}
             saving={loading}

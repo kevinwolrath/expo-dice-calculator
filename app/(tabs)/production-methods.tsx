@@ -6,7 +6,8 @@ import * as AlertHelper from "@/components/alert";
 import { usePackSurface } from "@/components/usePackSurface";
 import ChipSelect from "@/components/ui/ChipSelect";
 import EntityListItem from "@/components/ui/EntityListItem";
-import FormActionRow, { isFormDirty } from "@/components/ui/FormActionRow";
+import FormActions from "@/components/ui/FormActions";
+import { isFormDirty } from "@/components/ui/formDirty";
 import FormField from "@/components/ui/FormField";
 import { useFormFieldRefs } from "@/components/ui/fieldFocus";
 import ScreenList from "@/components/ui/ScreenList";
@@ -312,10 +313,8 @@ export default function ProductionMethodsScreen() {
             value={allowedMaterialIds}
             onChange={setAllowedMaterialIds}
           />
-          <FormActionRow
-            addTitle={t("productionMethods.add")}
+          <FormActions
             onAdd={handleCancelMethod}
-            saveTitle={t("productionMethods.save")}
             onSave={handleSaveMethod}
             onCancel={handleCancelMethod}
             saving={savingMethod}

@@ -1,5 +1,6 @@
 import { type ReactNode } from "react";
 import {
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -29,6 +30,7 @@ type PrimaryButtonProps = {
   style?: StyleProp<ViewStyle>;
   icon?: ReactNode;
   compact?: boolean;
+  accessibilityLabel?: string;
 };
 
 const dayPalette = (colors: ThemePackColors) => ({
@@ -103,15 +105,20 @@ export default function PrimaryButton({
   style,
   icon,
   compact,
+  accessibilityLabel,
 }: PrimaryButtonProps) {
   const { isNight, packId } = usePackSurface();
   const tone = resolveTone(variant, isNight, themeColorsForPack(packId));
+  const label = accessibilityLabel ?? title;
 
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: Boolean(disabled) }}
       onPress={onPress}
       disabled={disabled}
+      {...(Platform.OS === "web" ? { title: label } : null)}
       style={({ pressed }) => [
         styles.button,
         compact && styles.compact,
@@ -126,12 +133,7 @@ export default function PrimaryButton({
       ]}
     >
       {icon}
-      <Text
-        style={[styles.label, { color: tone.color }]}
-        numberOfLines={1}
-      >
-        {title}
-      </Text>
+      <Text style={[styles.label, { color: tone.color }]}>{title}</Text>
     </Pressable>
   );
 }
@@ -139,14 +141,15 @@ export default function PrimaryButton({
 const styles = StyleSheet.create({
   button: {
     minWidth: 84,
-    minHeight: 54,
-    height: 54,
+    minHeight: Layout.buttonHeight,
     borderRadius: 12,
     paddingHorizontal: Space[3],
+    paddingVertical: Space[2],
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: Space[2],
+    flexShrink: 0,
   },
   compact: {
     minWidth: 54,
@@ -155,6 +158,7 @@ const styles = StyleSheet.create({
     fontSize: FontSize.md,
     fontWeight: "700",
     textAlign: "center",
+    flexShrink: 1,
   },
   pressed: {
     opacity: 0.86,
@@ -165,6 +169,7 @@ const styles = StyleSheet.create({
   },
   actionRow: {
     flexDirection: "row",
+    flexWrap: "wrap",
     alignItems: "stretch",
     gap: Layout.actionGap,
     marginTop: Layout.cardGap,

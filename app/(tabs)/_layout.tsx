@@ -38,7 +38,6 @@ function TabBarLabel({
   return (
     <RNText
       numberOfLines={2}
-      ellipsizeMode="clip"
       style={StyleSheet.flatten([
         styles.tabLabel,
         { color, fontWeight: focused ? "700" : "500" },

@@ -4,7 +4,8 @@ import { Alert, Platform, type ListRenderItem } from "react-native";
 import { showMessage } from "@/components/alert";
 import { usePackSurface } from "@/components/usePackSurface";
 import EntityListItem from "@/components/ui/EntityListItem";
-import FormActionRow, { isFormDirty } from "@/components/ui/FormActionRow";
+import FormActions from "@/components/ui/FormActions";
+import { isFormDirty } from "@/components/ui/formDirty";
 import FormField from "@/components/ui/FormField";
 import { useFormFieldRefs } from "@/components/ui/fieldFocus";
 import ScreenList from "@/components/ui/ScreenList";
@@ -150,10 +151,8 @@ export default function MaterialTypesScreen() {
               setErrors({});
             }}
           />
-          <FormActionRow
-            addTitle={t("materialTypes.add")}
+          <FormActions
             onAdd={handleCancelType}
-            saveTitle={t("materialTypes.save")}
             onSave={handleSaveType}
             onCancel={handleCancelType}
             saving={loading}

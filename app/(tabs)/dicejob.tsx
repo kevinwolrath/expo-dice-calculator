@@ -20,7 +20,8 @@ import { usePackSurface } from "@/components/usePackSurface";
 import DicePreview from "@/components/ui/DicePreview";
 import EntityListItem from "@/components/ui/EntityListItem";
 import FieldLabel from "@/components/ui/FieldLabel";
-import FormActionRow, { isFormDirty } from "@/components/ui/FormActionRow";
+import FormActions from "@/components/ui/FormActions";
+import { isFormDirty } from "@/components/ui/formDirty";
 import FormField from "@/components/ui/FormField";
 import { useFormFieldRefs } from "@/components/ui/fieldFocus";
 import JobsGenerateBar from "@/components/ui/JobsGenerateBar";
@@ -1328,10 +1329,8 @@ export default function JobsScreen() {
               }}
               emptyHint={t("jobs.addNumberColourHint")}
             />
-            <FormActionRow
-              addTitle={t("jobs.addJob")}
+            <FormActions
               onAdd={resetForm}
-              saveTitle={t("jobs.save")}
               onSave={handleCreate}
               onCancel={resetForm}
               saving={saving}

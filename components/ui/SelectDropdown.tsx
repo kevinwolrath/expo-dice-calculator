@@ -101,7 +101,7 @@ export default function SelectDropdown({
                     : control.placeholder,
               },
             ]}
-            numberOfLines={1}
+            numberOfLines={selected ? 1 : 2}
           >
             {selected ? selected.label : placeholder}
           </Text>
@@ -211,14 +211,27 @@ export default function SelectDropdown({
 
 const styles = StyleSheet.create({
   hint: { opacity: 0.5 },
-  pickerRow: { flexDirection: "row", alignItems: "center", gap: Space[3] },
+  pickerRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: Space[3],
+  },
   picker: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 180,
+    minWidth: 160,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
-  inputText: { fontSize: FontSize.md, flex: 1, paddingRight: Space[2] },
+  inputText: {
+    fontSize: FontSize.md,
+    flexGrow: 1,
+    flexShrink: 1,
+    paddingRight: Space[2],
+  },
   inputTextLarge: { fontSize: FontSize.lg, fontWeight: "600" },
   chevron: {
     fontSize: 18,

@@ -1,5 +1,5 @@
-import { type ReactNode } from "react";
-import { StyleSheet, Switch, type ImageSourcePropType } from "react-native";
+import { type ReactNode, useState } from "react";
+import { StyleSheet, Switch, type ImageSourcePropType, type LayoutChangeEvent } from "react-native";
 
 import { Text, View, useThemeColors } from "@/components/Themed";
 import FieldError from "@/components/ui/FieldError";
@@ -9,6 +9,7 @@ import FieldLabelIcon, {
 } from "@/components/ui/FieldLabelIcon";
 import { usePanelStyle } from "@/components/ui/FieldPanel";
 import { useControlColors } from "@/components/ui/fieldControl";
+import { shouldStackLockField } from "@/components/ui/lockFieldLayout";
 import { FontSize, Layout, Space } from "@/constants/theme";
 
 type LockFieldCardProps = {
@@ -37,11 +38,19 @@ export default function LockFieldCard({
   const colors = useThemeColors();
   const control = useControlColors();
   const panelStyle = usePanelStyle();
+  const [width, setWidth] = useState(0);
+  const stacked = shouldStackLockField(width);
+
+  const onLayout = (event: LayoutChangeEvent) => {
+    setWidth(event.nativeEvent.layout.width);
+  };
 
   return (
     <View
+      onLayout={onLayout}
       style={[
         styles.card,
+        stacked && styles.cardStacked,
         panelStyle,
         error ? { borderColor: colors.destructive } : null,
       ]}
@@ -51,12 +60,12 @@ export default function LockFieldCard({
           <FieldLabelIcon source={icon} />
         </View>
       ) : null}
-      <View style={styles.middle}>
+      <View style={[styles.middle, stacked && styles.middleStacked]}>
         <FieldLabel label={label} required={required} />
         {children}
         <FieldError message={error} />
       </View>
-      <View style={styles.lock}>
+      <View style={[styles.lock, stacked && styles.lockStacked]}>
         <Text style={[styles.lockLabel, { color: control.label }]}>
           {lockLabel}
         </Text>
@@ -66,6 +75,7 @@ export default function LockFieldCard({
           trackColor={{ false: colors.inputBorder, true: colors.primary }}
           thumbColor={colors.onPrimary}
           accessibilityLabel={lockAccessibilityLabel}
+          accessibilityRole="switch"
         />
       </View>
     </View>
@@ -76,9 +86,13 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
     alignItems: "flex-start",
+    flexWrap: "wrap",
     minHeight: 90,
     gap: FIELD_LABEL_ICON_GAP,
     marginBottom: Layout.cardGap,
+  },
+  cardStacked: {
+    flexDirection: "column",
   },
   iconWrap: {
     marginTop: 2,
@@ -88,17 +102,29 @@ const styles = StyleSheet.create({
   middle: {
     flexGrow: 1,
     flexShrink: 1,
-    minWidth: 120,
+    flexBasis: 180,
+    minWidth: 160,
+  },
+  middleStacked: {
+    flexBasis: "100%",
+    width: "100%",
+    minWidth: 0,
   },
   lock: {
     alignSelf: "center",
     flexGrow: 0,
     flexShrink: 0,
-    minWidth: 72,
     alignItems: "center",
     justifyContent: "center",
     gap: Space[1],
     paddingLeft: Space[2],
+  },
+  lockStacked: {
+    alignSelf: "stretch",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingLeft: 0,
+    paddingTop: Space[2],
   },
   lockLabel: {
     fontSize: FontSize.sm,

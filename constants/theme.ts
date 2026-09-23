@@ -52,6 +52,8 @@ export const Layout = {
   headerSpacer: 96,
   rowGap: 16,
   actionGap: 12,
+  /** Reserved for tablet/web; do not stretch forms past this. */
+  contentMaxWidth: 720,
 } as const;
 
 export const Control = {

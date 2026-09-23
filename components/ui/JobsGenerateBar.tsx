@@ -111,10 +111,7 @@ export default function JobsGenerateBar({
           size={18}
           tintColor={previewLabel}
         />
-        <Text
-          style={[styles.previewLabel, { color: previewLabel }]}
-          numberOfLines={1}
-        >
+        <Text style={[styles.previewLabel, { color: previewLabel }]}>
           {previewTitle}
         </Text>
       </Pressable>
@@ -126,6 +123,7 @@ export default function JobsGenerateBar({
 const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
+    flexWrap: "wrap",
     alignItems: "stretch",
     width: "100%",
     gap: 10,
@@ -133,8 +131,10 @@ const styles = StyleSheet.create({
     marginBottom: Space[4],
   },
   generateWrap: {
-    flex: 7,
-    minWidth: 0,
+    flexGrow: 1,
+    flexShrink: 0,
+    flexBasis: 160,
+    minWidth: 160,
     borderRadius: 12,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.45,
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
   },
   generate: {
     width: "100%",
-    height: Layout.buttonHeight,
+    minHeight: Layout.buttonHeight,
     borderRadius: 12,
     overflow: "hidden",
     flexDirection: "row",
@@ -182,9 +182,11 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   preview: {
-    flex: 3,
-    minWidth: 0,
-    height: Layout.buttonHeight,
+    flexGrow: 1,
+    flexShrink: 0,
+    flexBasis: 108,
+    minWidth: 108,
+    minHeight: Layout.buttonHeight,
     borderRadius: 12,
     borderWidth: 1,
     flexDirection: "row",
