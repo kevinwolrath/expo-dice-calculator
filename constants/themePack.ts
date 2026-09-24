@@ -91,8 +91,8 @@ const BUNDLED_PACKS: ThemePack[] = themeModules.map(({ manifest }) =>
 
 const bundledById = new Map(BUNDLED_PACKS.map((pack) => [pack.id, pack]));
 
-/** No pack selected, or the stored pack folder is gone. */
-export const DEFAULT_THEME_PACK_ID: ThemePackId | null = null;
+/** First launch, or the stored pack folder is gone. */
+export const DEFAULT_THEME_PACK_ID: ThemePackId = "dragon";
 
 export const UNSTYLED_PACK_COLORS: ThemePackColors = {
   text: Colors.light.text,

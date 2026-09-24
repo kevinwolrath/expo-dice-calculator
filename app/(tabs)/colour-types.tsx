@@ -197,6 +197,7 @@ export default function ColourTypesScreen() {
             icon={icon("colour")}
             required
             error={errors.description}
+            placeholder={t("colourTypes.descriptionPlaceholder")}
             value={description}
             onChangeText={(value) => {
               setDescription(value);

@@ -276,6 +276,7 @@ export default function ProductionMethodsScreen() {
             icon={icon("method")}
             required
             error={errors.description}
+            placeholder={t("productionMethods.descriptionPlaceholder")}
             value={methodDescription}
             onChangeText={(value) => {
               setMethodDescription(value);
@@ -286,6 +287,8 @@ export default function ProductionMethodsScreen() {
             focusRef={bind("colourCountRange")}
             label={t("productionMethods.minimumColourCount")}
             icon={icon("colour")}
+            compact
+            placeholder={t("productionMethods.minimumColourCountPlaceholder")}
             error={errors.colourCountRange}
             value={minimumColourCount}
             onChangeText={(value) => {
@@ -297,6 +300,8 @@ export default function ProductionMethodsScreen() {
           <FormField
             label={t("productionMethods.maximumColourCount")}
             icon={icon("colour")}
+            compact
+            placeholder={t("productionMethods.maximumColourCountPlaceholder")}
             error={errors.colourCountRange}
             value={maximumColourCount}
             onChangeText={(value) => {

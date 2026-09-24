@@ -46,15 +46,21 @@ type FlatListRef = {
   getNativeScrollRef?: () => unknown;
 };
 
+function readInnerViewNode(host: object): unknown {
+  if (!("getInnerViewNode" in host)) return null;
+  const method = host.getInnerViewNode;
+  if (typeof method !== "function") return null;
+  return method.call(host);
+}
+
 function getScrollContentNode(list: FlatListRef | null): unknown {
-  if (
-    scrollRef &&
-    typeof (scrollRef as { getInnerViewNode?: unknown }).getInnerViewNode ===
-      "function"
-  ) {
-    return (scrollRef as { getInnerViewNode: () => unknown }).getInnerViewNode();
-  }
-  return null;
+  if (!list) return null;
+  const direct = readInnerViewNode(list);
+  if (direct != null) return direct;
+  if (typeof list.getNativeScrollRef !== "function") return null;
+  const native = list.getNativeScrollRef();
+  if (!native || typeof native !== "object") return null;
+  return readInnerViewNode(native);
 }
 
 export default function ScreenList<T>({
@@ -142,6 +148,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Layout.listGutter,
     paddingBottom: Layout.listBottom,
     flexGrow: 1,
+    width: "100%",
+    maxWidth: Layout.contentMaxWidth,
+    alignSelf: "center",
   },
   hero: {
     marginBottom: Space[4],

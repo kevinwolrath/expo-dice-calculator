@@ -75,7 +75,9 @@ test("night view ignores pack defaults and page customisation", () => {
 });
 
 test("unknown or missing pack ids fall back to no theme", () => {
-  expect(DEFAULT_THEME_PACK_ID).toBeNull();
+  expect(DEFAULT_THEME_PACK_ID).toBe("dragon");
+  expect(isThemePackId(DEFAULT_THEME_PACK_ID)).toBe(true);
+  expect(getThemePack(DEFAULT_THEME_PACK_ID)?.id).toBe("dragon");
   expect(isThemePackId("neon")).toBe(false);
   expect(getThemePack("neon")).toBeNull();
   expect(getThemePack(null)).toBeNull();

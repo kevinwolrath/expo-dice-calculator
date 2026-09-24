@@ -147,7 +147,7 @@ export default function SelectDropdown({
                 { color: control.text, fontWeight: "700" },
               ]}
             >
-              {placeholder}
+              {label}
             </Text>
             <ScrollView>
               {options.map((option) => {
@@ -220,8 +220,8 @@ const styles = StyleSheet.create({
   picker: {
     flexGrow: 1,
     flexShrink: 1,
-    flexBasis: 180,
-    minWidth: 160,
+    flexBasis: 120,
+    minWidth: 96,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
