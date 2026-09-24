@@ -40,9 +40,9 @@ jobs:
         run: npm run export:android
       - name: Generate Android project
         run: npx expo prebuild --platform android --non-interactive
-      - name: Build debug APK
+      - name: Build release-mode smoke APK with embedded JavaScript
         working-directory: android
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleRelease
       - name: Boot emulator and launch DiceForge
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -51,7 +51,7 @@ jobs:
           profile: pixel_6
           disable-animations: true
           script: |
-            adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+            adb install -r android/app/build/outputs/apk/release/app-release.apk
             adb logcat -c
             adb shell monkey -p com.snackbearer.expodicecalculator -c android.intent.category.LAUNCHER 1
             sleep 15
