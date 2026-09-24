@@ -1,0 +1,75 @@
+name: Android PR Smoke Test
+
+on:
+  pull_request:
+    branches:
+      - develop
+
+permissions:
+  contents: read
+
+concurrency:
+  group: diceforge-pr-smoke-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  smoke-test:
+    name: Build and launch Android app
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Install dependencies
+        run: npm ci
+      - name: Type check
+        run: npm run typecheck
+      - name: Unit tests
+        run: npm test -- --ci --runInBand
+      - name: Verify Expo Android production bundle
+        run: npm run export:android
+      - name: Generate Android project
+        run: npx expo prebuild --platform android --non-interactive
+      - name: Build debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug
+      - name: Boot emulator and launch DiceForge
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: |
+            adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+            adb logcat -c
+            adb shell monkey -p com.snackbearer.expodicecalculator -c android.intent.category.LAUNCHER 1
+            sleep 15
+            PID=$(adb shell pidof com.snackbearer.expodicecalculator | tr -d '\r')
+            adb logcat -d -t 500 > smoke-logcat.txt
+            tail -n 200 smoke-logcat.txt
+            if [ -z "$PID" ]; then
+              echo "::error::DiceForge is not running after launch."
+              exit 1
+            fi
+            if grep -E "FATAL EXCEPTION|AndroidRuntime.*FATAL|ReactNativeJS.*(TypeError|ReferenceError|Error:)" smoke-logcat.txt; then
+              echo "::error::Fatal Android or React Native startup error detected."
+              exit 1
+            fi
+      - name: Upload smoke-test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-pr-smoke-log
+          path: smoke-logcat.txt
+          if-no-files-found: ignore
