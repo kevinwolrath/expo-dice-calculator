@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Screen, Text, useChromeColors } from "@/components/Themed";
 import { PageThemeScope } from "@/components/pageTheme/PageThemeScope";
+import AppTabBar from "@/components/ui/AppTabBar";
 import HeaderActions from "@/components/ui/HeaderActions";
 import { appHeaderStyleOptions } from "@/components/ui/HeaderSceneBackground";
 import PrimaryButton from "@/components/ui/PrimaryButton";
@@ -37,7 +38,7 @@ function TabBarLabel({
 }) {
   return (
     <RNText
-      numberOfLines={2}
+      numberOfLines={1}
       style={StyleSheet.flatten([
         styles.tabLabel,
         { color, fontWeight: focused ? "700" : "500" },
@@ -121,12 +122,8 @@ export default function TabLayout() {
   return (
     <PageThemeScope pageId={pageId}>
       <Tabs
+        tabBar={(props) => <AppTabBar {...props} />}
         screenOptions={{
-          // Each tab holds its own list + form state and reloads via
-          // useFocusEffect whenever it regains focus, so nothing is lost by
-          // unmounting it while another tab is active — only the memory of
-          // its (already virtualized) list and dice-preview SVGs is freed.
-          unmountOnBlur: true,
           tabBarActiveTintColor: isNight ? "#ffffff" : packColors.primary,
           tabBarInactiveTintColor: isNight
             ? "#aaaaaa"
@@ -322,7 +319,5 @@ const styles = StyleSheet.create({
     lineHeight: 13,
     textAlign: "center",
     marginTop: 2,
-    width: "100%",
-    paddingHorizontal: 2,
   },
 });

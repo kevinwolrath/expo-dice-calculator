@@ -145,6 +145,7 @@ export default function MaterialTypesScreen() {
             icon={icon("material")}
             required
             error={errors.description}
+            placeholder={t("materialTypes.descriptionPlaceholder")}
             value={description}
             onChangeText={(value) => {
               setDescription(value);

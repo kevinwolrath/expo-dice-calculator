@@ -168,6 +168,7 @@ export default function DiceNumberColoursScreen() {
             icon={icon("dice")}
             required
             error={errors.name}
+            placeholder={t("diceNumberColours.namePlaceholder")}
             value={name}
             onChangeText={(value) => {
               setName(value);

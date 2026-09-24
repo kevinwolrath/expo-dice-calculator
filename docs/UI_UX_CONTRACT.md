@@ -79,6 +79,10 @@ Do not fix overflow by making controls tiny.
 
 ## 5. Forms, fields, accessories
 
+- Label = what the field is. Placeholder = a short example of what might go here. Help = extra guidance. Validation = what is wrong.
+- Empty selects use `common.select` (`Select…`). Do not put instructions in the placeholder (`Choose a material type`, `Choose a production method`).
+- Text and number placeholders are short examples (`e.g. Dragon Scale`, `e.g. 3`) or omitted. Never repeat the label. Never size a control from placeholder length.
+- A single-value field is a compact row (icon, label, control). Do not give it a tall empty card. Small numbers use `FormField` `compact` plus a numeric keyboard.
 - Labels, required markers, errors, and helper text use existing `FieldLabel` / `FieldError` / `Type.hint`.
 - Errors sit **under** the field they belong to.
 - Required fields keep the existing required indicator.

@@ -31,6 +31,8 @@ type FormFieldProps = TextInputProps & {
   rightAccessory?: ReactNode;
   icon?: ImageSourcePropType;
   embedded?: boolean;
+  /** Small numeric value. Does not stretch across the row. */
+  compact?: boolean;
   focusRef?: Ref<FieldFocusable>;
 };
 
@@ -43,6 +45,7 @@ export default function FormField({
   rightAccessory,
   icon,
   embedded,
+  compact,
   editable = true,
   onFocus,
   onBlur,
@@ -58,8 +61,9 @@ export default function FormField({
   const activate = useCallback(() => {
     inputRef.current?.focus();
     if (Platform.OS !== "web") return;
-    const host = hostRef.current as unknown as HTMLElement | null;
-    host?.querySelector?.("input, textarea")?.focus();
+    const host = hostRef.current as unknown as ParentNode | null;
+    const field = host?.querySelector?.("input, textarea");
+    if (field instanceof HTMLElement) field.focus();
   }, []);
   useFieldFocus(focusRef, hostRef, activate);
 
@@ -68,6 +72,12 @@ export default function FormField({
       <TextInput
         ref={inputRef}
         {...props}
+        inputMode={
+          props.inputMode ??
+          (props.keyboardType === "number-pad" || props.keyboardType === "numeric"
+            ? "numeric"
+            : undefined)
+        }
         placeholderTextColor={control.placeholder}
         multiline={multiline}
         editable={editable}
@@ -82,9 +92,9 @@ export default function FormField({
           onBlur?.(event);
         }}
         style={[
-          styles.input,
+          compact ? styles.inputCompact : styles.input,
           inputTypeface,
-          embedded && styles.inputTextLarge,
+          embedded && !compact && styles.inputTextLarge,
           controlStyle({
             colors: control,
             focused,
@@ -94,7 +104,7 @@ export default function FormField({
           }),
           {
             color: disabled ? control.disabledText : control.text,
-            paddingVertical: 10,
+            paddingVertical: compact ? 6 : 8,
           },
           multiline && styles.multiline,
           style,
@@ -129,6 +139,12 @@ const styles = StyleSheet.create({
   inputRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   input: {
     flex: 1,
+    fontSize: FontSize.md,
+  },
+  inputCompact: {
+    alignSelf: "flex-start",
+    width: Layout.numericFieldWidth,
+    maxWidth: "100%",
     fontSize: FontSize.md,
   },
   inputTextLarge: { fontSize: FontSize.lg, fontWeight: "600" },

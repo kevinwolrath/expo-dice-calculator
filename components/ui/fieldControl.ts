@@ -1,4 +1,4 @@
-import { Platform, type TextStyle, type ViewStyle } from "react-native";
+import { Platform, type TextStyle } from "react-native";
 
 import { useThemeColors } from "@/components/Themed";
 import { useColorScheme } from "@/components/useColorScheme";
@@ -63,6 +63,20 @@ export function useControlColors(): ControlColors {
   };
 }
 
+export type ControlChromeStyle = {
+  backgroundColor: string;
+  borderColor: string;
+  borderWidth: number;
+  borderRadius: number;
+  paddingHorizontal: number;
+  minHeight: number;
+  shadowColor?: string;
+  shadowOpacity: number;
+  shadowRadius?: number;
+  shadowOffset?: { width: number; height: number };
+  elevation: number;
+};
+
 export function controlStyle({
   colors,
   focused = false,
@@ -75,7 +89,7 @@ export function controlStyle({
   disabled?: boolean;
   error?: boolean;
   errorColor?: string;
-}): ViewStyle {
+}): ControlChromeStyle {
   let borderColor = colors.border;
   if (error && errorColor) borderColor = errorColor;
   else if (focused) borderColor = colors.focus;

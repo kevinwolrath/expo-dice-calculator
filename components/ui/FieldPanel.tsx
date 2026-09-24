@@ -42,6 +42,7 @@ const FieldPanel = forwardRef<
       style={[
         styles.panel,
         panelStyle,
+        styles.fieldPadding,
         error ? { borderColor: colors.destructive } : null,
       ]}
     >
@@ -58,7 +59,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     gap: FIELD_LABEL_ICON_GAP,
-    marginBottom: Layout.cardGap,
+    marginBottom: Layout.fieldGap,
+  },
+  fieldPadding: {
+    padding: Layout.fieldPadding,
   },
   iconWrap: {
     marginTop: 2,

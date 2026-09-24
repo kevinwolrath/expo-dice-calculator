@@ -52,6 +52,7 @@ export default function LockFieldCard({
         styles.card,
         stacked && styles.cardStacked,
         panelStyle,
+        styles.fieldPadding,
         error ? { borderColor: colors.destructive } : null,
       ]}
     >
@@ -87,12 +88,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     flexWrap: "wrap",
-    minHeight: 90,
     gap: FIELD_LABEL_ICON_GAP,
-    marginBottom: Layout.cardGap,
+    marginBottom: Layout.fieldGap,
+  },
+  fieldPadding: {
+    padding: Layout.fieldPadding,
   },
   cardStacked: {
     flexDirection: "column",
+    flexWrap: "nowrap",
+    alignItems: "stretch",
   },
   iconWrap: {
     marginTop: 2,

@@ -260,6 +260,7 @@ export default function StockScreen() {
             icon={icon("colour")}
             required
             error={errors.colourName}
+            placeholder={t("stock.colourNamePlaceholder")}
             value={colourName}
             onChangeText={(value) => {
               setColourName(value);
@@ -282,7 +283,7 @@ export default function StockScreen() {
             focusRef={bind("colourTypeId")}
             label={t("stock.colourType")}
             icon={icon("colour")}
-            placeholder={t("stock.selectColourType")}
+            placeholder={t("common.select")}
             required
             error={errors.colourTypeId}
             options={colourTypeOptions}
@@ -299,7 +300,7 @@ export default function StockScreen() {
           <SelectDropdown
             label={t("stock.colourBrand")}
             icon={icon("colour")}
-            placeholder={t("stock.selectColourBrand")}
+            placeholder={t("common.select")}
             options={colourBrandOptions}
             value={colourBrandId}
             onChange={setColourBrandId}
@@ -308,6 +309,8 @@ export default function StockScreen() {
           <FormField
             label={t("stock.quantity")}
             icon={icon("material")}
+            compact
+            placeholder={t("stock.quantityPlaceholder")}
             value={quantity}
             onChangeText={setQuantity}
             keyboardType="number-pad"

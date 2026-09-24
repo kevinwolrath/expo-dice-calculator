@@ -936,13 +936,12 @@ export default function JobsScreen() {
               icon={icon("notes")}
               value={description}
               onChangeText={setDescription}
-              placeholder={t("jobs.descriptionPlaceholder")}
               multiline
             />
             <View style={styles.colourCountBlock}>
               <SelectDropdown
                 label={t("jobs.excludedColourTypes")}
-                placeholder={t("jobs.selectExcludedColourType")}
+                placeholder={t("common.select")}
                 value={null}
                 options={excludableColourTypeOptions}
                 onChange={(value) => {
@@ -1141,7 +1140,7 @@ export default function JobsScreen() {
                   focusRef={bind("materialTypeId")}
                   embedded
                   label={t("jobs.materialType")}
-                  placeholder={t("jobs.selectMaterialType")}
+                  placeholder={t("common.select")}
                   error={errors.materialTypeId}
                   value={materialTypeId}
                   options={materialTypeOptions}
@@ -1165,7 +1164,7 @@ export default function JobsScreen() {
                   focusRef={bind("methodId")}
                   embedded
                   label={t("jobs.productionMethod")}
-                  placeholder={t("jobs.selectProductionMethod")}
+                  placeholder={t("common.select")}
                   error={errors.methodId}
                   value={methodId}
                   options={methodOptions}
@@ -1189,8 +1188,10 @@ export default function JobsScreen() {
                 <FormField
                   focusRef={bind("colourCount")}
                   embedded
+                  compact
                   label={t("jobs.colourCount")}
                   error={errors.colourCount}
+                  placeholder={t("jobs.colourCountPlaceholder")}
                   value={colourCount}
                   onChangeText={(value) => {
                     setColourCount(value);
@@ -1315,7 +1316,7 @@ export default function JobsScreen() {
               focusRef={bind("numberColourId")}
               label={t("jobs.numberColour")}
               icon={icon("dice")}
-              placeholder={t("jobs.selectNumberColour")}
+              placeholder={t("common.select")}
               required
               error={errors.numberColourId}
               value={numberColourId}
